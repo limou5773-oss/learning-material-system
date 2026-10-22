@@ -1,0 +1,42 @@
+# Credentials and local configuration
+.env
+.env.*
+!.env.example
+!.env.*.example
+**/application-local.yml
+**/application-local.yaml
+**/application-prod.yml
+**/application-prod.yaml
+*.pem
+*.key
+*.p12
+*.pfx
+
+# Dependencies and build outputs
+node_modules/
+dist/
+target/
+.venv/
+__pycache__/
+*.py[cod]
+
+# Runtime data and private study material
+/data/
+/uploads/
+/storage/
+/backups/
+/logs/
+*.log
+*.sql.gz
+*.dump
+
+# Local tools and editor state
+.idea/
+.vscode/
+.DS_Store
+Thumbs.db
+*.iml
+*.tmp
+~$*
+.graphflow-cache/
+graphflow-out/
