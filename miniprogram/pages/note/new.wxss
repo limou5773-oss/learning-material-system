@@ -1,0 +1,2 @@
+.note-textarea { box-sizing: border-box; width: 100%; min-height: 390rpx; padding: 22rpx 24rpx; border: 1rpx solid #d9e4d9; border-radius: 16rpx; background: #fafcf9; font-size: 28rpx; line-height: 1.6; }
+.character-count { margin-top: 12rpx; color: #9aa9a0; font-size: 22rpx; text-align: right; }

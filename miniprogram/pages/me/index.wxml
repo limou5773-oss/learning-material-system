@@ -1,0 +1,24 @@
+<view class="page">
+  <text class="eyebrow">PERSONAL SPACE</text>
+  <view class="title">我的信息</view>
+  <view class="lead">你在 Web 与小程序中使用的是同一个账号。</view>
+
+  <view class="card">
+    <view wx:if="{{loading}}" class="muted">正在读取本人信息…</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+    <button wx:if="{{error}}" class="outline" bindtap="refresh">重试</button>
+    <view wx:if="{{user}}">
+      <view class="card-title">{{user.displayName}}</view>
+      <view class="muted">@{{user.username}}</view>
+      <view class="field-row"><text>用户 ID</text><text selectable="true">{{user.id}}</text></view>
+      <view class="field-row"><text>账号类型</text><text>{{user.role === 'ADMIN' ? '管理员' : '普通用户'}}</text></view>
+      <view class="field-row"><text>账号状态</text><text>{{user.status === 'ENABLED' ? '正常' : '已停用'}}</text></view>
+      <view class="field-row"><text>微信绑定</text><text>{{user.hasWechatBinding ? '已绑定' : '尚未接入'}}</text></view>
+      <button class="primary" bindtap="openMaterials">查看我的资料</button>
+      <button class="outline" bindtap="openTasks">查看整理任务</button>
+      <button class="outline" bindtap="newNote">快速记笔记</button>
+      <button class="outline" bindtap="submitLogout" loading="{{loggingOut}}" disabled="{{loggingOut}}">退出登录</button>
+    </view>
+  </view>
+  <view class="footnote">账号密码登录联调阶段 · 未使用微信身份模拟</view>
+</view>

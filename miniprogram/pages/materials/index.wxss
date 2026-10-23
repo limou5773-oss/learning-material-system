@@ -1,0 +1,21 @@
+.filter-card { padding: 28rpx; border: 1rpx solid #e2e9df; border-radius: 22rpx; background: #fff; }
+.subject-input { margin-top: 14rpx; }
+.favorite-filter { display: flex; justify-content: flex-end; align-items: center; gap: 14rpx; margin-top: 18rpx; color: #547260; font-size: 25rpx; }
+.filter-actions { display: flex; justify-content: space-between; align-items: center; margin-top: 22rpx; }
+.tag-picker { color: #3c644b; font-size: 27rpx; }
+.filter-button { margin: 0; padding: 0 38rpx; height: 68rpx; line-height: 68rpx; border-radius: 12rpx; background: #276c47; color: #fff; font-size: 25rpx; }
+.note-list { margin-top: 28rpx; }
+.note-item { margin-bottom: 20rpx; padding: 30rpx; border: 1rpx solid #e2e9df; border-radius: 22rpx; background: #fff; }
+.note-item-top { display: flex; justify-content: space-between; }
+.note-type { color: #2f6f4b; font-size: 23rpx; font-weight: 700; }
+.note-date { color: #9aa9a0; font-size: 23rpx; }
+.note-title { margin-top: 13rpx; font-size: 34rpx; font-weight: 700; }
+.note-excerpt { margin-top: 10rpx; overflow: hidden; color: #75877a; font-size: 25rpx; line-height: 1.5; text-overflow: ellipsis; white-space: nowrap; }
+.note-meta { margin-top: 16rpx; color: #839287; font-size: 23rpx; }
+.favorite-button { display: inline-block; margin: 20rpx 0 0; padding: 0 20rpx; height: 58rpx; line-height: 58rpx; border: 1rpx solid #c7ddce; border-radius: 10rpx; background: #fff; color: #276c47; font-size: 24rpx; }
+.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 25rpx; color: #718076; font-size: 23rpx; }
+.pagination button { margin: 0; padding: 0 16rpx; height: 62rpx; line-height: 62rpx; border-radius: 10rpx; background: #fff; color: #276c47; font-size: 23rpx; }
+.pagination button[disabled] { opacity: .4; }
+.retry { margin-top: 10rpx; text-decoration: underline; }
+.toolbar-actions { display: flex; gap: 10rpx; }
+.secondary-action { background: #e5efe7; color: #276c47; }

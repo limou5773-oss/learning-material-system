@@ -1,0 +1,16 @@
+<view class="page">
+  <text class="eyebrow">IMAGE CAPTURE</text>
+  <view class="title">上传图片资料</view>
+  <view class="lead">拍照或从相册选择 JPEG、PNG 图片，单张不超过 10 MiB。</view>
+  <view class="card">
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+    <view class="image-actions"><button class="outline" bindtap="camera">拍照</button><button class="outline" bindtap="album">从相册选择</button></view>
+    <image wx:if="{{filePath}}" class="selected-image" src="{{filePath}}" mode="widthFix" />
+    <view wx:if="{{filePath}}" class="muted">已选择图片：{{fileSize}} 字节</view>
+    <text class="field-label">标题</text><input class="field-input" value="{{title}}" bindinput="onTitleInput" maxlength="255" placeholder="例如：课堂板书" />
+    <text class="field-label">学科</text><input class="field-input" value="{{subject}}" bindinput="onSubjectInput" maxlength="64" placeholder="可选" />
+    <text class="field-label">标签</text><input class="field-input" value="{{tagsText}}" bindinput="onTagsInput" placeholder="多个标签用逗号隔开" />
+    <button class="primary" bindtap="submit" loading="{{uploading}}" disabled="{{uploading || !filePath}}">上传图片</button>
+    <view wx:if="{{existingId}}" class="duplicate-actions"><button class="outline" bindtap="openExisting">查看已有资料</button><button class="outline" bindtap="saveCopy">确认保存副本</button></view>
+  </view>
+</view>

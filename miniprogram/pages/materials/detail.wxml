@@ -1,0 +1,22 @@
+<view class="page">
+  <view wx:if="{{loading}}" class="state">正在加载资料…</view>
+  <view wx:if="{{error}}" class="error">{{error}}<view class="retry" bindtap="load">点击重试</view></view>
+  <view wx:if="{{material}}" class="card detail-card">
+    <text class="eyebrow">{{material.type === 'IMAGE' ? '图片资料' : material.type === 'PDF' ? 'PDF 资料' : '文字笔记'}} · 版本 {{material.version}}{{material.status === 'ARCHIVED' ? ' · 已归档' : ''}}</text>
+    <view class="title">{{material.title}}</view>
+    <view class="detail-meta"><text>{{material.subject || '未分类'}}</text><text wx:for="{{material.tags}}" wx:for-item="tag" wx:key="id" class="tag-pill">#{{tag.name}}</text></view>
+    <text wx:if="{{material.type === 'NOTE'}}" class="note-content" selectable="true">{{material.noteText}}</text>
+    <view wx:if="{{material.type === 'IMAGE'}}" class="image-preview">
+      <image wx:if="{{previewPath}}" src="{{previewPath}}" mode="widthFix" class="original-image" />
+      <view wx:elif="{{previewError}}" class="error">{{previewError}}<view class="retry" bindtap="load">重试</view></view>
+      <view wx:else class="state">正在读取图片…</view>
+    </view>
+    <view wx:if="{{material.type === 'PDF'}}" class="pdf-preview"><text>{{material.pageCount || '?'}} 页</text><button class="primary" bindtap="openPdf" disabled="{{busy}}">{{busy ? '正在读取…' : '预览 PDF'}}</button><view wx:if="{{previewError}}" class="error">{{previewError}}</view></view>
+    <view wx:if="{{actionError}}" class="error">{{actionError}}<view class="retry" bindtap="load">刷新版本</view></view>
+    <button wx:if="{{material.type === 'NOTE'}}" class="primary" bindtap="edit">编辑笔记</button>
+    <button class="outline" bindtap="newTask">提交整理任务</button>
+    <button class="outline" bindtap="toggleFavorite" disabled="{{favoriteBusy}}">{{material.favorite ? '★ 取消收藏' : '☆ 收藏'}}</button>
+    <button class="outline" bindtap="changeArchive" disabled="{{busy}}">{{material.status === 'ARCHIVED' ? '恢复使用' : '归档'}}</button>
+    <button class="outline delete-action" bindtap="remove" disabled="{{busy}}">删除</button>
+  </view>
+</view>

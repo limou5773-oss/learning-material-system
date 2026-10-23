@@ -1,0 +1,4 @@
+.field-row { display: flex; justify-content: space-between; gap: 20rpx; padding: 28rpx 0; border-bottom: 1rpx solid #edf1ec; color: #6b7b70; font-size: 27rpx; }
+.field-row text:last-child { color: #233b2c; font-weight: 600; text-align: right; }
+.card-title { margin-top: 10rpx; }
+.card .error { margin-top: 20rpx; }

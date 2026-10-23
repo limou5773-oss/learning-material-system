@@ -1,0 +1,9 @@
+.detail-card .title { font-size: 46rpx; overflow-wrap: anywhere; }
+.detail-meta { margin-top: 24rpx; color: #718076; font-size: 25rpx; }
+.note-content { display: block; min-height: 320rpx; margin-top: 38rpx; padding-top: 38rpx; border-top: 1rpx solid #eaf0e9; color: #34483b; font-size: 29rpx; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.retry { margin-top: 10rpx; text-decoration: underline; }
+.delete-action { color: #a2463b; border-color: #ecd8d3; }
+.image-preview { margin-top: 38rpx; padding-top: 38rpx; border-top: 1rpx solid #eaf0e9; }
+.original-image { display: block; width: 100%; }
+.pdf-preview { margin-top: 38rpx; padding-top: 38rpx; border-top: 1rpx solid #eaf0e9; color: #718076; }
+.pdf-preview button { margin: 24rpx 0; }

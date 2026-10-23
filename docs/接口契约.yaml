@@ -2,11 +2,11 @@
 "info":
   "title": "个人学习资料智能整理系统开发接口"
   "version": "1.0.0-draft"
-  "description": "依据开题报告拟议的编码契约，尚无运行实现。JSON枚举、来源和权限需在服务层验证。所有ID为字符串，时间为UTC。"
+  "description": "依据开题报告的编码契约；D02至D09账号、资料上传查阅、筛选收藏及整理任务提交/状态查询已实现。worker、卡片收藏及其余接口仍为拟议。所有ID为字符串，时间为UTC。"
 "servers":
   -
     "url": "http://localhost:8080/api/v1"
-    "description": "未来本地开发地址，未启动"
+    "description": "本地开发地址；D02至D09已实现的账号、资料、收藏和任务提交查询接口可运行"
 "security":
   -
     "bearerSession": []
@@ -824,6 +824,14 @@
               - "ALL"
           "description": ""
         -
+          "name": "favorite"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "boolean"
+            "default": false
+          "description": "为true时仅筛选本人已收藏资料"
+        -
           "name": "page"
           "in": "query"
           "required": false
@@ -1013,7 +1021,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "批量由前端排队。重复摘要返回409及本人已有资料ID；allowDuplicate=true表示用户确认重复保存。文件实际类型和PDF页数在服务端校验。"
+      "description": "单请求上传一个文件。JPEG或PNG不超过10 MiB且最多4000万像素；PDF不超过30 MiB且最多100页，Web前端一次最多选10个、同时发起2个单文件请求。重复SHA-256摘要返回409及本人已有资料ID；allowDuplicate=true表示用户确认重复保存。文件实际类型在服务端校验。"
       "requestBody":
         "required": true
         "content":
@@ -1210,11 +1218,11 @@
             "schema":
               "$ref": "#/components/schemas/MaterialPatch"
     "delete":
-      "summary": "逻辑删除本人资料并取消非终态任务"
+      "summary": "逻辑删除本人资料；非终态任务取消待任务模块接入"
       "operationId": "delete_materials_id"
       "responses":
         "204":
-          "description": "逻辑删除本人资料并取消非终态任务"
+          "description": "逻辑删除本人资料"
         "400":
           "description": "格式错误"
           "content":
@@ -1312,6 +1320,18 @@
         "200":
           "description": "授权读取本人原文件"
           "content":
+            "image/jpeg":
+              "schema":
+                "type": "string"
+                "format": "binary"
+            "image/png":
+              "schema":
+                "type": "string"
+                "format": "binary"
+            "application/pdf":
+              "schema":
+                "type": "string"
+                "format": "binary"
             "application/octet-stream":
               "schema":
                 "type": "string"
@@ -1511,6 +1531,7 @@
     "put":
       "summary": "幂等添加本人收藏"
       "operationId": "put_favorites_type_id"
+      "description": "D08仅支持MATERIAL；CARD将在卡片功能完成后开放，当前返回422。"
       "responses":
         "204":
           "description": "幂等添加本人收藏"
@@ -1607,6 +1628,7 @@
     "delete":
       "summary": "幂等删除本人收藏"
       "operationId": "delete_favorites_type_id"
+      "description": "D08仅支持MATERIAL；删除不存在的本人收藏仍返回204。"
       "responses":
         "204":
           "description": "幂等删除本人收藏"
@@ -1704,6 +1726,7 @@
     "get":
       "summary": "查询收藏分页"
       "operationId": "get_favorites"
+      "description": "D08仅返回本人未删除的资料收藏；归档资料仍可见。CARD筛选当前返回422。"
       "responses":
         "200":
           "description": "查询收藏分页"
@@ -1896,7 +1919,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "PDF必须指定最多20页的有效pageRange；NOTE和IMAGE不传pageRange。记录外部处理同意时间。相同键且相同输入返回同一Task；相同键不同输入409。"
+      "description": "D10提供worker租约与取消协议；处理器尚未接入，默认不领取任务。PDF必须指定最多20页的有效pageRange；NOTE和IMAGE不传pageRange。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
       "requestBody":
         "required": true
         "content":
@@ -5069,6 +5092,14 @@
               "type": "object"
               "additionalProperties":
                 "type": "string"
+            "currentVersion":
+              "type": "integer"
+              "minimum": 1
+              "description": "VERSION_CONFLICT 时返回当前资料版本"
+            "existingMaterialId":
+              "type": "string"
+              "pattern": "^[1-9][0-9]*$"
+              "description": "DUPLICATE_FILE 时返回本人已有资料ID"
           "additionalProperties": false
           "required":
             - "code"
@@ -5275,6 +5306,9 @@
           "type": "integer"
           "minimum": 1
           "nullable": true
+        "favorite":
+          "type": "boolean"
+          "description": "当前用户是否已收藏这份资料"
         "createdAt":
           "type": "string"
           "format": "date-time"
@@ -5292,6 +5326,7 @@
         - "version"
         - "status"
         - "accessState"
+        - "favorite"
         - "createdAt"
         - "updatedAt"
     "NoteInput":

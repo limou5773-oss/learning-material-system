@@ -1,0 +1,6 @@
+.picker-field { display: flex; align-items: center; }
+.task-textarea { box-sizing: border-box; width: 100%; min-height: 180rpx; padding: 20rpx 24rpx; border: 1rpx solid #d9e4d9; border-radius: 16rpx; background: #fafcf9; font-size: 28rpx; }
+.task-range { display: flex; align-items: center; gap: 16rpx; }
+.task-range input { flex: 1; min-width: 0; }
+.task-switch { display: flex; justify-content: space-between; align-items: center; gap: 20rpx; margin-top: 32rpx; color: #344d3e; font-size: 25rpx; }
+.task-switch text { flex: 1; }

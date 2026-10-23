@@ -1,0 +1,5 @@
+.image-actions { display: flex; gap: 16rpx; }
+.image-actions .outline { flex: 1; margin-top: 0; }
+.selected-image { display: block; width: 100%; max-height: 600rpx; margin: 26rpx auto 16rpx; }
+.duplicate-actions { display: flex; gap: 16rpx; }
+.duplicate-actions .outline { flex: 1; }

@@ -1,0 +1,5 @@
+.task-item { margin-bottom: 20rpx; }
+.task-item .card-title { margin-top: 12rpx; }
+.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 25rpx; color: #718076; font-size: 23rpx; }
+.pagination button { margin: 0; padding: 0 16rpx; height: 62rpx; line-height: 62rpx; border-radius: 10rpx; background: #fff; color: #276c47; font-size: 23rpx; }
+.retry { margin-top: 10rpx; text-decoration: underline; }

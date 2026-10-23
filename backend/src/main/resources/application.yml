@@ -1,0 +1,42 @@
+spring:
+  application:
+    name: learning-material-system
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}
+  flyway:
+    enabled: true
+    baseline-on-migrate: false
+    validate-on-migrate: true
+  jackson:
+    deserialization:
+      fail-on-unknown-properties: true
+  servlet:
+    multipart:
+      max-file-size: 32MB
+      max-request-size: 34MB
+
+mybatis-plus:
+  configuration:
+    map-underscore-to-camel-case: true
+
+management:
+  endpoints:
+    web:
+      exposure:
+        include: health
+  endpoint:
+    health:
+      show-details: never
+      show-components: never
+
+server:
+  port: 8080
+
+lms:
+  task:
+    worker:
+      enabled: ${TASK_WORKER_ENABLED:false}
+      poll-ms: 1000
+      heartbeat-ms: 10000

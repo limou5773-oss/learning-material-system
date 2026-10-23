@@ -1,0 +1,14 @@
+<view class="page">
+  <text class="eyebrow">QUICK CAPTURE</text>
+  <view class="title">写下此刻的要点</view>
+  <view class="lead">保存后，可以在 Web 和小程序中查看同一篇笔记。</view>
+  <view class="card">
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+    <text class="field-label">标题</text><input class="field-input" value="{{title}}" bindinput="onTitleInput" placeholder="例如：线性代数第三章要点" maxlength="255" />
+    <text class="field-label">学科</text><input class="field-input" value="{{subject}}" bindinput="onSubjectInput" placeholder="可选，例如：数学" maxlength="64" />
+    <text class="field-label">标签</text><input class="field-input" value="{{tagsText}}" bindinput="onTagsInput" placeholder="可选，多个标签用逗号隔开" />
+    <text class="field-label">正文</text><textarea class="note-textarea" value="{{noteText}}" bindinput="onNoteInput" placeholder="写下学习内容…" maxlength="20000" />
+    <view class="character-count">{{noteText.length}} / 20000 字</view>
+    <button class="primary" bindtap="submit" loading="{{loading}}" disabled="{{loading}}">保存笔记</button>
+  </view>
+</view>

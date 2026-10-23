@@ -40,3 +40,4 @@ Thumbs.db
 ~$*
 .graphflow-cache/
 graphflow-out/
+miniprogram/project.private.config.json

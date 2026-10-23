@@ -1,0 +1,29 @@
+page {
+  min-height: 100%;
+  background: #f5f7f4;
+  color: #192c25;
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+}
+
+button::after { border: 0; }
+
+.page { padding: 52rpx 38rpx 80rpx; }
+.eyebrow { color: #537460; font-size: 22rpx; font-weight: 700; letter-spacing: 4rpx; }
+.title { margin: 20rpx 0 0; font-size: 64rpx; font-weight: 700; line-height: 1.2; }
+.lead { margin: 22rpx 0 52rpx; color: #64736a; font-size: 28rpx; line-height: 1.65; }
+.card { padding: 42rpx 36rpx; border: 1rpx solid #e2e9df; border-radius: 30rpx; background: #fff; box-shadow: 0 18rpx 52rpx rgba(24, 57, 37, .06); }
+.card-title { margin: 0 0 10rpx; font-size: 38rpx; font-weight: 700; }
+.muted { color: #718076; font-size: 25rpx; line-height: 1.6; }
+.notice { margin: 0 0 28rpx; padding: 20rpx 24rpx; border-radius: 16rpx; background: #eaf3eb; color: #295d3e; font-size: 25rpx; line-height: 1.5; }
+.error { margin: 0 0 28rpx; padding: 20rpx 24rpx; border-radius: 16rpx; background: #fff1ed; color: #9f3e30; font-size: 25rpx; line-height: 1.5; }
+.field-label { display: block; margin: 32rpx 0 14rpx; color: #344d3e; font-size: 26rpx; font-weight: 600; }
+.field-input { box-sizing: border-box; width: 100%; height: 92rpx; padding: 0 24rpx; border: 1rpx solid #d9e4d9; border-radius: 16rpx; background: #fafcf9; font-size: 29rpx; }
+.primary { display: flex; align-items: center; justify-content: center; width: 100%; margin: 42rpx 0 0; height: 94rpx; border-radius: 17rpx; background: #276c47; color: #fff; font-size: 29rpx; font-weight: 600; }
+.primary[disabled] { opacity: .6; }
+.outline { display: flex; align-items: center; justify-content: center; width: 100%; margin: 34rpx 0 0; height: 90rpx; border: 1rpx solid #cad9ce; border-radius: 17rpx; background: #fff; color: #2b6142; font-size: 28rpx; }
+.footnote { margin-top: 36rpx; color: #829087; font-size: 24rpx; line-height: 1.6; text-align: center; }
+.toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; margin-bottom: 32rpx; }
+.toolbar-title { font-size: 44rpx; font-weight: 700; }
+.small-action { padding: 17rpx 24rpx; border-radius: 13rpx; background: #276c47; color: #fff; font-size: 25rpx; }
+.state { padding: 70rpx 15rpx; color: #718076; font-size: 27rpx; text-align: center; }
+.tag-pill { display: inline-block; margin: 6rpx 10rpx 0 0; padding: 7rpx 15rpx; border-radius: 9rpx; background: #eaf3eb; color: #34664a; font-size: 23rpx; }

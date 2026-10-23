@@ -1,0 +1,20 @@
+<view class="page">
+  <text class="eyebrow">EDIT NOTE</text>
+  <view class="title">编辑笔记</view>
+  <view wx:if="{{loading}}" class="state">正在加载笔记…</view>
+  <view wx:if="{{material}}" class="card">
+    <view wx:if="{{restored}}" class="notice">已恢复本机保存的编辑草稿。</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+    <view wx:if="{{conflict && serverCopy}}" class="server-copy">
+      <text>服务器版本 {{serverCopy.version}}：{{serverCopy.title}}</text>
+      <text class="server-content" selectable="true">{{serverCopy.noteText}}</text>
+      <button class="outline" bindtap="discardDraft">放弃草稿，使用服务器版本</button>
+    </view>
+    <text class="field-label">标题</text><input class="field-input" value="{{title}}" bindinput="onTitleInput" maxlength="255" />
+    <text class="field-label">学科</text><input class="field-input" value="{{subject}}" bindinput="onSubjectInput" maxlength="64" />
+    <text class="field-label">标签</text><input class="field-input" value="{{tagsText}}" bindinput="onTagsInput" placeholder="多个标签用逗号隔开" />
+    <text class="field-label">正文</text><textarea class="note-textarea" value="{{noteText}}" bindinput="onNoteInput" maxlength="20000" />
+    <view class="character-count">{{noteText.length}} / 20000 字</view>
+    <button class="primary" bindtap="submit" loading="{{saving}}" disabled="{{saving || conflict}}">保存修改</button>
+  </view>
+</view>

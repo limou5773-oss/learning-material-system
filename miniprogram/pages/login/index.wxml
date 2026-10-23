@@ -1,0 +1,19 @@
+<view class="page">
+  <text class="eyebrow">YOUR LEARNING, IN ONE PLACE</text>
+  <view class="title"><view>让学习的每一步</view><view>都有归处。</view></view>
+  <view class="lead">用与 Web 相同的账号登录，学习资料会保存在同一个空间。</view>
+
+  <view class="card">
+    <view class="card-title">欢迎回来</view>
+    <view class="muted">账号密码登录 · 本地联调阶段</view>
+    <view wx:if="{{notice}}" class="notice">{{notice}}</view>
+    <view wx:if="{{error}}" class="error">{{error}}</view>
+    <text class="field-label">用户名</text>
+    <input class="field-input" value="{{username}}" bindinput="onUsernameInput" placeholder="请输入用户名" maxlength="32" />
+    <text class="field-label">密码</text>
+    <input class="field-input" value="{{password}}" bindinput="onPasswordInput" placeholder="请输入密码" password="true" placeholder-style="color:#a0aba3" />
+    <button class="primary" bindtap="submit" loading="{{loading}}" disabled="{{loading}}">登录</button>
+  </view>
+
+  <view class="footnote">账号请先在 Web 端注册。当前使用账号密码登录，微信身份绑定尚未接入。</view>
+</view>
