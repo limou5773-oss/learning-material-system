@@ -4,3 +4,11 @@
 .steps-title { margin: 32rpx 0 12rpx; font-weight: 600; }
 .step-row { padding: 16rpx 0; border-bottom: 1rpx solid #edf0f4; overflow-wrap: anywhere; }
 .retry-consent { display: flex; align-items: center; margin: 28rpx 0; font-size: 26rpx; }
+.candidate-preview { margin-top: 36rpx; padding-top: 28rpx; border-top: 1rpx solid #edf0f4; }
+.candidate-title { font-size: 34rpx; font-weight: 700; margin-bottom: 12rpx; }
+.candidate-badge { margin-left: 12rpx; padding: 5rpx 10rpx; border-radius: 8rpx; background: #fff1dc; color: #8e5c16; font-size: 22rpx; }
+.candidate-warning { margin-top: 14rpx; padding: 14rpx; border-radius: 8rpx; background: #fff7eb; color: #805719; font-size: 25rpx; }
+.candidate-card { margin-top: 22rpx; padding: 18rpx; border: 1rpx solid #dce5f2; border-radius: 12rpx; }
+.candidate-source { margin-top: 16rpx; padding: 16rpx; border-radius: 8rpx; background: #f6f8fd; }
+.candidate-copy, .candidate-quote { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+.candidate-quote { margin: 12rpx 0; padding-left: 12rpx; border-left: 4rpx solid #a6bbdf; }

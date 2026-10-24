@@ -7,6 +7,8 @@ import com.learningmaterial.system.task.AiTaskDtos.TaskInput;
 import com.learningmaterial.system.task.AiTaskDtos.TaskView;
 import com.learningmaterial.system.task.AiTaskDtos.RetryInput;
 import com.learningmaterial.system.task.AiTaskDtos.TaskStepView;
+import com.learningmaterial.system.task.AiTaskDtos.CandidateResult;
+import com.learningmaterial.system.task.AiTaskDtos.SourceView;
 import jakarta.servlet.http.HttpServletRequest;
 import jakarta.validation.Valid;
 import org.springframework.http.HttpStatus;
@@ -19,13 +21,18 @@ import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
 import org.springframework.web.bind.annotation.RestController;
+import java.util.List;
 
 @RestController
 @RequestMapping("/api/v1/ai-tasks")
 public class AiTaskController {
     private final AiTaskService tasks;
+    private final TaskCandidateService candidates;
 
-    public AiTaskController(AiTaskService tasks) { this.tasks = tasks; }
+    public AiTaskController(AiTaskService tasks, TaskCandidateService candidates) {
+        this.tasks = tasks;
+        this.candidates = candidates;
+    }
 
     @PostMapping
     public ResponseEntity<ApiResponse<TaskView>> submit(@AuthenticationPrincipal AuthPrincipal principal,
@@ -48,6 +55,20 @@ public class AiTaskController {
     public ApiResponse<TaskView> get(@AuthenticationPrincipal AuthPrincipal principal,
                                      @PathVariable String id, HttpServletRequest request) {
         return ApiResponse.of(tasks.get(principal.userId(), id), request);
+    }
+
+    @GetMapping("/{id}/result")
+    public ApiResponse<CandidateResult> result(@AuthenticationPrincipal AuthPrincipal principal,
+                                                @PathVariable String id, HttpServletRequest request) {
+        long taskId = Long.parseLong(tasks.get(principal.userId(), id).id());
+        return ApiResponse.of(candidates.getResult(principal.userId(), taskId), request);
+    }
+
+    @GetMapping("/{id}/sources")
+    public ApiResponse<List<SourceView>> sources(@AuthenticationPrincipal AuthPrincipal principal,
+                                                  @PathVariable String id, HttpServletRequest request) {
+        long taskId = Long.parseLong(tasks.get(principal.userId(), id).id());
+        return ApiResponse.of(candidates.getSources(principal.userId(), taskId), request);
     }
 
     @GetMapping("/{id}/steps")

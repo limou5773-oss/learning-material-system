@@ -75,6 +75,34 @@ test('小程序任务列表和详情读取服务端状态', async () => {
   assert.deepEqual(detail.data.steps, [])
 })
 
+test('小程序待确认任务展示模拟候选和可核验来源', async () => {
+  const detail = page('../miniprogram/pages/tasks/detail')
+  detail.onLoad({ id: '91' })
+  const paths = []
+  requestHandler = options => {
+    paths.push(options.url)
+    let data
+    if (options.url.endsWith('/steps?page=1&pageSize=100')) data = { items: [], total: 0 }
+    else if (options.url.endsWith('/result')) data = {
+      taskId: '91', resultVersion: 1, sourceVersion: 1, generationMode: 'MOCK',
+      summary: '模拟摘要', tags: ['模拟结果'], relations: [], processedPages: [], warnings: ['模拟生成'],
+      cards: [{ candidateKey: 'mock-1', title: '模拟卡片', content: '待核对内容',
+        sources: [{ chunkId: '17', quoteText: '实际原文', startOffset: 0, endOffset: 4 }] }],
+    }
+    else if (options.url.endsWith('/sources')) data = [{ chunkId: '17', content: '实际原文',
+      extractionMethod: 'TEXT', chunkNo: 1 }]
+    else data = { id: '91', materialId: '42', materialVersion: 1, goalType: 'REVIEW_CARDS',
+      status: 'WAIT_CONFIRM', stage: 'CANDIDATE_READY', stepCount: 3 }
+    options.success({ statusCode: 200, data: { data } })
+  }
+  await detail.load()
+  assert.equal(detail.data.candidate.generationMode, 'MOCK')
+  assert.equal(detail.data.candidateCards[0].sourceViews[0].content, '实际原文')
+  assert.equal(detail.data.candidateCards[0].sourceViews[0].locator, '文字笔记片段 1')
+  assert.equal(paths.filter(path => path.endsWith('/result')).length, 1)
+  assert.equal(paths.filter(path => path.endsWith('/sources')).length, 1)
+})
+
 test('小程序取消后状态更新，重试网络失败复用请求键', async () => {
   const detail = page('../miniprogram/pages/tasks/detail')
   detail.onLoad({ id: '88' })

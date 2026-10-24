@@ -9,6 +9,7 @@ import jakarta.validation.constraints.Size;
 import java.time.Instant;
 import java.time.ZoneOffset;
 import java.math.BigDecimal;
+import java.util.List;
 
 public final class AiTaskDtos {
     private AiTaskDtos() { }
@@ -60,6 +61,26 @@ public final class AiTaskDtos {
                 row.getStartedAt().toInstant(ZoneOffset.UTC),
                 row.getFinishedAt() == null ? null : row.getFinishedAt().toInstant(ZoneOffset.UTC),
                 cost == null ? null : cost.toPlainString(), row.getCurrency());
+        }
+    }
+
+    public record SourceRef(String chunkId, String quoteText, int startOffset, int endOffset) { }
+
+    public record CandidateCard(String candidateKey, String title, String content, String summary,
+                                String subject, List<String> tags, List<SourceRef> sources,
+                                String parentCandidateKey) { }
+
+    public record CandidateResult(String taskId, int resultVersion, int sourceVersion,
+                                  String generationMode, String summary, List<String> tags,
+                                  List<CandidateCard> cards, List<Object> relations,
+                                  Integer totalPages, List<Integer> processedPages, List<String> warnings) { }
+
+    public record SourceView(String chunkId, String materialId, int materialVersion, int chunkNo,
+                             Integer pageNo, String extractionMethod, String content, String qualityNote) {
+        static SourceView from(MaterialChunkRow row) {
+            return new SourceView(row.getId().toString(), row.getMaterialId().toString(),
+                row.getMaterialVersion(), row.getChunkNo(), row.getPageNo(),
+                row.getExtractionMethod(), row.getContent(), row.getQualityNote());
         }
     }
 }

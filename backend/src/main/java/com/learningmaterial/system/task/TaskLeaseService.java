@@ -16,7 +16,7 @@ public class TaskLeaseService {
     public static final int LEASE_SECONDS = 30;
     public static final int EXECUTION_SECONDS = 300;
     private static final Set<String> TOOL_KINDS = Set.of("LOCAL", "MODEL", "OCR");
-    private static final Set<String> TOOL_NAMES = Set.of("extract_pdf_text", "recognize_image",
+    private static final Set<String> TOOL_NAMES = Set.of("prepare_source", "extract_pdf_text", "recognize_image",
         "search_personal_materials", "generate_summary_cards", "validate_candidate", "planner");
 
     private final AiTaskMapper tasks;

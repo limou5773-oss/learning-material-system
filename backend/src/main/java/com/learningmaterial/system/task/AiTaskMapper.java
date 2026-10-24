@@ -35,6 +35,9 @@ public interface AiTaskMapper {
     @Select("SELECT * FROM ai_task WHERE id = #{id} FOR UPDATE")
     AiTaskRow findByIdForUpdate(@Param("id") long id);
 
+    @Select("SELECT * FROM ai_task WHERE id = #{id} LIMIT 1")
+    AiTaskRow findById(@Param("id") long id);
+
     @Select("""
         SELECT * FROM ai_task
         WHERE (status = 'QUEUED' OR (status = 'RUNNING' AND lease_until < #{now}))
@@ -95,6 +98,17 @@ public interface AiTaskMapper {
         """)
     int failOwnedLease(@Param("id") long id, @Param("epoch") int epoch,
                        @Param("errorCode") String errorCode, @Param("now") LocalDateTime now);
+
+    @Update("""
+        UPDATE ai_task SET status = 'WAIT_CONFIRM', stage = 'CANDIDATE_READY',
+            lease_until = NULL, updated_at = #{now}
+        WHERE id = #{id} AND execution_epoch = #{epoch} AND status = 'RUNNING'
+          AND cancel_flag = 0 AND lease_until > #{now}
+          AND started_at > #{deadlineStart}
+        """)
+    int markCandidateReady(@Param("id") long id, @Param("epoch") int epoch,
+                           @Param("now") LocalDateTime now,
+                           @Param("deadlineStart") LocalDateTime deadlineStart);
 
     @Update("""
         UPDATE ai_task SET status = 'FAILED', stage = 'FAILED', error_code = 'TASK_TIMEOUT',

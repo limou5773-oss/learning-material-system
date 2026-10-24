@@ -205,6 +205,8 @@ public class AiTaskService {
         source.put("title", material.getTitle());
         source.put("materialVersion", material.getVersion());
         source.put("noteText", material.getNoteText());
+        source.put("subject", material.getSubject());
+        source.put("pageCount", material.getPageCount());
         source.put("fileHash", material.getFileHash());
         source.put("storageKey", material.getStorageKey());
         Map<String, Object> config = new LinkedHashMap<>();

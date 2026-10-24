@@ -36,6 +36,8 @@ server:
 
 lms:
   task:
+    processor:
+      mode: ${TASK_PROCESSOR_MODE:disabled}
     worker:
       enabled: ${TASK_WORKER_ENABLED:false}
       poll-ms: 1000

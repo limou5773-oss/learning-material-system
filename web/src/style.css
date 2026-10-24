@@ -127,6 +127,17 @@ a { color: inherit; text-decoration: none; }
 .task-hint { margin: 24px 0; padding: 15px; border-radius: 10px; background: #eef3ff; color: #4265ac; }
 .task-steps { margin: 24px 0; padding-top: 15px; border-top: 1px solid #eef1f6; }
 .task-steps h2 { font-size: 17px; }
+.candidate-preview { margin-top: 28px; padding-top: 24px; border-top: 1px solid #eef1f6; }
+.candidate-heading { display: flex; align-items: center; gap: 12px; }
+.candidate-heading h2 { margin: 0; font-size: 21px; }
+.candidate-badge { padding: 5px 9px; border-radius: 6px; background: #fff1dc; color: #8e5c16; font-size: 12px; font-weight: 700; }
+.candidate-warning { padding: 10px 12px; border-radius: 8px; background: #fff7eb; color: #805719; }
+.candidate-card { margin: 18px 0; padding: 18px; border: 1px solid #dce5f2; border-radius: 10px; }
+.candidate-card h3 { margin-top: 0; }
+.candidate-copy { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
+.candidate-source { margin-top: 14px; padding: 12px; border-radius: 8px; background: #f6f8fd; color: #53647b; }
+.candidate-source blockquote { margin: 10px 0; padding-left: 12px; border-left: 3px solid #a6bbdf; white-space: pre-wrap; overflow-wrap: anywhere; }
+.candidate-source details p { max-height: 220px; overflow: auto; }
 .task-steps ol { padding-left: 22px; color: #53647b; line-height: 1.8; overflow-wrap: anywhere; }
 .task-retry-consent { display: flex; gap: 8px; align-items: center; margin-bottom: 16px; color: #53647b; font-size: 14px; }
 .task-toolbar { display: flex; align-items: center; gap: 12px; margin-bottom: 20px; }

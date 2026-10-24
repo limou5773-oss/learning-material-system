@@ -1,11 +1,11 @@
-<view class="page"><text class="eyebrow">ORGANIZE</text><view class="title">提交整理任务</view><view class="lead">提交后进入队列；执行模块将在下一阶段接入。</view>
+<view class="page"><text class="eyebrow">ORGANIZE</text><view class="title">提交整理任务</view><view class="lead">提交后进入队列；本地启用模拟处理器后可生成候选预览。</view>
   <view wx:if="{{loading}}" class="state">正在读取资料…</view><view wx:if="{{error}}" class="error">{{error}}</view>
   <view wx:if="{{material}}" class="card"><view class="card-title">{{material.title}}</view><view class="muted">版本 {{material.version}}</view>
     <text class="field-label">整理目标</text><picker range="{{goals}}" range-key="label" value="{{goalIndex}}" bindchange="onGoalChange"><view class="field-input picker-field">{{goals[goalIndex].label}} ▾</view></picker>
     <text class="field-label">补充说明</text><textarea class="task-textarea" value="{{instruction}}" maxlength="1000" bindinput="onInstructionInput" placeholder="可选，说明希望关注的内容" />
     <view wx:if="{{material.type === 'PDF'}}"><text class="field-label">PDF页段（最多20页，共{{material.pageCount}}页）</text><view class="task-range"><input class="field-input" type="number" value="{{from}}" bindinput="onFromInput" /><text>至</text><input class="field-input" type="number" value="{{to}}" bindinput="onToInput" /></view></view>
     <view class="task-switch"><text>允许检索本人相关笔记</text><switch checked="{{allowRelatedSearch}}" bindchange="onRelatedChange" color="#276c47" /></view>
-    <view class="task-switch"><text>同意资料用于后续配置的外部处理服务</text><switch checked="{{consent}}" bindchange="onConsentChange" color="#276c47" /></view>
+    <view class="task-switch"><text>同意资料用于整理及后续外部处理；当前模拟模式不发送</text><switch checked="{{consent}}" bindchange="onConsentChange" color="#276c47" /></view>
     <button class="primary" bindtap="submit" loading="{{saving}}" disabled="{{saving}}">提交任务</button>
   </view>
 </view>

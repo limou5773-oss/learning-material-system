@@ -1,5 +1,37 @@
 <view class="page"><text class="eyebrow">ORGANIZE STATUS</text><view class="title">任务状态</view>
   <view wx:if="{{loading && !task}}" class="state">正在读取任务…</view>
   <view wx:if="{{error}}" class="error">{{error}}<view class="retry" bindtap="load">点击重试</view></view>
-  <view wx:if="{{task}}" class="card"><text class="eyebrow">{{task.statusLabel}}</text><view class="card-title task-title">{{task.goalLabel}}</view><view class="muted">任务 #{{task.id}} · 资料 #{{task.materialId}}</view><view wx:if="{{task.parentTaskId}}" class="muted">重试自任务 #{{task.parentTaskId}}</view><view class="field-row"><text>资料版本</text><text>{{task.materialVersion}}</text></view><view class="field-row"><text>当前阶段</text><text>{{task.stageLabel}}</text></view><view class="field-row"><text>已记录步骤</text><text>{{task.stepCount}}</text></view><view wx:if="{{task.status === 'QUEUED'}}" class="notice">任务已排队。处理器接入后才会开始生成候选内容。</view><view wx:if="{{task.status === 'RUNNING'}}" class="notice">worker 正在执行；取消后迟到的结果不会写入任务。</view><view wx:if="{{task.errorCode}}" class="error">错误码：{{task.errorCode}}</view><view class="steps-title">执行记录</view><view wx:if="{{!steps.length}}" class="muted">暂无执行步骤</view><view wx:for="{{steps}}" wx:key="stepNo" class="step-row">{{item.toolName}} · {{item.statusLabel}}<text wx:if="{{item.outputSummary}}"> · {{item.outputSummary}}</text><text wx:if="{{item.errorCode}}"> · {{item.errorCode}}</text></view><checkbox-group wx:if="{{task.canRetry}}" bindchange="onConsentChange"><label class="retry-consent"><checkbox value="yes" checked="{{consent}}" />我同意再次将当前资料提交外部处理</label></checkbox-group><button class="outline" bindtap="load">刷新状态</button><button wx:if="{{task.canCancel}}" class="outline" loading="{{busy}}" disabled="{{busy}}" bindtap="cancel">取消任务</button><button wx:if="{{task.canRetry}}" class="outline" loading="{{busy}}" disabled="{{busy || !consent}}" bindtap="retryTask">创建重试任务</button><button class="outline" bindtap="openMaterial">查看原资料</button></view>
+  <view wx:if="{{task}}" class="card">
+    <text class="eyebrow">{{task.statusLabel}}</text><view class="card-title task-title">{{task.goalLabel}}</view>
+    <view class="muted">任务 #{{task.id}} · 资料 #{{task.materialId}}</view>
+    <view wx:if="{{task.parentTaskId}}" class="muted">重试自任务 #{{task.parentTaskId}}</view>
+    <view class="field-row"><text>资料版本</text><text>{{task.materialVersion}}</text></view>
+    <view class="field-row"><text>当前阶段</text><text>{{task.stageLabel}}</text></view>
+    <view class="field-row"><text>已记录步骤</text><text>{{task.stepCount}}</text></view>
+    <view wx:if="{{task.status === 'QUEUED'}}" class="notice">任务已排队。本地模拟处理器启用后会开始生成候选内容。</view>
+    <view wx:if="{{task.status === 'RUNNING'}}" class="notice">worker 正在执行；取消后迟到的结果不会写入任务。</view>
+    <view wx:if="{{task.errorCode}}" class="error">错误码：{{task.errorCode}}</view>
+    <view wx:if="{{candidate}}" class="candidate-preview">
+      <view class="candidate-title">候选预览 <text class="candidate-badge">模拟生成</text></view>
+      <view class="muted">候选版本 {{candidate.resultVersion}} · 来源版本 {{candidate.sourceVersion}} · 实际处理 {{candidate.processedPages.length}} 页</view>
+      <view wx:for="{{candidate.warnings}}" wx:key="*this" class="candidate-warning">{{item}}</view>
+      <view class="steps-title">候选摘要</view><view class="candidate-copy">{{candidate.summary}}</view>
+      <view wx:for="{{candidateCards}}" wx:for-item="card" wx:key="candidateKey" class="candidate-card">
+        <view class="steps-title">{{card.title}}</view><view class="candidate-copy">{{card.content}}</view>
+        <view wx:for="{{card.sourceViews}}" wx:for-item="source" wx:key="chunkId" class="candidate-source">
+          <view class="muted">来源片段 #{{source.chunkId}} · {{source.locator}}</view>
+          <view class="candidate-quote">{{source.quoteText}}</view>
+          <view class="muted">完整来源片段</view><view class="candidate-copy">{{source.content}}</view>
+        </view>
+      </view>
+      <view class="notice">当前仅供预览。编辑和确认保存将在下一阶段提供。</view>
+    </view>
+    <view class="steps-title">执行记录</view><view wx:if="{{!steps.length}}" class="muted">暂无执行步骤</view>
+    <view wx:for="{{steps}}" wx:key="stepNo" class="step-row">{{item.toolName}} · {{item.statusLabel}}<text wx:if="{{item.outputSummary}}"> · {{item.outputSummary}}</text><text wx:if="{{item.errorCode}}"> · {{item.errorCode}}</text></view>
+    <checkbox-group wx:if="{{task.canRetry}}" bindchange="onConsentChange"><label class="retry-consent"><checkbox value="yes" checked="{{consent}}" />我同意再次将当前资料提交外部处理</label></checkbox-group>
+    <button class="outline" bindtap="load">刷新状态</button>
+    <button wx:if="{{task.canCancel}}" class="outline" loading="{{busy}}" disabled="{{busy}}" bindtap="cancel">取消任务</button>
+    <button wx:if="{{task.canRetry}}" class="outline" loading="{{busy}}" disabled="{{busy || !consent}}" bindtap="retryTask">创建重试任务</button>
+    <button class="outline" bindtap="openMaterial">查看原资料</button>
+  </view>
 </view>

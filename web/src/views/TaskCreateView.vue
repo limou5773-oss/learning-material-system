@@ -67,7 +67,7 @@ onMounted(load)
 <template>
   <div class="materials-layout narrow">
     <router-link class="back-link" :to="`/materials/${route.params.id}`">← 返回资料</router-link>
-    <div class="section-heading"><div><span class="intro-eyebrow">ORGANIZE</span><h1>提交整理任务</h1><p>任务先进入队列；执行模块将在下一阶段接入。</p></div></div>
+    <div class="section-heading"><div><span class="intro-eyebrow">ORGANIZE</span><h1>提交整理任务</h1><p>任务先进入队列；本地启用模拟处理器后可生成候选预览。</p></div></div>
     <p v-if="loading" class="list-state">正在读取资料…</p>
     <section v-if="material" class="materials-panel editor-panel">
       <p class="task-source">资料：{{ material.title }} · 版本 {{ material.version }}</p>
@@ -77,7 +77,7 @@ onMounted(load)
         <label for="task-instruction">补充说明</label><textarea id="task-instruction" v-model="form.instruction" maxlength="1000" rows="4" placeholder="可选，说明希望关注的内容" />
         <div v-if="material.type === 'PDF'" class="task-range"><label for="task-from">起始页<input id="task-from" v-model.number="form.from" type="number" min="1" :max="material.pageCount || 1" /></label><label for="task-to">结束页<input id="task-to" v-model.number="form.to" type="number" min="1" :max="material.pageCount || 1" /></label><small>一次最多整理 20 页，共 {{ material.pageCount }} 页</small></div>
         <label class="task-check"><input v-model="form.allowRelatedSearch" type="checkbox" /> 允许检索本人相关笔记</label>
-        <label class="task-check"><input v-model="form.consent" type="checkbox" /> 我同意将所选资料发送给后续配置的外部处理服务</label>
+        <label class="task-check"><input v-model="form.consent" type="checkbox" /> 我同意所选资料用于整理及后续配置的外部处理；当前模拟模式不发送到外部服务</label>
         <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
         <div class="editor-actions"><span>提交后可在“整理任务”查看状态</span><button type="submit" :disabled="saving">{{ saving ? '正在提交…' : '提交任务' }}</button></div>
       </form>

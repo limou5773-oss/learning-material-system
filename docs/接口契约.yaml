@@ -2529,6 +2529,37 @@
             "type": "string"
             "pattern": "^[1-9][0-9]*$"
             "description": "十进制BIGINT字符串"
+  "/ai-tasks/{id}/sources":
+    "get":
+      "summary": "读取本人候选结果引用的来源片段"
+      "operationId": "get_ai_tasks_id_sources"
+      "responses":
+        "200":
+          "description": "候选来源片段"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/CandidateSourcesResponse"
+        "401":
+          "description": "未认证"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "404":
+          "description": "资源不存在、无权访问或尚无可查看候选"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+      "parameters":
+        -
+          "name": "id"
+          "in": "path"
+          "required": true
+          "schema":
+            "type": "string"
+            "pattern": "^[1-9][0-9]*$"
   "/ai-tasks/{id}/confirmation":
     "put":
       "summary": "原子确认候选卡片"
@@ -5753,6 +5784,10 @@
         "sourceVersion":
           "type": "integer"
           "minimum": 1
+        "generationMode":
+          "type": "string"
+          "enum":
+            - "MOCK"
         "summary":
           "type": "string"
           "maxLength": 4000
@@ -5781,6 +5816,10 @@
             "type": "integer"
             "minimum": 1
           "uniqueItems": true
+        "totalPages":
+          "type": "integer"
+          "minimum": 1
+          "nullable": true
         "warnings":
           "type": "array"
           "items":
@@ -5790,11 +5829,50 @@
         - "taskId"
         - "resultVersion"
         - "sourceVersion"
+        - "generationMode"
         - "summary"
         - "tags"
         - "cards"
         - "relations"
+        - "processedPages"
         - "warnings"
+    "CandidateSourceView":
+      "type": "object"
+      "properties":
+        "chunkId":
+          "type": "string"
+          "pattern": "^[1-9][0-9]*$"
+        "materialId":
+          "type": "string"
+          "pattern": "^[1-9][0-9]*$"
+        "materialVersion":
+          "type": "integer"
+          "minimum": 1
+        "chunkNo":
+          "type": "integer"
+          "minimum": 1
+        "pageNo":
+          "type": "integer"
+          "minimum": 1
+          "nullable": true
+        "extractionMethod":
+          "type": "string"
+          "enum":
+            - "TEXT"
+            - "METADATA"
+        "content":
+          "type": "string"
+        "qualityNote":
+          "type": "string"
+          "nullable": true
+      "additionalProperties": false
+      "required":
+        - "chunkId"
+        - "materialId"
+        - "materialVersion"
+        - "chunkNo"
+        - "extractionMethod"
+        - "content"
     "ConfirmationInput":
       "type": "object"
       "properties":
@@ -6784,6 +6862,19 @@
       "properties":
         "data":
           "$ref": "#/components/schemas/CandidateResult"
+        "requestId":
+          "type": "string"
+      "additionalProperties": false
+      "required":
+        - "data"
+        - "requestId"
+    "CandidateSourcesResponse":
+      "type": "object"
+      "properties":
+        "data":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/CandidateSourceView"
         "requestId":
           "type": "string"
       "additionalProperties": false

@@ -32,6 +32,38 @@ export interface TaskStep {
   currency: string | null
 }
 
+export interface CandidateSourceRef {
+  chunkId: string
+  quoteText: string
+  startOffset: number
+  endOffset: number
+}
+
+export interface CandidateResult {
+  taskId: string
+  resultVersion: number
+  sourceVersion: number
+  generationMode: 'MOCK'
+  summary: string
+  tags: string[]
+  cards: { candidateKey: string; title: string; content: string; sources: CandidateSourceRef[] }[]
+  relations: unknown[]
+  totalPages: number | null
+  processedPages: number[]
+  warnings: string[]
+}
+
+export interface CandidateSource {
+  chunkId: string
+  materialId: string
+  materialVersion: number
+  chunkNo: number
+  pageNo: number | null
+  extractionMethod: 'TEXT' | 'METADATA'
+  content: string
+  qualityNote: string | null
+}
+
 export const goalLabels: Record<GoalType, string> = {
   REVIEW_CARDS: '生成复习卡片',
   EXTRACT_KEY_POINTS: '提炼课件重点',
@@ -46,6 +78,8 @@ export const statusLabels: Record<TaskStatus, string> = {
 export const stageLabels: Record<string, string> = {
   QUEUED: '等待领取', STARTING: '开始处理', FAILED: '处理失败',
   CANCELLED: '用户取消', SOURCE_DELETED: '原资料已删除',
+  PREPARE_SOURCE: '准备来源', GENERATE_SUMMARY_CARDS: '生成模拟候选',
+  VALIDATE_CANDIDATE: '核验候选', CANDIDATE_READY: '等待人工确认',
 }
 
 export const stepStatusLabels: Record<TaskStep['status'], string> = {
