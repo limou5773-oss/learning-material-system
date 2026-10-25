@@ -19,10 +19,14 @@ import java.util.ArrayList;
 import java.util.HashSet;
 import java.util.List;
 import java.util.Set;
+import java.util.HashMap;
+import java.util.Map;
+import java.util.Objects;
 
 @Service
 public class TaskCandidateService {
     public static final int MOCK_METADATA_CHUNK_NO = 1_000_000;
+    public static final int PDF_CHUNK_BASE = 2_000_000;
     private final AiTaskMapper tasks;
     private final MaterialMapper materials;
     private final MaterialChunkMapper chunks;
@@ -40,11 +44,15 @@ public class TaskCandidateService {
         this.clock = clock;
     }
 
-    public record SourceDraft(int chunkNo, String content, String extractionMethod, String qualityNote) { }
+    public record SourceDraft(int chunkNo, String content, String extractionMethod, String qualityNote, Integer pageNo) {
+        public SourceDraft(int chunkNo, String content, String extractionMethod, String qualityNote) {
+            this(chunkNo, content, extractionMethod, qualityNote, null);
+        }
+    }
 
     @Transactional
     public List<MaterialChunkRow> saveSources(TaskLeaseService.Lease lease, List<SourceDraft> drafts) {
-        if (drafts == null || drafts.isEmpty() || drafts.size() > 3) invalidCandidate();
+        if (drafts == null || drafts.isEmpty() || drafts.size() > 30) invalidCandidate();
         AiTaskRow snapshot = tasks.findById(lease.taskId());
         if (snapshot == null) return null;
         MaterialRow material = materials.findOwnedForUpdate(snapshot.getMaterialId(), snapshot.getUserId());
@@ -52,16 +60,31 @@ public class TaskCandidateService {
         if (!current(task, lease)) return null;
         checkMaterial(material, task);
         List<MaterialChunkRow> saved = new ArrayList<>();
+        Map<Integer, Integer> pageParts = new HashMap<>();
         for (SourceDraft draft : drafts) {
-            int expectedChunkNo = "METADATA".equals(draft.extractionMethod())
-                ? MOCK_METADATA_CHUNK_NO : saved.size() + 1;
+            boolean pdf = "PDF_TEXT".equals(draft.extractionMethod());
+            if (pdf && (!"PDF".equals(material.getMaterialType()) || draft.pageNo() == null
+                || draft.pageNo() < 1 || draft.pageNo() > 100)) invalidCandidate();
+            if (!pdf && !("TEXT".equals(draft.extractionMethod()) && "NOTE".equals(material.getMaterialType()))
+                && !("METADATA".equals(draft.extractionMethod()) && "IMAGE".equals(material.getMaterialType()))) invalidCandidate();
+            if (pdf) {
+                try {
+                    var range = json.readTree(task.getConfigJson()).path("pageRange");
+                    if (draft.pageNo() < range.path("from").asInt() || draft.pageNo() > range.path("to").asInt()) invalidCandidate();
+                } catch (JsonProcessingException ex) { throw new TaskExecutionException("INVALID_TASK_CONFIG"); }
+            }
+            int part = pdf ? pageParts.merge(draft.pageNo(), 1, Integer::sum) - 1 : 0;
+            int expectedChunkNo = pdf ? PDF_CHUNK_BASE + draft.pageNo() * 100 + part
+                : "METADATA".equals(draft.extractionMethod()) ? MOCK_METADATA_CHUNK_NO : saved.size() + 1;
             if (draft.chunkNo() != expectedChunkNo || draft.content() == null
-                || draft.content().isBlank() || draft.content().length() > 500
-                || !Set.of("TEXT", "METADATA").contains(draft.extractionMethod())) invalidCandidate();
+                || draft.content().isEmpty() || (!pdf && draft.content().isBlank()) || draft.content().length() > (pdf ? 2000 : 500)
+                || (!pdf && (draft.pageNo() != null || drafts.size() > 3))
+                || !Set.of("TEXT", "METADATA", "PDF_TEXT").contains(draft.extractionMethod())) invalidCandidate();
             MaterialChunkRow row = new MaterialChunkRow();
             row.setMaterialId(task.getMaterialId());
             row.setMaterialVersion(task.getMaterialVersion());
             row.setChunkNo(draft.chunkNo());
+            row.setPageNo(draft.pageNo());
             row.setContent(draft.content());
             row.setExtractionMethod(draft.extractionMethod());
             row.setQualityNote(draft.qualityNote());
@@ -70,7 +93,8 @@ public class TaskCandidateService {
             MaterialChunkRow persisted = chunks.findVersionChunk(task.getMaterialId(),
                 task.getMaterialVersion(), draft.chunkNo());
             if (persisted == null || !persisted.getContent().equals(draft.content())
-                || !persisted.getExtractionMethod().equals(draft.extractionMethod())) {
+                || !persisted.getExtractionMethod().equals(draft.extractionMethod())
+                || !Objects.equals(persisted.getPageNo(), draft.pageNo())) {
                 throw new TaskExecutionException("SOURCE_CHUNK_CONFLICT");
             }
             saved.add(persisted);
@@ -173,12 +197,18 @@ public class TaskCandidateService {
     }
 
     private void checkMaterial(MaterialRow material, AiTaskRow task) {
-        if (material == null || !"NORMAL".equals(material.getAccessState())) {
+        if (material == null || !"NORMAL".equals(material.getAccessState())
+            || !Objects.equals(material.getId(), task.getMaterialId())
+            || !Objects.equals(material.getUserId(), task.getUserId())) {
             throw new TaskExecutionException("SOURCE_UNAVAILABLE");
         }
         if (!material.getVersion().equals(task.getMaterialVersion())) {
             throw new TaskExecutionException("SOURCE_VERSION_CHANGED");
         }
+        try {
+            if (!material.getMaterialType().equals(json.readTree(task.getConfigJson()).path("inputSnapshot").path("type").asText()))
+                throw new TaskExecutionException("SOURCE_UNAVAILABLE");
+        } catch (JsonProcessingException ex) { throw new TaskExecutionException("INVALID_TASK_CONFIG"); }
     }
 
     private boolean current(AiTaskRow task, TaskLeaseService.Lease lease) {
