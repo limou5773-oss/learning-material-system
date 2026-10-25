@@ -5,6 +5,7 @@ import jakarta.validation.constraints.Min;
 import jakarta.validation.constraints.NotBlank;
 import jakarta.validation.constraints.NotNull;
 import jakarta.validation.constraints.Size;
+import jakarta.validation.constraints.Pattern;
 
 import java.time.Instant;
 import java.time.ZoneOffset;
@@ -64,15 +65,45 @@ public final class AiTaskDtos {
         }
     }
 
-    public record SourceRef(String chunkId, String quoteText, int startOffset, int endOffset) { }
+    public record SourceRef(@NotBlank @Pattern(regexp = "[1-9][0-9]*") String chunkId,
+                            @NotBlank @Size(max = 2000) String quoteText,
+                            @NotNull @Min(0) Integer startOffset,
+                            @NotNull @Min(1) Integer endOffset) { }
 
-    public record CandidateCard(String candidateKey, String title, String content, String summary,
-                                String subject, List<String> tags, List<SourceRef> sources,
-                                String parentCandidateKey) { }
+    public record CandidateCard(@NotBlank @Size(max = 64) String candidateKey,
+                                @NotBlank @Size(max = 255) String title,
+                                @NotBlank @Size(max = 8000) String content,
+                                @Size(max = 2000) String summary, @Size(max = 64) String subject,
+                                @Size(max = 10) List<@NotBlank @Size(max = 64) String> tags,
+                                @NotNull @Size(min = 1, max = 20) List<@NotNull @Valid SourceRef> sources,
+                                @Size(max = 64) String parentCandidateKey) { }
+
+    public record CardEndpoint(@Size(min = 1, max = 64) String candidateKey,
+                               @Pattern(regexp = "[1-9][0-9]*") String cardId,
+                               @Min(1) Integer cardVersion) { }
+
+    public record CandidateRelation(@NotBlank @Size(max = 64) String relationKey,
+                                    @NotNull @Valid CardEndpoint source,
+                                    @NotNull @Valid CardEndpoint target,
+                                    @NotBlank @Pattern(regexp = "RELATED|PREREQUISITE|EXAMPLE") String type,
+                                    @NotBlank @Size(max = 2000) String evidenceText) { }
+
+    public enum TagMode { MERGE, REPLACE }
+
+    public record ConfirmationInput(@NotNull @Min(1) Integer resultVersion,
+                                     @NotNull @Min(1) Integer sourceVersion,
+                                     @NotNull @Size(max = 4000) String summary,
+                                     @NotNull @Size(max = 10) List<@NotBlank @Size(max = 64) String> tags,
+                                     @NotNull TagMode tagMode,
+                                     @NotNull @Size(min = 1, max = 30) List<@NotNull @Valid CandidateCard> cards,
+                                     @NotNull @Size(max = 60) List<@NotNull @Valid CandidateRelation> relations) { }
+
+    public record ConfirmationResult(String taskId, String status, List<String> cardIds,
+                                      int resultingMaterialVersion, Instant confirmedAt) { }
 
     public record CandidateResult(String taskId, int resultVersion, int sourceVersion,
                                   String generationMode, String summary, List<String> tags,
-                                  List<CandidateCard> cards, List<Object> relations,
+                                  List<CandidateCard> cards, List<CandidateRelation> relations,
                                   Integer totalPages, List<Integer> processedPages, List<String> warnings) { }
 
     public record SourceView(String chunkId, String materialId, int materialVersion, int chunkNo,

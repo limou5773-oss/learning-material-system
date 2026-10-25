@@ -1,0 +1,12 @@
+<view class="page"><text class="eyebrow">KNOWLEDGE CARD</text><view class="title">知识卡片</view>
+  <view wx:if="{{loading}}" class="state">正在读取…</view><view wx:if="{{error}}" class="error">{{error}}</view><button wx:if="{{error}}" class="outline" bindtap="load">重试</button>
+  <view wx:if="{{card}}" class="card"><view class="notice">{{card.generationMode === 'MOCK' ? '模拟候选 · 人工确认' : '人工确认保存'}}</view><view class="card-title">{{card.title}}</view><view class="muted">卡片 #{{card.id}} · 版本 {{card.version}} {{card.isEdited ? '· 已人工修改' : ''}}</view>
+    <view wx:if="{{card.generationMode === 'MOCK'}}" class="notice">本卡片来自模拟候选。PDF和图片的模拟来源仅含标题元数据，正文尚未提取。</view>
+    <view wx:if="{{card.subject}}" class="muted">学科 {{card.subject}}</view><text wx:for="{{card.tags}}" wx:key="*this" class="tag-pill">{{item}}</text>
+    <view wx:if="{{card.summary}}" class="card-copy">{{card.summary}}</view><text class="card-copy" selectable="true">{{card.content}}</text>
+    <view class="field-label">来源与依据</view><view wx:for="{{sources}}" wx:key="chunkId" class="source"><view class="muted">{{item.materialTitle}} · 来源版本 {{item.materialVersion}} {{item.pageNo ? '· 第' + item.pageNo + '页' : ''}}</view>
+      <block wx:if="{{item.isAvailable}}"><text class="card-copy" selectable="true">{{item.quoteText}}</text><view class="muted">完整片段</view><text class="card-copy" selectable="true">{{item.content}}</text><button class="outline" data-id="{{item.materialId}}" bindtap="openMaterial">查看原资料</button></block>
+      <view wx:else class="notice">{{item.reasonLabel}}</view>
+    </view>
+  </view>
+</view>

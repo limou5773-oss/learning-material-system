@@ -1,0 +1,2 @@
+.card-copy { display: block; margin-top: 30rpx; white-space: pre-wrap; word-break: break-all; font-size: 29rpx; line-height: 1.8; }
+.source { margin-top: 26rpx; padding-top: 26rpx; border-top: 1rpx solid #e2e9df; }

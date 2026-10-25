@@ -2,11 +2,11 @@
 "info":
   "title": "个人学习资料智能整理系统开发接口"
   "version": "1.0.0-draft"
-  "description": "依据开题报告的编码契约；D02至D09账号、资料上传查阅、筛选收藏及整理任务提交/状态查询已实现。worker、卡片收藏及其余接口仍为拟议。所有ID为字符串，时间为UTC。"
+  "description": "依据开题报告的编码契约；D02至D12账号、资料、资料收藏、异步任务及模拟候选、原子确认、卡片只读列表/详情/来源已实现。真实模型与OCR、卡片编辑/搜索/收藏、图谱及管理接口仍为拟议。所有ID为字符串，时间为UTC。"
 "servers":
   -
     "url": "http://localhost:8080/api/v1"
-    "description": "本地开发地址；D02至D09已实现的账号、资料、收藏和任务提交查询接口可运行"
+    "description": "本地开发地址；已实现范围见各接口描述与开发进度"
 "security":
   -
     "bearerSession": []
@@ -1919,7 +1919,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "D10提供worker租约与取消协议；处理器尚未接入，默认不领取任务。PDF必须指定最多20页的有效pageRange；NOTE和IMAGE不传pageRange。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
+      "description": "D10提供worker租约与取消协议；D11接入显式启用的MOCK处理器，默认不领取任务。PDF必须指定最多20页的有效pageRange；NOTE和IMAGE不传pageRange。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
       "requestBody":
         "required": true
         "content":
@@ -2643,7 +2643,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "用户提交选择且编辑后的卡片与关系。仅WAIT_CONFIRM可首次确认；成功后重复请求直接返回已保存结果，不重复落库。来源或关联版本失效返回409。"
+      "description": "D12已实现。用户提交选择且编辑后的卡片与明确选择的关系；至少选择一张。卡片键与来源须来自原候选，引用按UTF-16区间精确核验；父卡片须同时选中。仅WAIT_CONFIRM可首次确认；成功后重复请求返回原回执，不重复落库。原子写入卡片、来源、关系、正式摘要与标签。来源版本失效返回409并使候选失效；不可见的既有关系卡片统一404，既有卡片版本失效409。RELATED按较小卡片ID为起点规范化并拒绝反向重复，其他类型保留方向。D11目前不生成关联，人工显式提交的关联保存为USER_CONFIRMED。"
       "parameters":
         -
           "name": "id"
@@ -2663,6 +2663,7 @@
     "get":
       "summary": "分页查询本人卡片"
       "operationId": "get_cards"
+      "description": "D12已实现本人未删除卡片的page/pageSize分页；keyword、subject、tag为D17拟议参数，当前不参与筛选。"
       "responses":
         "200":
           "description": "分页查询本人卡片"
@@ -2786,6 +2787,7 @@
     "post":
       "summary": "人工创建知识卡片"
       "operationId": "post_cards"
+      "description": "拟议接口，D17实现，当前尚未提供。"
       "responses":
         "201":
           "description": "人工创建知识卡片"
@@ -3160,6 +3162,7 @@
     "get":
       "summary": "读取可访问来源或失效提示"
       "operationId": "get_cards_id_sources"
+      "description": "D12已实现，来源删除或受限时isAvailable=false，quoteText和content均为null；原正式卡片保留。不可见卡片返回404。"
       "responses":
         "200":
           "description": "读取可访问来源或失效提示"
@@ -5651,6 +5654,7 @@
         - "startedAt"
     "SourceRef":
       "type": "object"
+      "description": "引用原候选允许的固定版本片段；startOffset包含，endOffset不包含，均以Java字符串UTF-16代码单元计数，quoteText必须等于该区间原文。"
       "properties":
         "chunkId":
           "type": "string"
@@ -5658,6 +5662,7 @@
           "description": "十进制BIGINT字符串"
         "quoteText":
           "type": "string"
+          "minLength": 1
           "maxLength": 2000
         "startOffset":
           "type": "integer"
@@ -5668,6 +5673,9 @@
       "additionalProperties": false
       "required":
         - "chunkId"
+        - "quoteText"
+        - "startOffset"
+        - "endOffset"
     "CandidateCard":
       "type": "object"
       "properties":
@@ -5686,6 +5694,7 @@
         "summary":
           "type": "string"
           "maxLength": 2000
+          "nullable": true
         "subject":
           "type": "string"
           "maxLength": 64
@@ -5987,6 +5996,11 @@
           "enum":
             - "AI"
             - "MANUAL"
+        "generationMode":
+          "type": "string"
+          "enum":
+            - "MOCK"
+          "description": "D12正式卡片保留生成模式，当前仍为模拟结果，不能视为真实AI分析。"
         "isEdited":
           "type": "boolean"
         "createdAt":
@@ -6005,6 +6019,7 @@
         - "tags"
         - "version"
         - "origin"
+        - "generationMode"
         - "isEdited"
         - "createdAt"
         - "updatedAt"

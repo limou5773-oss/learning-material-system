@@ -9,7 +9,10 @@
     "pages/materials/detail",
     "pages/tasks/index",
     "pages/tasks/new",
-    "pages/tasks/detail"
+    "pages/tasks/detail",
+    "pages/tasks/confirm",
+    "pages/cards/index",
+    "pages/cards/detail"
   ],
   "window": {
     "navigationBarTitleText": "学材",

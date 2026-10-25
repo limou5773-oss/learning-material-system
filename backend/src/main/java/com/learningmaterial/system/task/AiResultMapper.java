@@ -4,6 +4,8 @@ import org.apache.ibatis.annotations.Insert;
 import org.apache.ibatis.annotations.Mapper;
 import org.apache.ibatis.annotations.Param;
 import org.apache.ibatis.annotations.Select;
+import org.apache.ibatis.annotations.Update;
+import java.time.LocalDateTime;
 
 @Mapper
 public interface AiResultMapper {
@@ -20,4 +22,13 @@ public interface AiResultMapper {
         WHERE t.user_id = #{userId} AND r.task_id = #{taskId} LIMIT 1
         """)
     AiResultRow findOwned(@Param("userId") long userId, @Param("taskId") long taskId);
+
+    @Select("SELECT * FROM ai_result WHERE task_id = #{taskId} FOR UPDATE")
+    AiResultRow findForUpdate(long taskId);
+
+    @Update("UPDATE ai_result SET status='CONFIRMED', confirmation_json=#{receipt}, confirmed_at=#{now}, updated_at=#{now} WHERE task_id=#{taskId} AND status='CANDIDATE'")
+    int confirm(@Param("taskId") long taskId, @Param("receipt") String receipt, @Param("now") LocalDateTime now);
+
+    @Update("UPDATE ai_result SET status='INVALIDATED', updated_at=#{now} WHERE task_id=#{taskId} AND status='CANDIDATE'")
+    int invalidate(@Param("taskId") long taskId, @Param("now") LocalDateTime now);
 }

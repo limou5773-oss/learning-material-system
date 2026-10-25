@@ -1,0 +1,4 @@
+.card-item { margin-top: 28rpx; }
+.preview { margin-top: 18rpx; color: #718076; font-size: 27rpx; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
+.pagination { margin-top: 32rpx; display: flex; align-items: center; gap: 14rpx; font-size: 24rpx; }
+.pagination button { flex: 1; font-size: 24rpx; background: #fff; }

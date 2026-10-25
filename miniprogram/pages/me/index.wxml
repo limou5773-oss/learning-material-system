@@ -16,6 +16,7 @@
       <view class="field-row"><text>微信绑定</text><text>{{user.hasWechatBinding ? '已绑定' : '尚未接入'}}</text></view>
       <button class="primary" bindtap="openMaterials">查看我的资料</button>
       <button class="outline" bindtap="openTasks">查看整理任务</button>
+      <button class="outline" bindtap="openCards">查看知识卡片</button>
       <button class="outline" bindtap="newNote">快速记笔记</button>
       <button class="outline" bindtap="submitLogout" loading="{{loggingOut}}" disabled="{{loggingOut}}">退出登录</button>
     </view>

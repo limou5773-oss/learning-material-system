@@ -24,7 +24,9 @@
           <view class="muted">完整来源片段</view><view class="candidate-copy">{{source.content}}</view>
         </view>
       </view>
-      <view class="notice">当前仅供预览。编辑和确认保存将在下一阶段提供。</view>
+      <view wx:if="{{task.status === 'WAIT_CONFIRM'}}" class="notice">候选尚未保存，请核对来源后编辑并确认。</view>
+      <button wx:if="{{task.status === 'WAIT_CONFIRM'}}" class="primary" bindtap="openConfirmation">编辑并确认保存</button>
+      <button wx:if="{{task.status === 'SUCCEEDED'}}" class="outline" bindtap="openCards">查看已保存卡片</button>
     </view>
     <view class="steps-title">执行记录</view><view wx:if="{{!steps.length}}" class="muted">暂无执行步骤</view>
     <view wx:for="{{steps}}" wx:key="stepNo" class="step-row">{{item.toolName}} · {{item.statusLabel}}<text wx:if="{{item.outputSummary}}"> · {{item.outputSummary}}</text><text wx:if="{{item.errorCode}}"> · {{item.errorCode}}</text></view>

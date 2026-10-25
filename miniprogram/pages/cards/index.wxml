@@ -1,0 +1,7 @@
+<view class="page"><text class="eyebrow">KNOWLEDGE LIBRARY</text><view class="title">知识卡片</view><view class="lead">已核对并确认保存的学习要点。</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view><button wx:if="{{error}}" class="outline" bindtap="load">重试</button>
+  <view wx:if="{{loading}}" class="state">正在读取…</view><view wx:if="{{!loading && !error && !items.length}}" class="state">还没有卡片，请先确认一个整理任务。</view>
+  <view wx:for="{{items}}" wx:key="id" class="card card-item" data-id="{{item.id}}" bindtap="openCard"><view class="muted">{{item.generationMode === 'MOCK' ? '模拟候选 · 人工确认' : '人工确认保存'}}</view><view class="card-title">{{item.title}}</view><view class="preview">{{item.summary || item.content}}</view><text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag-pill">{{tag}}</text></view>
+  <view wx:if="{{total > 20}}" class="pagination"><button disabled="{{loading || page === 1}}" bindtap="previous">上一页</button><text>{{page}} 页 · {{total}} 张</text><button disabled="{{loading || page * 20 >= total}}" bindtap="next">下一页</button></view>
+  <button class="outline" bindtap="openTasks">前往整理任务</button>
+</view>

@@ -31,4 +31,7 @@ public interface MaterialChunkMapper {
         """)
     MaterialChunkRow findSource(@Param("materialId") long materialId,
                                 @Param("version") int version, @Param("id") long id);
+
+    @Select("SELECT * FROM material_chunk WHERE id=#{id} FOR UPDATE")
+    MaterialChunkRow findForUpdate(long id);
 }

@@ -1,0 +1,6 @@
+.confirm-textarea { box-sizing: border-box; width: 100%; min-height: 240rpx; padding: 22rpx; border: 1rpx solid #d9e4d9; border-radius: 16rpx; background: #fafcf9; font-size: 29rpx; line-height: 1.7; }
+.confirm-card { margin-top: 32rpx; padding-top: 32rpx; border-top: 1rpx solid #e2e9df; }
+.confirm-source { margin-top: 24rpx; padding: 20rpx; background: #f4f8f2; border-radius: 12rpx; white-space: pre-wrap; word-break: break-all; font-size: 27rpx; line-height: 1.7; }
+.source-panel { margin-top: 30rpx; }
+.draft-copy { margin-top: 24rpx; }
+.mode, .relation { display: block; margin-top: 22rpx; font-size: 27rpx; line-height: 1.6; }
