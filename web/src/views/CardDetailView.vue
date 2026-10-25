@@ -30,7 +30,7 @@ onMounted(load)
     <article v-if="card" class="materials-panel detail-panel">
       <span class="candidate-badge">{{ card.generationMode === 'MOCK' ? '模拟候选 · 人工确认' : '人工确认保存' }}</span>
       <h1>{{ card.title }}</h1><div class="detail-meta"><span>卡片 #{{ card.id }} · 版本 {{ card.version }}</span><span v-if="card.isEdited">已人工修改</span><span v-if="card.subject">{{ card.subject }}</span><span v-for="tag in card.tags" :key="tag" class="mini-tag">{{ tag }}</span></div>
-      <p v-if="card.generationMode === 'MOCK'" class="candidate-warning">本卡片来自模拟候选。PDF和图片的模拟来源仅含标题元数据，正文尚未提取。</p>
+      <p v-if="card.generationMode === 'MOCK'" class="candidate-warning">本卡片经人工确认保存，生成内容仍为模拟结果。请核对下方固定版本来源；PDF文字来源标明页码，标题元数据来源不代表文件正文。</p>
       <p v-if="card.summary" class="candidate-copy">{{ card.summary }}</p><div class="detail-text">{{ card.content }}</div>
       <section class="task-steps"><h2>来源与依据</h2><div v-for="source in sources" :key="source.chunkId" class="candidate-source">
         <h3>{{ source.materialTitle }} · 来源版本 {{ source.materialVersion }}<span v-if="source.pageNo"> · 第 {{ source.pageNo }} 页</span></h3>

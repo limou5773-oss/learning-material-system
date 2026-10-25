@@ -1,4 +1,5 @@
 const { ApiError, getToken, request } = require('../../utils/api')
+const { sourceLocator, taskErrorMessage } = require('../../utils/source-presentation')
 
 const goalLabels = { REVIEW_CARDS: '生成复习卡片', EXTRACT_KEY_POINTS: '提炼课件重点', LINK_NOTES: '整理并关联已有笔记' }
 const statusLabels = { QUEUED: '排队中', RUNNING: '执行中', WAIT_CONFIRM: '待确认', SUCCEEDED: '已完成', FAILED: '失败', CANCELLED: '已取消' }
@@ -28,13 +29,13 @@ Page({
         candidate = result
         candidateCards = result.cards.map(card => ({ ...card, sourceViews: card.sources.map(ref => ({
           ...ref, content: byId[ref.chunkId] && byId[ref.chunkId].content || '',
-          locator: byId[ref.chunkId] && byId[ref.chunkId].extractionMethod === 'METADATA'
-            ? '资料标题元数据' : `文字笔记片段 ${byId[ref.chunkId] && byId[ref.chunkId].chunkNo || ''}`,
+          locator: sourceLocator(byId[ref.chunkId]),
         })) }))
       }
       this.setData({ task: { ...task, goalLabel: goalLabels[task.goalType] || task.goalType,
         statusLabel: statusLabels[task.status] || task.status,
-        stageLabel: stageLabels[task.stage] || task.stage || '等待更新' },
+        stageLabel: task.stage === 'EXTRACT_PDF_TEXT' ? '提取PDF文字' : stageLabels[task.stage] || task.stage || '等待更新',
+        errorMessage: taskErrorMessage(task.errorCode) },
         steps: history.items.map(step => ({ ...step, statusLabel: stepStatusLabels[step.status] || step.status })),
         candidate, candidateCards })
     } catch (error) {

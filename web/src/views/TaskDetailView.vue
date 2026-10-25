@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { api, ApiRequestError } from '../api'
 import { clearSession } from '../auth'
 import type { Material, Page } from '../materials'
-import { goalLabels, stageLabels, statusLabels, stepStatusLabels, type AiTask, type TaskStep, type CandidateResult, type CandidateSource } from '../tasks'
+import { goalLabels, stageLabels, statusLabels, stepStatusLabels, sourceLocator, taskErrorMessage, type AiTask, type TaskStep, type CandidateResult, type CandidateSource } from '../tasks'
 
 const route = useRoute()
 const router = useRouter()
@@ -86,6 +86,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
       <p v-if="task.status === 'QUEUED'" class="task-hint">任务已排队。本地模拟处理器启用后会开始生成候选内容。</p>
       <p v-if="task.status === 'RUNNING'" class="task-hint">worker 正在执行；页面会自动刷新。取消后，迟到的结果不会写入任务。</p>
       <p v-if="task.errorCode" class="inline-error">错误码：{{ task.errorCode }}</p>
+      <p v-if="task.errorCode && taskErrorMessage(task.errorCode)" class="task-hint">{{ taskErrorMessage(task.errorCode) }}</p>
       <section v-if="candidate" class="candidate-preview" aria-label="模拟候选预览">
         <div class="candidate-heading"><h2>候选预览</h2><span class="candidate-badge">模拟生成</span></div>
         <p class="task-state">候选版本 {{ candidate.resultVersion }} · 来源版本 {{ candidate.sourceVersion }}<span v-if="candidate.totalPages"> · 原资料 {{ candidate.totalPages }} 页</span> · 实际处理 {{ candidate.processedPages.length }} 页</p>
@@ -96,8 +97,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
           <h3>{{ card.title }}</h3><p class="candidate-copy">{{ card.content }}</p>
           <div v-for="ref in card.sources" :key="ref.chunkId" class="candidate-source">
             <strong>来源片段 #{{ ref.chunkId }}</strong>
-            <span v-if="sources.find(source => source.chunkId === ref.chunkId)?.extractionMethod === 'METADATA'"> · 资料标题元数据</span>
-            <span v-else> · 文字笔记片段 {{ sources.find(source => source.chunkId === ref.chunkId)?.chunkNo }}</span>
+            <span> · {{ sourceLocator(sources.find(source => source.chunkId === ref.chunkId)) }}</span>
             <blockquote>{{ ref.quoteText }}</blockquote>
             <details><summary>查看完整来源片段</summary><p class="candidate-copy">{{ sources.find(source => source.chunkId === ref.chunkId)?.content }}</p></details>
           </div>

@@ -1,4 +1,5 @@
 const { ApiError, getToken, getMe, request } = require('../../utils/api')
+const { sourceLocator } = require('../../utils/source-presentation')
 
 function tagNames(value) {
   const tags = value.split(/[,，]/).map(name => name.trim()).filter(Boolean)
@@ -62,7 +63,7 @@ Page({
           sourceLabel: relation.source.candidateKey || `已有卡片 #${relation.source.cardId}`,
           targetLabel: relation.target.candidateKey || `已有卡片 #${relation.target.cardId}` })),
         selectedCount: result.cards.length })
-      this.setData({ sources, warnings: result.warnings || [] })
+      this.setData({ sources: sources.map(source => ({ ...source, locator: sourceLocator(source) })), warnings: result.warnings || [] })
       if (this.data.resultVersion !== result.resultVersion || this.data.sourceVersion !== result.sourceVersion) {
         this.setData({ conflict: true, error: '候选版本已变化，原草稿已保留，请复制修改后重新整理。' })
       }

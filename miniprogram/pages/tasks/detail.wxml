@@ -11,6 +11,7 @@
     <view wx:if="{{task.status === 'QUEUED'}}" class="notice">任务已排队。本地模拟处理器启用后会开始生成候选内容。</view>
     <view wx:if="{{task.status === 'RUNNING'}}" class="notice">worker 正在执行；取消后迟到的结果不会写入任务。</view>
     <view wx:if="{{task.errorCode}}" class="error">错误码：{{task.errorCode}}</view>
+    <view wx:if="{{task.errorMessage}}" class="notice">{{task.errorMessage}}</view>
     <view wx:if="{{candidate}}" class="candidate-preview">
       <view class="candidate-title">候选预览 <text class="candidate-badge">模拟生成</text></view>
       <view class="muted">候选版本 {{candidate.resultVersion}} · 来源版本 {{candidate.sourceVersion}} · 实际处理 {{candidate.processedPages.length}} 页</view>

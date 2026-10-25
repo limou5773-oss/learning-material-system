@@ -1,0 +1,31 @@
+{
+  "date": "2026-10-25",
+  "totalPages": 4,
+  "requestedPages": [
+    2,
+    3
+  ],
+  "processedPages": [
+    2
+  ],
+  "needsOcrPages": [
+    3
+  ],
+  "excludedPagesAbsentFromSources": true,
+  "cacheChunkIdsReused": true,
+  "cacheTasks": [
+    "7",
+    "8"
+  ],
+  "sourceChunkIds": [
+    "10"
+  ],
+  "blankTaskId": "6",
+  "blankTaskError": "PDF_OCR_REQUIRED",
+  "webAndMiniUserIdsMatch": true,
+  "miniPageShowsPdfLocator": true,
+  "miniPageConfirmedCardId": "5",
+  "identicalWebAndMiniCard": true,
+  "generationMode": "MOCK",
+  "nativeWechatVerified": false
+}
