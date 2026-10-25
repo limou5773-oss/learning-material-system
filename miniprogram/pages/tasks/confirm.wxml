@@ -30,6 +30,6 @@
     <view wx:if="{{relations.length}}"><view class="field-label">关联建议 核对后再勾选</view><checkbox-group bindchange="onRelationSelection"><label wx:for="{{relations}}" wx:key="relationKey" class="relation"><checkbox value="{{item.relationKey}}" checked="{{item.selected}}" disabled="{{conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />{{item.sourceLabel}} → {{item.targetLabel}}：{{item.evidenceText}}</label></checkbox-group></view>
     <button class="primary" bindtap="submit" loading="{{saving}}" disabled="{{saving || loading || conflict || !selectedCount}}">{{task.status === 'SUCCEEDED' ? '读取上次保存结果' : '确认保存选中卡片'}}</button>
   </view>
-  <view wx:if="{{sources.length && !receipt}}" class="card source-panel"><view class="card-title">完整来源对照</view><view wx:for="{{sources}}" wx:key="chunkId" class="confirm-source"><view class="muted">片段 #{{item.chunkId}} · {{item.extractionMethod === 'METADATA' ? '标题元数据，正文未提取' : '文字来源'}}</view><text selectable="true">{{item.content}}</text></view></view>
+  <view wx:if="{{sources.length && !receipt}}" class="card source-panel"><view class="card-title">完整来源对照</view><view wx:for="{{sources}}" wx:key="chunkId" class="confirm-source"><view class="muted">片段 #{{item.chunkId}} · {{item.locator}}</view><text selectable="true">{{item.content}}</text></view></view>
   <button class="outline" bindtap="openTask">返回任务详情</button>
 </view>

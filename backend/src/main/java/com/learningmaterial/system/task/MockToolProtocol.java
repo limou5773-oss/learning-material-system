@@ -1,6 +1,8 @@
 package com.learningmaterial.system.task;
 
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.fasterxml.jackson.core.JsonProcessingException;
 
 import java.util.HashSet;
 import java.util.Set;
@@ -22,12 +24,31 @@ final class MockToolProtocol {
                 fields(args, Set.of("goalType", "chunkIds"));
                 JsonNode ids = args.path("chunkIds");
                 if (!task.getGoalType().equals(args.path("goalType").textValue())
-                    || !ids.isArray() || ids.isEmpty() || ids.size() > 3) invalid();
+                    || !ids.isArray() || ids.isEmpty() || ids.size() > 30) invalid();
                 Set<String> seen = new HashSet<>();
                 for (JsonNode id : ids) {
                     if (!id.isTextual() || !id.textValue().matches("[1-9][0-9]*")
                         || !seen.add(id.textValue())) invalid();
                 }
+            }
+            case "extract_pdf_text" -> {
+                fields(args, Set.of("materialId", "materialVersion", "pageRange"));
+                if (!task.getMaterialId().toString().equals(args.path("materialId").textValue())
+                    || !args.path("materialVersion").isIntegralNumber()
+                    || !args.path("materialVersion").canConvertToInt()
+                    || args.path("materialVersion").intValue() != task.getMaterialVersion()) invalid();
+                JsonNode range = args.path("pageRange");
+                if (!range.isObject()) invalid();
+                fields(range, Set.of("from", "to"));
+                if (!range.path("from").isIntegralNumber() || !range.path("from").canConvertToInt()
+                    || !range.path("to").isIntegralNumber() || !range.path("to").canConvertToInt()) invalid();
+                int from = range.path("from").intValue(), to = range.path("to").intValue();
+                if (from < 1 || to < from || to > 100 || to - from + 1 > 20) invalid();
+                try {
+                    JsonNode config = new ObjectMapper().readTree(task.getConfigJson());
+                    if (!"PDF".equals(config.path("inputSnapshot").path("type").asText())
+                        || !range.equals(config.path("pageRange"))) invalid();
+                } catch (JsonProcessingException | IllegalArgumentException ex) { invalid(); }
             }
             case "validate_candidate" -> {
                 fields(args, Set.of("taskId", "resultVersion", "sourceVersion"));

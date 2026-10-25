@@ -21,13 +21,15 @@ public class MockTaskProcessor implements TaskProcessor {
     private final TaskLeaseService leases;
     private final TaskCandidateService candidates;
     private final ObjectMapper json;
+    private final PdfTextExtractionService pdfText;
 
     public MockTaskProcessor(AiTaskMapper tasks, TaskLeaseService leases,
-                             TaskCandidateService candidates, ObjectMapper json) {
+                             TaskCandidateService candidates, ObjectMapper json, PdfTextExtractionService pdfText) {
         this.tasks = tasks;
         this.leases = leases;
         this.candidates = candidates;
         this.json = json;
+        this.pdfText = pdfText;
     }
 
     @Override
@@ -41,13 +43,32 @@ public class MockTaskProcessor implements TaskProcessor {
         ObjectNode prepareArgs = json.createObjectNode()
             .put("materialId", task.getMaterialId().toString())
             .put("materialVersion", task.getMaterialVersion());
-        MockToolProtocol.validate("prepare_source", prepareArgs, task);
-        Long prepareCall = leases.startStep(lease, "prepare_source", "LOCAL");
+        boolean pdf = "PDF".equals(config.path("inputSnapshot").path("type").asText());
+        String prepareTool = pdf ? "extract_pdf_text" : "prepare_source";
+        if (pdf) prepareArgs.set("pageRange", config.path("pageRange"));
+        MockToolProtocol.validate(prepareTool, prepareArgs, task);
+        Long prepareCall = leases.startStep(lease, prepareTool, "LOCAL");
         if (prepareCall == null) return;
-        List<SourceDraft> drafts = prepare(config.path("inputSnapshot"));
-        List<MaterialChunkRow> sources = candidates.saveSources(lease, drafts);
+        List<MaterialChunkRow> sources;
+        PdfTextExtractionService.Extraction extraction = null;
+        try {
+            if (pdf) {
+                extraction = pdfText.extract(lease);
+                if (extraction == null) return;
+                sources = extraction.sources();
+                if (sources.isEmpty()) throw new TaskExecutionException("PDF_OCR_REQUIRED");
+            } else sources = candidates.saveSources(lease, prepare(config.path("inputSnapshot")));
+        } catch (TaskExecutionException ex) {
+            String explanation = switch (ex.errorCode()) {
+                case "PDF_OCR_REQUIRED" -> "所选页没有可提取文字，需要OCR或为空白页；未生成候选。";
+                case "PDF_TEXT_LIMIT_EXCEEDED" -> "所选页文字超过处理上限，请缩小页段后重试；未截断文字。";
+                default -> "来源文字提取未完成，请检查资料后重试。";
+            };
+            leases.completeStep(lease, prepareCall, false, explanation, ex.errorCode());
+            throw ex;
+        }
         if (sources == null || !leases.completeStep(lease, prepareCall, true,
-            sources.size() + "个可核验的模拟来源片段", null)) return;
+            sources.size() + (pdf ? "个PDF文字层来源片段" : "个可核验的模拟来源片段"), null)) return;
 
         ObjectNode generateArgs = json.createObjectNode().put("goalType", task.getGoalType());
         var ids = generateArgs.putArray("chunkIds");
@@ -56,7 +77,7 @@ public class MockTaskProcessor implements TaskProcessor {
         Long generateCall = leases.startStep(lease, "generate_summary_cards", "LOCAL");
         if (generateCall == null) return;
         CandidateResult result = generate(task, config.path("inputSnapshot"), sources,
-            config.path("pageRange"));
+            config.path("pageRange"), extraction);
         if (!leases.completeStep(lease, generateCall, true,
             result.cards().size() + "张模拟候选卡片", null)) return;
 
@@ -83,7 +104,7 @@ public class MockTaskProcessor implements TaskProcessor {
             }
             return drafts;
         }
-        if ("PDF".equals(type) || "IMAGE".equals(type)) {
+        if ("IMAGE".equals(type)) {
             String title = snapshot.path("title").asText("").trim();
             if (title.isEmpty()) throw new TaskExecutionException("SOURCE_TEXT_NOT_AVAILABLE");
             return List.of(new SourceDraft(TaskCandidateService.MOCK_METADATA_CHUNK_NO,
@@ -94,16 +115,22 @@ public class MockTaskProcessor implements TaskProcessor {
     }
 
     private CandidateResult generate(AiTaskRow task, JsonNode snapshot,
-                                     List<MaterialChunkRow> sources, JsonNode pageRange) {
+                                     List<MaterialChunkRow> sources, JsonNode pageRange,
+                                     PdfTextExtractionService.Extraction extraction) {
         boolean metadataOnly = "METADATA".equals(sources.getFirst().getExtractionMethod());
-        String first = sources.getFirst().getContent();
+        String first = sources.stream().map(MaterialChunkRow::getContent).filter(content -> !content.isBlank())
+            .findFirst().orElseThrow(() -> new TaskExecutionException("SOURCE_TEXT_NOT_AVAILABLE")).stripLeading();
         String summary = metadataOnly ? "模拟摘要：仅依据资料标题生成，尚未读取文件正文。"
-            : "模拟摘要：" + first.substring(0, Math.min(first.length(), 180));
+            : "模拟摘要：" + first.substring(0, safeEnd(first, 0, 180));
         List<CandidateCard> cards = new ArrayList<>();
         for (int i = 0; i < sources.size(); i++) {
             MaterialChunkRow source = sources.get(i);
-            String quote = source.getContent().substring(0, Math.min(source.getContent().length(), 160));
-            SourceRef ref = new SourceRef(source.getId().toString(), quote, 0, quote.length());
+            if (source.getContent().isBlank()) continue;
+            int offset = "PDF_TEXT".equals(source.getExtractionMethod())
+                ? source.getContent().length() - source.getContent().stripLeading().length() : 0;
+            int end = safeEnd(source.getContent(), offset, 160);
+            String quote = source.getContent().substring(offset, end);
+            SourceRef ref = new SourceRef(source.getId().toString(), quote, offset, end);
             String content = metadataOnly ? "待核对资料标题：" + quote + "。文件正文尚未解析。"
                 : "待核对原文片段：" + quote;
             cards.add(new CandidateCard("mock-" + (i + 1), "模拟卡片 " + (i + 1), content,
@@ -113,14 +140,24 @@ public class MockTaskProcessor implements TaskProcessor {
         List<String> warnings = new ArrayList<>();
         warnings.add("模拟生成，仅供流程验证；请对照原资料核查，不能作为真实AI分析结果。");
         if (metadataOnly) warnings.add("文件正文尚未提取；候选仅引用资料标题，不能代表文件内容。");
+        if (extraction != null) warnings.addAll(extraction.warnings());
         String note = snapshot.path("noteText").asText("").trim();
         if (!metadataOnly && note.length() > 1500) warnings.add("本次模拟仅处理文字笔记前1500个字符。");
         Integer totalPages = snapshot.path("pageCount").isIntegralNumber()
             ? snapshot.path("pageCount").intValue() : null;
+        if (extraction != null) totalPages = extraction.totalPages();
         if (!pageRange.isMissingNode() && !pageRange.isNull() && metadataOnly) {
             warnings.add("所选PDF页段尚未解析，实际处理页数为0。");
         }
         return new CandidateResult(task.getId().toString(), 1, task.getMaterialVersion(), "MOCK",
-            summary, List.of("模拟结果"), cards, List.of(), totalPages, List.of(), warnings);
+            summary, List.of("模拟结果"), cards, List.of(), totalPages,
+            extraction == null ? List.of() : extraction.processedPages(), warnings);
+    }
+
+    private static int safeEnd(String text, int start, int length) {
+        int end = Math.min(text.length(), start + length);
+        if (end < text.length() && Character.isHighSurrogate(text.charAt(end - 1))
+            && Character.isLowSurrogate(text.charAt(end))) end--;
+        return end;
     }
 }

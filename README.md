@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-截至2026年10月25日，D01至D12的代码已实现。D12新增候选编辑、选择和原子确认保存，以及双端正式卡片查阅。D01、D02、D11与D12已有对应验证记录；D03至D10仍需补齐部分浏览器操作和微信开发者工具原生验证。当前生成仍为明确标注的模拟结果；真实模型、OCR和智能体规划循环尚未接入。详见[开发进度与下一步](docs/开发进度.md)和[任务清单](tasks/todo.md)。
+截至2026年10月25日，D01至D13的代码已实现。D12提供候选确认与双端卡片查阅，D13加入PDF指定页段的真实文字提取、页码与固定版本缓存。D03至D10仍需补齐部分浏览器操作和微信开发者工具原生验证。当前卡片生成仍为明确标注的模拟结果；真实模型、OCR和智能体规划循环尚未接入。详见[开发进度与下一步](docs/开发进度.md)和[任务清单](tasks/todo.md)。
 
 ## 文档入口
 
@@ -30,7 +30,7 @@
 
 先完成独立数据库连通和后端健康检查，再实现登录、文字笔记与双端查阅；随后增加图片和PDF上传。异步任务、来源校验及人工确认协议验证后，再接真实OCR和模型，最后完成知识可视化、管理后台及统计。
 
-D01、D02、D11与D12已有对应验收记录；D03至D10已有代码与自动化验证记录，尚待对应的真实操作证据。最近完成的D12见[验证记录](tasks/evidence/D12.md)，下一项是D13真实PDF片段提取。小程序原生验证按用户此前选择暂缓。
+D01、D02、D11至D13已有对应验收记录；D03至D10已有代码与自动化验证记录，尚待对应的真实操作证据。最近完成的D13见[验证记录](tasks/evidence/D13.md)，下一项是D14真实OCR适配。小程序原生验证按用户此前选择暂缓。
 
 ## 后端本地启动（D01）
 
@@ -44,7 +44,7 @@ mvn -f backend/pom.xml spring-boot:run
 curl -i http://localhost:8080/actuator/health
 ```
 
-正常运行时健康接口只返回状态；Flyway启动时执行V1至V7迁移并记录到`flyway_schema_history`。D01已在独立MySQL上完成首次启动、迁移、重复启动和空库重放验证；V3资料与标签迁移见[D04验证记录](tasks/evidence/D04.md)，V4收藏迁移见[D08验证记录](tasks/evidence/D08.md)，V5任务迁移见[D09验证记录](tasks/evidence/D09.md)，V6候选与来源迁移见[D11验证记录](tasks/evidence/D11.md)，V7正式卡片、来源及关系迁移见[D12验证记录](tasks/evidence/D12.md)。
+正常运行时健康接口只返回状态；Flyway启动时执行V1至V8迁移并记录到`flyway_schema_history`。D01已在独立MySQL上完成首次启动、迁移、重复启动和空库重放验证；V3资料与标签迁移见[D04验证记录](tasks/evidence/D04.md)，V4收藏迁移见[D08验证记录](tasks/evidence/D08.md)，V5任务迁移见[D09验证记录](tasks/evidence/D09.md)，V6候选与来源迁移见[D11验证记录](tasks/evidence/D11.md)，V7正式卡片迁移见[D12验证记录](tasks/evidence/D12.md)，V8 PDF页缓存见[D13验证记录](tasks/evidence/D13.md)。
 
 本项目当前使用的Mac已配置`lms-mysql-start`和`lms-mysql-stop`命令。重启电脑后先在终端运行`lms-mysql-start`，再执行上述后端启动命令。微信开发者工具已安装在“应用程序”中；小程序联调时仍需使用本人微信账号登录并导入项目。
 
@@ -68,7 +68,9 @@ npm run dev
 
 资料详情可进入“提交整理任务”，选择生成复习卡片、提炼重点或关联笔记，并填写补充说明。PDF需选择不超过20页的有效页段，提交前需确认外部处理同意。每个账号最多同时保留2个排队或执行中的任务；相同请求键及输入返回原任务，不同输入返回409。Web“整理任务”页和小程序任务页可读取状态和脱敏步骤、取消任务，并在重新同意外部处理后基于当前资料版本创建重试任务。删除原资料会取消对应的非终态任务。D10已实现最多2个worker、30秒租约、10秒心跳、300秒执行时限和epoch写入保护。
 
-D11提供本地确定性模拟处理器：严格校验`prepare_source`、`generate_summary_cards`、`validate_candidate`工具参数，保存固定版本来源片段和候选摘要、标签、卡片，核验引用后将任务原子地转为`WAIT_CONFIRM`。Web与小程序详情页可预览候选及完整来源，明确显示“模拟生成”。文字笔记引用笔记正文；PDF和图片目前只引用标题元数据，实际处理页数为0，页面会提示文件正文尚未读取。模拟候选不会写入正式卡片或资料摘要。
+D11起提供本地确定性模拟处理器：严格校验`prepare_source`、`generate_summary_cards`、`validate_candidate`工具参数，保存固定版本来源片段和候选摘要、标签、卡片，核验引用后将任务原子地转为`WAIT_CONFIRM`。Web与小程序可预览候选及完整来源，明确显示“模拟生成”。文字笔记引用笔记正文；图片仍只引用标题元数据，实际处理页数为0。候选在用户确认前不会写入正式卡片或资料摘要。
+
+D13对PDF调用本地`extract_pdf_text`，只提取用户所选连续页段（最多20页）的文字层。来源保留实际页码，按资料、版本和页码缓存；同版本重叠页段复用来源。没有文字层的页标记需要OCR或可能为空白，混合PDF只对有文字的页生成模拟候选并列出未识别页；全范围无文字时明确失败，不使用标题假装正文。每片段最多2000个UTF-16代码单元，每任务最多30个片段，超过上限提示缩小页段，不静默截断PDF文字。此步骤不调用外部OCR或模型。
 
 默认`TASK_WORKER_ENABLED=false`，任务仍排队；仅开启worker但未选择处理器时会安全失败并返回`PROCESSOR_NOT_CONFIGURED`。本地联调模拟流程时，在启动后端前设置`TASK_WORKER_ENABLED=true`和`TASK_PROCESSOR_MODE=mock`。这两个配置不调用外部模型或OCR，也不产生供应商费用。
 
@@ -109,12 +111,12 @@ mvn -f backend/pom.xml spring-boot:run
 
 Windows上的图片和PDF文件默认保存在当前用户目录下的`.learning-material-system\files`，不会随Git同步。若想改位置，在启动后端的PowerShell窗口额外设置`$env:STORAGE_ROOT = 'D:\LearningMaterialFiles'`；请选项目目录外的文件夹，并自行备份该目录。
 
-启动Web时另开一个PowerShell窗口，在项目根目录运行`cd web`、`npm ci`、`npm run dev`，然后访问`http://127.0.0.1:5173`。首次启动后端会自动执行V1至V7数据库迁移，不要手动导入整份拟议SQL。Windows上的微信开发者工具模拟器可导入同一个`miniprogram/`目录；后端也运行在这台Windows电脑时，默认本机地址可沿用。真机联调仍需HTTPS合法域名。
+启动Web时另开一个PowerShell窗口，在项目根目录运行`cd web`、`npm ci`、`npm run dev`，然后访问`http://127.0.0.1:5173`。首次启动后端会自动执行V1至V8数据库迁移，不要手动导入整份拟议SQL。Windows上的微信开发者工具模拟器可导入同一个`miniprogram/`目录；后端也运行在这台Windows电脑时，默认本机地址可沿用。真机联调仍需HTTPS合法域名。
 
 ## 工程目录
 
 ```text
-backend/       Spring Boot后端，D01至D12相关接口已实现
+backend/       Spring Boot后端，D01至D13相关接口已实现
 web/           Vue3与Element Plus，资料、任务确认及知识卡片查阅
 miniprogram/   原生微信小程序，资料采集、任务确认及知识卡片查阅
 docs/          需求、接口与数据库设计

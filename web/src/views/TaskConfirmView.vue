@@ -5,6 +5,7 @@ import { api, ApiRequestError } from '../api'
 import { clearSession, session } from '../auth'
 import { buildConfirmationInput, createConfirmationDraft, isConfirmationDraft, type ConfirmationDraft } from '../confirmation'
 import type { AiTask, CandidateResult, CandidateSource, ConfirmationResult, RelationEndpoint } from '../tasks'
+import { sourceLocator } from '../tasks'
 
 const route = useRoute()
 const router = useRouter()
@@ -131,6 +132,6 @@ onMounted(load)
         </form>
       </template>
     </section>
-    <aside v-if="sources.length && !receipt" class="materials-panel confirmation-source-panel"><h2>原始来源</h2><section v-for="source in sources" :key="source.chunkId" class="candidate-source"><h3>片段 #{{ source.chunkId }}</h3><p class="task-state">{{ source.extractionMethod === 'METADATA' ? '资料标题元数据，文件正文尚未读取' : `文字片段 ${source.chunkNo}` }}</p><p class="candidate-copy">{{ source.content }}</p></section></aside>
+    <aside v-if="sources.length && !receipt" class="materials-panel confirmation-source-panel"><h2>原始来源</h2><section v-for="source in sources" :key="source.chunkId" class="candidate-source"><h3>片段 #{{ source.chunkId }}</h3><p class="task-state">{{ sourceLocator(source) }}</p><p class="candidate-copy">{{ source.content }}</p></section></aside>
   </div>
 </template>

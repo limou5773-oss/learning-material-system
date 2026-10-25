@@ -2,7 +2,7 @@
 "info":
   "title": "个人学习资料智能整理系统开发接口"
   "version": "1.0.0-draft"
-  "description": "依据开题报告的编码契约；D02至D12账号、资料、资料收藏、异步任务及模拟候选、原子确认、卡片只读列表/详情/来源已实现。真实模型与OCR、卡片编辑/搜索/收藏、图谱及管理接口仍为拟议。所有ID为字符串，时间为UTC。"
+  "description": "依据开题报告的编码契约；D02至D13账号、资料、资料收藏、异步任务、PDF指定页段文字提取、模拟候选、原子确认及卡片查阅已实现。PDF文字来源带页码和固定版本缓存，无文字页明确提示。生成仍为MOCK；真实模型与OCR、卡片编辑/搜索/收藏、图谱及管理接口仍为拟议。所有ID为字符串，时间为UTC。"
 "servers":
   -
     "url": "http://localhost:8080/api/v1"
@@ -1919,7 +1919,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "D10提供worker租约与取消协议；D11接入显式启用的MOCK处理器，默认不领取任务。PDF必须指定最多20页的有效pageRange；NOTE和IMAGE不传pageRange。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
+      "description": "D10提供worker租约与取消协议；D11接入显式启用的MOCK生成器，默认不领取任务。D13 PDF指定最多20页有效pageRange，真实提取文字层并保留页码与版本缓存；NOTE和IMAGE不传pageRange。生成仍为MOCK，不调用OCR或外部模型。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
       "requestBody":
         "required": true
         "content":
@@ -5821,6 +5821,7 @@
           "maxItems": 60
         "processedPages":
           "type": "array"
+          "description": "D13仅列出本次所选页段中成功获得文字层内容的实际页码；不表示页内图片或全部信息已识别。无文字页列入warnings，全无文字任务失败。"
           "items":
             "type": "integer"
             "minimum": 1
@@ -5869,6 +5870,8 @@
           "enum":
             - "TEXT"
             - "METADATA"
+            - "PDF_TEXT"
+          "description": "PDF_TEXT为D13按所选页段提取的真实PDF文字，pageNo非空；METADATA仅标题，不代表正文。"
         "content":
           "type": "string"
         "qualityNote":
