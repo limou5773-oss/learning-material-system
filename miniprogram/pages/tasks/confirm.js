@@ -1,5 +1,5 @@
 const { ApiError, getToken, getMe, request } = require('../../utils/api')
-const { sourceLocator, generationPresentation } = require('../../utils/source-presentation')
+const { sourceLocator, generationPresentation, relationEndpointLabel } = require('../../utils/source-presentation')
 
 function tagNames(value) {
   const tags = value.split(/[,，]/).map(name => name.trim()).filter(Boolean)
@@ -60,8 +60,8 @@ Page({
         summary: result.summary, tagsText: result.tags.join('，'), tagMode: 'MERGE',
         cards: result.cards.map(card => ({ ...card, selected: true, tagsText: (card.tags || []).join('，') })),
         relations: result.relations.map(relation => ({ ...relation, selected: false,
-          sourceLabel: relation.source.candidateKey || `已有卡片 #${relation.source.cardId}`,
-          targetLabel: relation.target.candidateKey || `已有卡片 #${relation.target.cardId}` })),
+          sourceLabel: relationEndpointLabel(relation.source, result.cards),
+          targetLabel: relationEndpointLabel(relation.target, result.cards) })),
         selectedCount: result.cards.length })
       this.setData({ generationView: generationPresentation(result.generationMode, result.generationInfo), sources: sources.map(source => ({ ...source, locator: sourceLocator(source) })), warnings: result.warnings || [] })
       if (this.data.resultVersion !== result.resultVersion || this.data.sourceVersion !== result.sourceVersion) {

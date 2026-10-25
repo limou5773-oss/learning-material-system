@@ -40,6 +40,8 @@ public class MockTaskProcessor implements TaskProcessor {
         try { config = json.readTree(task.getConfigJson()); }
         catch (JsonProcessingException ex) { throw new TaskExecutionException("INVALID_TASK_CONFIG"); }
 
+        if (config.has("processorMode") && !"mock".equals(config.path("processorMode").asText()))
+            throw new TaskExecutionException("PROCESSOR_MODE_CHANGED");
         var prepared = preparation.prepare(lease,task,config,false);
         if(prepared == null) return;
         var sources = prepared.sources();

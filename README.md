@@ -6,7 +6,7 @@
 
 ## 当前状态
 
-截至2026年10月25日，D01至D13已实现，D14加入腾讯云OCR适配代码、图片及扫描页处理、缓存和请求记录；真实腾讯云联调按用户选择留待本机配置密钥后进行。OCR默认关闭。D12提供候选确认与双端卡片查阅，D13加入PDF指定页段的真实文字提取、页码与固定版本缓存。D03至D10仍需补齐部分浏览器操作和微信开发者工具原生验证。D15增加DeepSeek结构化生成代码，默认仍不调用外部模型；MODEL候选与模拟结果明确区分，均需人工确认。用户选择先完成代码、密钥稍后配置，真实DeepSeek联调待完成。智能体规划循环留在D16。详见[开发进度与下一步](docs/开发进度.md)和[任务清单](tasks/todo.md)。
+截至2026年10月25日，D01至D13已实现，D14加入腾讯云OCR适配代码、图片及扫描页处理、缓存和请求记录；真实腾讯云联调按用户选择留待本机配置密钥后进行。OCR默认关闭。D12提供候选确认与双端卡片查阅，D13加入PDF指定页段的真实文字提取、页码与固定版本缓存。D03至D10仍需补齐部分浏览器操作和微信开发者工具原生验证。D15增加DeepSeek结构化生成代码，默认仍不调用外部模型；MODEL候选与模拟结果明确区分，均需人工确认。用户选择先完成代码、密钥稍后配置，真实DeepSeek联调待完成。D16增加显式agent模式的受限规划、工具反馈和本人卡片关键词检索，真实厂商验收仍待凭证。详见[开发进度与下一步](docs/开发进度.md)和[任务清单](tasks/todo.md)。
 
 ## 文档入口
 
@@ -18,6 +18,7 @@
 - [开发进度与下一步](docs/开发进度.md)
 - [腾讯云OCR配置与待验证事项](docs/OCR接入配置.md)
 - [DeepSeek模型配置与待验证事项](docs/DeepSeek接入配置.md)
+- [D16智能体代码与本地验证](tasks/evidence/D16.md)
 
 ## 技术方案
 
@@ -46,7 +47,7 @@ mvn -f backend/pom.xml spring-boot:run
 curl -i http://localhost:8080/actuator/health
 ```
 
-正常运行时健康接口只返回状态；Flyway启动时执行V1至V10迁移并记录到`flyway_schema_history`。D01已在独立MySQL上完成首次启动、迁移、重复启动和空库重放验证；V3资料与标签迁移见[D04验证记录](tasks/evidence/D04.md)，V4收藏迁移见[D08验证记录](tasks/evidence/D08.md)，V5任务迁移见[D09验证记录](tasks/evidence/D09.md)，V6候选与来源迁移见[D11验证记录](tasks/evidence/D11.md)，V7正式卡片迁移见[D12验证记录](tasks/evidence/D12.md)，V8 PDF页缓存见[D13验证记录](tasks/evidence/D13.md)。
+正常运行时健康接口只返回状态；Flyway启动时执行V1至V11迁移并记录到`flyway_schema_history`。D01已在独立MySQL上完成首次启动、迁移、重复启动和空库重放验证；V3资料与标签迁移见[D04验证记录](tasks/evidence/D04.md)，V4收藏迁移见[D08验证记录](tasks/evidence/D08.md)，V5任务迁移见[D09验证记录](tasks/evidence/D09.md)，V6候选与来源迁移见[D11验证记录](tasks/evidence/D11.md)，V7正式卡片迁移见[D12验证记录](tasks/evidence/D12.md)，V8 PDF页缓存见[D13验证记录](tasks/evidence/D13.md)。
 
 本项目当前使用的Mac已配置`lms-mysql-start`和`lms-mysql-stop`命令。重启电脑后先在终端运行`lms-mysql-start`，再执行上述后端启动命令。微信开发者工具已安装在“应用程序”中；小程序联调时仍需使用本人微信账号登录并导入项目。
 
@@ -82,7 +83,15 @@ D12在待确认任务提供“编辑并确认”入口，可修改摘要、标�
 
 显式选择`TASK_PROCESSOR_MODE=model`、`MODEL_PROVIDER=deepseek`并在后端配置`MODEL_API_KEY`后，已同意处理的所选文字才会发送给DeepSeek。默认`MODEL_NAME=deepseek-flash`；配置步骤见[DeepSeek接入配置](docs/DeepSeek接入配置.md)。缺配置明确失败，不回退假生成。模型输出只允许摘要、标签、卡片和原文引用，服务端校验结构、来源归属和精确引用后进入待确认状态；用户确认前不写正式卡片。
 
-每任务最多两次模型请求尝试（跨租约接管累计），包括一次重试或格式修复。请求记录保留模型、提示版本、token数和未知费用NULL；取消、删除、失租或来源变化不接收迟到结果。未经过OCR的图片不能以标题冒充正文；真实模式笔记超限明确失败。JSON和引用校验不能证明整张卡片事实正确，仍须人工核对。当前真实模型与OCR验收都待本机配置凭证，规划循环仍未实现。
+每任务最多两次模型请求尝试（跨租约接管累计），包括一次重试或格式修复。请求记录保留模型、提示版本、token数和未知费用NULL；取消、删除、失租或来源变化不接收迟到结果。未经过OCR的图片不能以标题冒充正文；真实模式笔记超限明确失败。JSON和引用校验不能证明整张卡片事实正确，仍须人工核对。当前真实模型与OCR验收都待本机配置凭证。
+
+## 受限智能体（D16）
+
+显式设置`TASK_PROCESSOR_MODE=agent`可启用DeepSeek规划循环，密钥及配置脚本沿用D15，详见[DeepSeek接入配置](docs/DeepSeek接入配置.md#d16受限智能体模式)。模型提出受限JSON动作，服务端校验白名单、参数、当前来源与预算后执行，将结果反馈下一次规划。文字PDF无文字页可转OCR；无可用正文或达限明确结束，不使用标题假装已识别。
+
+用户允许关联检索后，按关键词召回本人可访问已有卡片的标题、正文或标签，最多10条有限片段并保留版本。它是关键词检索，不是向量数据库；关联建议只能指向本轮召回卡片，并由用户逐条勾选确认保存。生成阶段不写正式卡片或关系，必须经过validate_candidate及人工确认。关系图展示仍在D19。
+
+任务最多8步（含规划）、4次规划请求、8次模型请求，生成部分最多2次，跨租约接管累计；旧model模式仍最多2次。V11用purpose区分PLANNER与GENERATION，未知费用仍为NULL。工具记录显示实际动作和反馈，不记录隐藏思维；不允许任意SQL、命令、外网URL或删除工具。代码与本地证据见[D16记录](tasks/evidence/D16.md)，真实规划、OCR及计费验收仍待本机凭证。
 
 ## 微信小程序本地联调（D03）
 
@@ -119,7 +128,7 @@ mvn -f backend/pom.xml spring-boot:run
 
 Windows上的图片和PDF文件默认保存在当前用户目录下的`.learning-material-system\files`，不会随Git同步。若想改位置，在启动后端的PowerShell窗口额外设置`$env:STORAGE_ROOT = 'D:\LearningMaterialFiles'`；请选项目目录外的文件夹，并自行备份该目录。
 
-启动Web时另开一个PowerShell窗口，在项目根目录运行`cd web`、`npm ci`、`npm run dev`，然后访问`http://127.0.0.1:5173`。首次启动后端会自动执行V1至V10数据库迁移，不要手动导入整份拟议SQL。Windows上的微信开发者工具模拟器可导入同一个`miniprogram/`目录；后端也运行在这台Windows电脑时，默认本机地址可沿用。真机联调仍需HTTPS合法域名。
+启动Web时另开一个PowerShell窗口，在项目根目录运行`cd web`、`npm ci`、`npm run dev`，然后访问`http://127.0.0.1:5173`。首次启动后端会自动执行V1至V11数据库迁移，不要手动导入整份拟议SQL。Windows上的微信开发者工具模拟器可导入同一个`miniprogram/`目录；后端也运行在这台Windows电脑时，默认本机地址可沿用。真机联调仍需HTTPS合法域名。
 
 ## 工程目录
 

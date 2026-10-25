@@ -32,8 +32,8 @@
       <button wx:if="{{task.status === 'WAIT_CONFIRM'}}" class="primary" bindtap="openConfirmation">编辑并确认保存</button>
       <button wx:if="{{task.status === 'SUCCEEDED'}}" class="outline" bindtap="openCards">查看已保存卡片</button>
     </view>
-    <view class="steps-title">执行记录</view><view wx:if="{{!steps.length}}" class="muted">暂无执行步骤</view>
-    <view wx:for="{{steps}}" wx:key="stepNo" class="step-row">{{item.toolName}} · {{item.statusLabel}}<text wx:if="{{item.outputSummary}}"> · {{item.outputSummary}}</text><text wx:if="{{item.errorCode}}"> · {{item.errorCode}}</text></view>
+    <view class="steps-title">执行记录</view><view class="muted">以下为服务端实际记录的动作与结果摘要。</view><view wx:if="{{!steps.length}}" class="muted">暂无执行步骤</view>
+    <view wx:for="{{steps}}" wx:key="stepNo" class="step-row">{{item.toolLabel}} · {{item.statusLabel}}<text wx:if="{{item.outputSummary}}"> · {{item.outputSummary}}</text><text wx:if="{{item.errorCode}}"> · {{item.errorMessage}}（{{item.errorCode}}）</text></view>
     <checkbox-group wx:if="{{task.canRetry}}" bindchange="onConsentChange"><label class="retry-consent"><checkbox value="yes" checked="{{consent}}" />{{ externalProcessingConsent }}</label></checkbox-group>
     <button class="outline" bindtap="load">刷新状态</button>
     <button wx:if="{{task.canCancel}}" class="outline" loading="{{busy}}" disabled="{{busy}}" bindtap="cancel">取消任务</button>

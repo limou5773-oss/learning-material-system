@@ -42,6 +42,10 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
     private final ObjectMapper json;
     private final Clock clock;
     private final TransactionTemplate transactions;
+    private final PersonalMaterialSearchService search;
+
+    @org.springframework.beans.factory.annotation.Value("${lms.task.processor.mode:disabled}")
+    private String processorMode;
 
     public ModelGenerationService(
             AiTaskMapper tasks,
@@ -54,7 +58,9 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
             ModelOutputProtocol protocol,
             ObjectMapper json,
             Clock clock,
-            PlatformTransactionManager manager) {
+            PlatformTransactionManager manager,
+            PersonalMaterialSearchService search) {
+        this.search = search;
         this.tasks = tasks;
         this.materials = materials;
         this.users = users;
@@ -77,18 +83,134 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
             AiTaskRow snapshot,
             TaskSourcePreparation.Prepared prepared,
             Consumer<CandidateResult> publication) {
+        validateSources(prepared);
+        request(
+                lease,
+                snapshot,
+                "GENERATION",
+                PROMPT_VERSION,
+                SYSTEM,
+                prompt(snapshot, prepared),
+                response ->
+                        protocol.parse(
+                                response.content(),
+                                snapshot,
+                                prepared,
+                                new GenerationInfo(
+                                        settings.provider(), response.model(), PROMPT_VERSION)),
+                publication,
+                List.of());
+    }
+
+    public void generateAgent(
+            TaskLeaseService.Lease lease,
+            AiTaskRow snapshot,
+            TaskSourcePreparation.Prepared prepared,
+            List<PersonalMaterialSearchService.Match> matches,
+            Consumer<CandidateResult> staging) {
+        validateSources(prepared);
+        String system =
+                SYSTEM
+                        + "\n"
+                        + "Agent generation: return the same required fields plus required"
+                        + " relations array. Each relation is exactly"
+                        + " {\"sourceIndex\":integer,\"targetCardId\":string,\"evidenceText\":string}."
+                        + " sourceIndex is zero-based within cards. RELATED targets must come from"
+                        + " relatedCards; maximum 10 relations. No relation if relatedCards is"
+                        + " empty. Related cards are context only; all cards.sources must quote"
+                        + " main sources. Do not use relatedCards as primary source citations.";
+        var input = json.createObjectNode();
+        try {
+            input =
+                    (com.fasterxml.jackson.databind.node.ObjectNode)
+                            json.readTree(prompt(snapshot, prepared));
+        } catch (com.fasterxml.jackson.core.JsonProcessingException ex) {
+            throw new TaskExecutionException("INVALID_TASK_CONFIG");
+        }
+        input.set("relatedCards", json.valueToTree(matches));
+        request(
+                lease,
+                snapshot,
+                "GENERATION",
+                "d16-v1",
+                system,
+                input.toString(),
+                response ->
+                        protocol.parseAgent(
+                                response.content(),
+                                snapshot,
+                                prepared,
+                                new GenerationInfo(settings.provider(), response.model(), "d16-v1"),
+                                matches),
+                staging,
+                matches);
+    }
+
+    public AgentPlanProtocol.Plan plan(
+            TaskLeaseService.Lease lease,
+            AiTaskRow snapshot,
+            String input,
+            List<PersonalMaterialSearchService.Match> matches) {
+        var result = new java.util.concurrent.atomic.AtomicReference<AgentPlanProtocol.Plan>();
+        request(
+                lease,
+                snapshot,
+                "PLANNER",
+                "d16-planner-v1",
+                AgentPlanProtocol.SYSTEM,
+                input,
+                response -> AgentPlanProtocol.parse(response.content()),
+                result::set,
+                matches);
+        return result.get();
+    }
+
+    public boolean publishAgent(
+            TaskLeaseService.Lease lease,
+            AiTaskRow snapshot,
+            List<PersonalMaterialSearchService.Match> matches,
+            Runnable publication) {
+        return Boolean.TRUE.equals(
+                transactions.execute(
+                        s -> {
+                            search.lockMaterials(
+                                    snapshot.getUserId(),
+                                    snapshot.getMaterialId(),
+                                    matches.stream()
+                                            .map(match -> Long.parseLong(match.cardId()))
+                                            .toList());
+                            if (!lockedCurrent(lease, snapshot)) return false;
+                            search.lockAndCheck(snapshot.getUserId(), matches);
+                            publication.run();
+                            return true;
+                        }));
+    }
+
+    private void validateSources(TaskSourcePreparation.Prepared prepared) {
         if (prepared.sources().isEmpty())
             throw new TaskExecutionException("MODEL_SOURCE_TEXT_REQUIRED");
         if (prepared.sources().size() > 30
                 || prepared.sources().stream().mapToInt(s -> s.getContent().length()).sum()
                         > 60_000) throw new TaskExecutionException("MODEL_TEXT_LIMIT_EXCEEDED");
+    }
+
+    private <T> void request(
+            TaskLeaseService.Lease lease,
+            AiTaskRow snapshot,
+            String purpose,
+            String promptVersion,
+            String system,
+            String prompt,
+            java.util.function.Function<ModelClient.Result, T> parse,
+            Consumer<T> publication,
+            List<PersonalMaterialSearchService.Match> matches) {
         String provider = client.providerKey();
         if (provider == null
                 || !provider.matches("[A-Za-z0-9_:-]{1,96}")
                 || !safeModel(settings.model()))
             throw new TaskExecutionException("MODEL_CONFIG_INVALID");
-        String prompt = prompt(snapshot, prepared);
         boolean repair = false;
+        int requests = 0;
         try {
             while (true) {
                 ModelAttemptRow attempt =
@@ -96,30 +218,40 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
                                 s -> {
                                     if (!lockedCurrent(lease, snapshot)) return null;
                                     int previous = attempts.countTask(lease.taskId());
-                                    if (previous >= 2)
+                                    boolean agent = "agent".equals(processorMode);
+                                    if (previous >= (agent ? 8 : 2))
                                         throw new TaskExecutionException("MODEL_ATTEMPT_LIMIT");
+                                    int purposeCount =
+                                            attempts.countPurpose(lease.taskId(), purpose);
+                                    if ("PLANNER".equals(purpose) && purposeCount >= 4)
+                                        throw new TaskExecutionException("AGENT_PLANNER_LIMIT");
+                                    if ("GENERATION".equals(purpose) && purposeCount >= 2)
+                                        throw new TaskExecutionException("MODEL_ATTEMPT_LIMIT");
+                                    search.checkAvailable(snapshot.getUserId(), matches);
                                     ModelAttemptRow row = new ModelAttemptRow();
+                                    row.setPurpose(purpose);
                                     row.setTaskId(lease.taskId());
                                     row.setExecutionEpoch(lease.epoch());
                                     row.setAttemptNo(previous + 1);
                                     row.setProviderKey(provider);
                                     row.setRequestedModel(settings.model());
-                                    row.setPromptVersion(PROMPT_VERSION);
+                                    row.setPromptVersion(promptVersion);
                                     row.setStartedAt(now());
                                     attempts.insert(row);
                                     return row;
                                 });
                 if (attempt == null) return;
                 try {
+                    requests++;
                     var response =
                             client.generate(
                                     settings.model(),
-                                    SYSTEM
+                                    system
                                             + (repair
                                                     ? "\n"
-                                                          + "Previous output was invalid. Correct"
-                                                          + " JSON shape and exact citations; all"
-                                                          + " required fields must be present."
+                                                            + "Previous output was invalid. Correct"
+                                                            + " JSON shape and exact citations; all"
+                                                            + " required fields must be present."
                                                     : ""),
                                     prompt);
                     if (response == null
@@ -132,13 +264,7 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
                     attempt.setInputTokens(response.inputTokens());
                     attempt.setOutputTokens(response.outputTokens());
                     attempts.recordResponse(attempt);
-                    var candidate =
-                            protocol.parse(
-                                    response.content(),
-                                    snapshot,
-                                    prepared,
-                                    new GenerationInfo(
-                                            settings.provider(), response.model(), PROMPT_VERSION));
+                    T candidate = parse.apply(response);
                     Boolean published =
                             transactions.execute(
                                     s -> {
@@ -165,7 +291,11 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
                     complete(attempt, current ? "FAILED" : "UNKNOWN", dispatched, code);
                     if (!current) return;
                     boolean format = "MODEL_OUTPUT_INVALID".equals(code);
-                    if (attempt.getAttemptNo() >= 2
+                    if (attempts.countTask(lease.taskId())
+                                    >= ("agent".equals(processorMode) ? 8 : 2)
+                            || attempts.countPurpose(lease.taskId(), purpose)
+                                    >= ("PLANNER".equals(purpose) ? 4 : 2)
+                            || "PLANNER".equals(purpose) && requests >= 2
                             || !(format || ex instanceof ModelException m && m.retryable()))
                         throw new TaskExecutionException(code);
                     repair = format;
@@ -222,6 +352,11 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
         try {
             var config = json.readTree(current.getConfigJson());
             var input = config.path("inputSnapshot");
+            if (config.has("processorMode")) {
+                if (!Objects.equals(config.path("processorMode").asText(null), processorMode))
+                    throw new TaskExecutionException("PROCESSOR_MODE_CHANGED");
+            } else if (!Set.of("model", "mock").contains(processorMode))
+                throw new TaskExecutionException("PROCESSOR_MODE_CHANGED");
             if (!Objects.equals(
                             config.path("modelConfig").path("provider").asText(null),
                             settings.provider())

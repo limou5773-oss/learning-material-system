@@ -2,7 +2,7 @@
 "info":
   "title": "个人学习资料智能整理系统开发接口"
   "version": "1.0.0-draft"
-  "description": "依据开题报告的编码契约；D02至D13账号、资料、资料收藏、异步任务、PDF指定页段文字提取、模拟候选、原子确认及卡片查阅已实现。D14增加默认关闭的腾讯云OCR代码、扫描页识别和质量提示；真实厂商联调待本机凭证。D15增加显式启用的DeepSeek MODEL生成及generationInfo，真实厂商联调待凭证；MOCK仍保留。卡片编辑/搜索/收藏、规划循环、图谱及管理接口仍为拟议。所有ID为字符串，时间为UTC。"
+  "description": "依据开题报告的编码契约；D02至D13账号、资料、资料收藏、异步任务、PDF指定页段文字提取、模拟候选、原子确认及卡片查阅已实现。D14增加默认关闭的腾讯云OCR代码、扫描页识别和质量提示；真实厂商联调待本机凭证。D15增加显式启用的DeepSeek MODEL生成及generationInfo，真实厂商联调待凭证；MOCK仍保留。D16增加显式agent受限规划、工具反馈及本人卡片检索和人工确认关联；真实厂商验收待凭证。卡片编辑/搜索/收藏、图谱及管理接口仍为拟议。所有ID为字符串，时间为UTC。"
 "servers":
   -
     "url": "http://localhost:8080/api/v1"
@@ -1919,7 +1919,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "D10提供worker租约与取消协议；D11接入显式启用的MOCK生成器，默认不领取任务。D13 PDF指定最多20页有效pageRange，真实提取文字层并保留页码与版本缓存；NOTE和IMAGE不传pageRange。默认不调用外部模型；显式TASK_PROCESSOR_MODE=model并配置DeepSeek后使用所选文字生成MODEL候选，否则mock仍使用模拟。D14显式启用OCR时，IMAGE及所选无文字PDF页调用配置的腾讯云服务；默认OCR_ENABLED=false不调用OCR。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
+      "description": "D10提供worker租约与取消协议；D11接入显式启用的MOCK生成器，默认不领取任务。D13 PDF指定最多20页有效pageRange，真实提取文字层并保留页码与版本缓存；NOTE和IMAGE不传pageRange。默认不调用外部模型；显式TASK_PROCESSOR_MODE=model并配置DeepSeek后使用所选文字生成MODEL候选，否则mock仍使用模拟。D16显式TASK_PROCESSOR_MODE=agent启用规划循环；allowRelatedSearch只允许本人可访问卡片的关键词检索，相关片段可发给模型；总8步、4次规划、8次模型请求并跨epoch累计。D14显式启用OCR时，IMAGE及所选无文字PDF页调用配置的腾讯云服务；默认OCR_ENABLED=false不调用OCR。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
       "requestBody":
         "required": true
         "content":

@@ -124,6 +124,32 @@ public class TaskSourcePreparation {
         return new Prepared(sources, extraction);
     }
 
+    /**
+     * Agent dispatches extraction and OCR independently so PDF feedback can inform its next plan.
+     */
+    public Prepared prepareAgent(
+            TaskLeaseService.Lease lease, JsonNode config, String tool, Prepared prior) {
+        return switch (tool) {
+            case "prepare_source" -> {
+                var sources =
+                        candidates.saveSources(lease, prepare(config.path("inputSnapshot"), true));
+                yield sources == null ? null : new Prepared(sources, null);
+            }
+            case "extract_pdf_text" -> {
+                var extraction = pdfText.extract(lease);
+                yield extraction == null ? null : new Prepared(extraction.sources(), extraction);
+            }
+            case "recognize_image" -> {
+                if (!ocrSettings.enabled()) throw new TaskExecutionException("OCR_NOT_CONFIGURED");
+                var outcome = ocr.extract(lease, prior == null ? null : prior.extraction());
+                yield outcome == null
+                        ? null
+                        : new Prepared(outcome.extraction().sources(), outcome.extraction());
+            }
+            default -> throw new TaskExecutionException("AGENT_ACTION_NOT_ALLOWED");
+        };
+    }
+
     private List<SourceDraft> prepare(JsonNode snapshot, boolean model) {
         String type = snapshot.path("type").asText("");
         if ("NOTE".equals(type)) {

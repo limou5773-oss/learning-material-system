@@ -43,6 +43,8 @@ public class AiTaskService {
     private final ObjectMapper json;
     private final Clock clock;
     private final com.learningmaterial.system.model.ModelSettings modelSettings;
+    @org.springframework.beans.factory.annotation.Value("${lms.task.processor.mode:disabled}")
+    private String processorMode;
 
     public AiTaskService(AiTaskMapper tasks, AiToolCallMapper calls, MaterialMapper materials, UserMapper users,
                          ObjectMapper json, Clock clock, OcrAttemptMapper ocrAttempts, ModelAttemptMapper modelAttempts, com.learningmaterial.system.model.ModelSettings modelSettings) {
@@ -219,13 +221,15 @@ public class AiTaskService {
         source.put("fileSize", material.getFileSize());
         source.put("mimeType", material.getMimeType());
         Map<String, Object> config = new LinkedHashMap<>();
+        config.put("processorMode", processorMode);
         config.put("pageRange", range);
         config.put("allowRelatedSearch", allowRelatedSearch);
         config.put("externalProcessingConsentAt", consentAt.toString());
         config.put("inputSnapshot", source);
         config.put("modelConfig", Map.of("provider", modelSettings.provider(), "model", modelSettings.model(),
             "status", "disabled".equalsIgnoreCase(modelSettings.provider()) ? "NOT_CONFIGURED" : "SNAPSHOT"));
-        config.put("budget", Map.of("maxSteps", 8, "maxModelAttempts", 2, "maxOcrPages", 20));
+        config.put("budget", Map.of("maxSteps", 8, "maxModelAttempts", "agent".equals(processorMode) ? 8 : 2,
+            "maxGenerationAttempts", 2, "maxPlannerAttempts", "agent".equals(processorMode) ? 4 : 0, "maxOcrPages", 20));
         return serialize(config);
     }
 

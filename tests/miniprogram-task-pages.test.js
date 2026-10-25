@@ -104,6 +104,24 @@ test('小程序待确认任务展示模拟候选和可核验来源', async () =>
   assert.equal(paths.filter(path => path.endsWith('/sources')).length, 1)
 })
 
+test('小程序只显示实际规划与检索步骤，并解释服务端预算失败', async () => {
+  const detail = page('../miniprogram/pages/tasks/detail')
+  detail.onLoad({ id: '92' })
+  requestHandler = options => options.success({ statusCode: 200, data: { data:
+    options.url.includes('/steps?') ? { items: [
+      { stepNo: 1, toolName: 'planner', status: 'SUCCESS', outputSummary: '规划了2个动作', errorCode: null },
+      { stepNo: 2, toolName: 'search_personal_materials', status: 'FAILED', outputSummary: null, errorCode: 'AGENT_SEARCH_NOT_ALLOWED' },
+    ], total: 2 } : { id: '92', materialId: '42', materialVersion: 1, goalType: 'LINK_NOTES',
+      status: 'FAILED', stage: 'FAILED', stepCount: 2, errorCode: 'AGENT_PLANNER_LIMIT' } } })
+  await detail.load()
+  assert.equal(detail.data.steps.length, 2)
+  assert.equal(detail.data.steps[0].toolLabel, '规划下一步')
+  assert.equal(detail.data.steps[0].outputSummary, '规划了2个动作')
+  assert.equal(detail.data.steps[1].toolLabel, '检索本人已有卡片')
+  assert.match(detail.data.steps[1].errorMessage, /未允许.*检索/)
+  assert.match(detail.data.task.errorMessage, /规划.*上限/)
+})
+
 test('小程序取消后状态更新，重试网络失败复用请求键', async () => {
   const detail = page('../miniprogram/pages/tasks/detail')
   detail.onLoad({ id: '88' })
