@@ -7,6 +7,30 @@ function sourceLocator(source) {
 }
 function taskErrorMessage(code) {
   const messages = {
+    MODEL_CONFIG_INVALID: '模型配置无效，请检查后端厂商与模型名称配置。',
+    MODEL_INPUT_LIMIT: '所选文字超过模型处理上限，请缩小页段或拆分笔记后重试。',
+    MODEL_INVALID_INPUT: '模型输入无效，请检查所选文字来源后重新整理。',
+    MODEL_INTERRUPTED: '模型处理已中断，请查看任务状态与执行记录后重试。',
+    MODEL_QUOTA_EXCEEDED: '模型账户额度不足，请检查厂商账户额度后重试。',
+    MODEL_REQUEST_REJECTED: '模型服务拒绝请求，请检查后端模型配置及调用权限。',
+    MODEL_REDIRECT_REJECTED: '模型服务返回了不允许的跳转，请检查后端服务配置。',
+    MODEL_OUTPUT_TRUNCATED: '模型输出不完整，未发布候选；请缩小输入范围后重试。',
+    MODEL_CONTENT_FILTERED: '模型服务未返回可用内容，未发布候选；请调整所选内容后重试。',
+    MODEL_EMPTY_RESULT: '模型没有返回可用内容，未发布候选；请检查来源后重试。',
+    MODEL_NOT_CONFIGURED: '模型尚未配置，请在后端本机配置厂商、模型与密钥后重试。',
+    MODEL_CREDENTIALS_INVALID: '模型凭证格式无效，请检查后端本机配置，勿在页面提交密钥。',
+    MODEL_AUTH_FAILED: '模型鉴权失败，请检查后端密钥及调用权限。',
+    MODEL_TIMEOUT: '模型请求超时，费用状态可能未知；请查看执行记录后重试。',
+    MODEL_RATE_LIMITED: '模型请求被限流，请稍后重试。',
+    MODEL_CONNECTION_FAILED: '无法连接模型服务，请检查后端网络后重试。',
+    MODEL_PROVIDER_UNAVAILABLE: '模型服务暂不可用，请稍后重试。',
+    MODEL_INVALID_RESPONSE: '模型响应格式无效，未发布候选内容。',
+    MODEL_OUTPUT_INVALID: '模型输出格式或来源引用校验失败，未发布候选；请核对所选来源后重新整理。',
+    MODEL_SOURCE_INVALID: '模型引用与已选来源不匹配，未发布候选；请核对来源后重新整理。',
+    MODEL_TEXT_LIMIT_EXCEEDED: '所选文字超过模型处理上限，请缩小页段或拆分笔记后重试。',
+    MODEL_SOURCE_TEXT_REQUIRED: '所选资料没有可用正文，请先配置OCR或换用有文字的来源。',
+    MODEL_SOURCE_REQUIRED: '所选资料没有可用正文，请先配置OCR或换用有文字的来源。',
+    MODEL_ATTEMPT_LIMIT: '本任务已达到模型请求尝试上限，请查看执行记录后重新提交。',
     PDF_OCR_REQUIRED: '所选页段没有可用文字层，可能需要OCR或为空白页；当前未启用OCR，请配置OCR或选择有文字的页段。',
     OCR_NOT_CONFIGURED: 'OCR尚未配置，请在后端本机配置厂商与密钥后重试。',
     OCR_CREDENTIALS_INVALID: 'OCR凭证格式无效，请检查本机配置，勿在页面提交密钥。',
@@ -32,6 +56,30 @@ function taskErrorMessage(code) {
     PDF_ENCRYPTED: '暂不支持加密PDF，请上传可直接读取的文件。',
     PDF_EXTRACTION_FORBIDDEN: '文件未授予文字提取权限，请换用允许提取文字的PDF。',
   }
-  return messages[code] || ''
+  return messages[code] || (code && code.startsWith('MODEL_') ? '模型处理失败，未发布候选；请查看执行记录并检查后端配置后重试。' : '')
 }
-module.exports = { sourceLocator, taskErrorMessage }
+const externalProcessingConsent = '我同意所选资料的文字、OCR识别文字及补充说明在模型启用时发送给已配置的模型服务，并在OCR启用时将所选图片或页面图像发送给已配置的OCR服务。处理模式由服务端配置决定。'
+function generationPresentation(mode, info) {
+  if (mode === 'MODEL') return {
+    label: '模型生成',
+    modelLabel: info ? `${info.provider} · ${info.model} · 提示版本 ${info.promptVersion}` : '模型标识暂不可用',
+    warning: '模型生成内容可能有误，须人工核对原文及OCR质量；引用能定位原文，不代表足以支持卡片结论。确认后才会保存。',
+  }
+  if (mode === 'MOCK') return {
+    label: '模拟生成', modelLabel: '',
+    warning: '当前为模拟生成结果，须人工核对固定版本来源与OCR质量；标题元数据不代表文件正文。确认后才会保存。',
+  }
+  return { label: '生成方式待核实', modelLabel: '', warning: '请人工核对固定版本来源与OCR质量后再确认保存。' }
+}
+function savedGenerationLabel(mode) {
+  if (mode === 'MODEL') return '模型生成 · 人工确认'
+  if (mode === 'MOCK') return '模拟候选 · 人工确认'
+  return '人工确认保存'
+}
+function savedGenerationWarning(mode) {
+  if (mode === 'MODEL') return '本卡片由模型生成并经人工确认保存。仍须人工核对固定版本来源及OCR质量；引用能定位原文，不代表足以支持卡片结论。'
+  if (mode === 'MOCK') return '本卡片经人工确认保存，生成内容仍为模拟结果。请核对固定版本来源与OCR质量；标题元数据不代表文件正文。'
+  return '请核对固定版本来源与OCR质量。'
+}
+
+module.exports = { sourceLocator, taskErrorMessage, externalProcessingConsent, generationPresentation, savedGenerationLabel, savedGenerationWarning }

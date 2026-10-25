@@ -1,13 +1,13 @@
 const { ApiError, getToken, request } = require('../../utils/api')
-const { sourceLocator, taskErrorMessage } = require('../../utils/source-presentation')
+const { sourceLocator, taskErrorMessage, generationPresentation, externalProcessingConsent } = require('../../utils/source-presentation')
 
 const goalLabels = { REVIEW_CARDS: '生成复习卡片', EXTRACT_KEY_POINTS: '提炼课件重点', LINK_NOTES: '整理并关联已有笔记' }
 const statusLabels = { QUEUED: '排队中', RUNNING: '执行中', WAIT_CONFIRM: '待确认', SUCCEEDED: '已完成', FAILED: '失败', CANCELLED: '已取消' }
-const stageLabels = { QUEUED: '等待领取', STARTING: '开始处理', FAILED: '处理失败', CANCELLED: '用户取消', SOURCE_DELETED: '原资料已删除', PREPARE_SOURCE: '准备来源', EXTRACT_PDF_TEXT: '提取PDF文字', RECOGNIZE_IMAGE: '识别图片文字', GENERATE_SUMMARY_CARDS: '生成模拟候选', VALIDATE_CANDIDATE: '核验候选', CANDIDATE_READY: '等待人工确认', CONFIRMED: '人工确认完成' }
+const stageLabels = { QUEUED: '等待领取', STARTING: '开始处理', FAILED: '处理失败', CANCELLED: '用户取消', SOURCE_DELETED: '原资料已删除', PREPARE_SOURCE: '准备来源', EXTRACT_PDF_TEXT: '提取PDF文字', RECOGNIZE_IMAGE: '识别图片文字', GENERATE_SUMMARY_CARDS: '生成候选内容', VALIDATE_CANDIDATE: '核验候选', CANDIDATE_READY: '等待人工确认', CONFIRMED: '人工确认完成' }
 const stepStatusLabels = { RUNNING: '进行中', SUCCESS: '成功', FAILED: '失败', UNKNOWN: '结果未知' }
 
 Page({
-  data: { id: '', task: null, steps: [], candidate: null, candidateCards: [], consent: false, loading: false, busy: false, error: '' },
+  data: { externalProcessingConsent, generationView: null, id: '', task: null, steps: [], candidate: null, candidateCards: [], consent: false, loading: false, busy: false, error: '' },
   onLoad(options) { this.setData({ id: options.id || '' }) },
   onShow() { this.onHide(); this.load(); this.timer = setInterval(() => {
     if (this.data.task && ['QUEUED', 'RUNNING'].includes(this.data.task.status)) this.load()
@@ -38,7 +38,7 @@ Page({
         stageLabel: stageLabels[task.stage] || task.stage || '等待更新',
         errorMessage: taskErrorMessage(task.errorCode) },
         steps: history.items.map(step => ({ ...step, statusLabel: stepStatusLabels[step.status] || step.status })),
-        candidate, candidateCards })
+        candidate, candidateCards, generationView: candidate ? generationPresentation(candidate.generationMode, candidate.generationInfo) : null })
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) wx.reLaunch({ url: '/pages/login/index?reason=expired' })
       else this.setData({ error: error.message || '任务读取失败' })

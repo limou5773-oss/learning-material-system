@@ -36,6 +36,7 @@ test('小程序任务提交在网络失败后复用请求键并带PDF页段和�
       keys.push(options.data.requestKey)
       assert.deepEqual(options.data.pageRange, { from: 2, to: 5 })
       assert.equal(options.data.externalProcessingConsent, true)
+      for (const field of ['provider', 'model', 'generationMode', 'tools']) assert.equal(options.data[field], undefined)
       if (keys.length === 1) options.fail()
       else options.success({ statusCode: 202, data: { data: { id: '88', status: 'QUEUED' } } })
     } else options.success({ statusCode: 200, data: { data: {

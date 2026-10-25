@@ -76,6 +76,8 @@ class AiTaskFlowIntegrationTest {
             JsonNode saved = json.readTree(config);
             assertThat(saved.path("inputSnapshot").path("noteText").asText()).isEqualTo("矩阵和特征值");
             assertThat(saved.path("externalProcessingConsentAt").asText()).isNotBlank();
+            assertThat(saved.path("modelConfig").path("provider").asText()).isEqualTo("disabled");
+            assertThat(saved.path("modelConfig").path("model").asText()).isEqualTo("deepseek-flash");
             assertThat(saved.path("modelConfig").path("status").asText()).isEqualTo("NOT_CONFIGURED");
 
             assertThat(post(firstInput, mini).getBody().path("data").path("id").asText()).isEqualTo(taskId);

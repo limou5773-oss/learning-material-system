@@ -1,5 +1,7 @@
 const { ApiError, getToken, request } = require('../../utils/api')
 
+const { taskErrorMessage } = require('../../utils/source-presentation')
+
 const goalLabels = { REVIEW_CARDS: '生成复习卡片', EXTRACT_KEY_POINTS: '提炼课件重点', LINK_NOTES: '整理并关联已有笔记' }
 const statusLabels = { QUEUED: '排队中', RUNNING: '执行中', WAIT_CONFIRM: '待确认', SUCCEEDED: '已完成', FAILED: '失败', CANCELLED: '已取消' }
 
@@ -14,6 +16,7 @@ Page({
       this.setData({ items: result.items.map(item => ({ ...item,
         goalLabel: goalLabels[item.goalType] || item.goalType,
         statusLabel: statusLabels[item.status] || item.status,
+        errorMessage: taskErrorMessage(item.errorCode) || item.errorCode,
         shortDate: item.createdAt.slice(0, 10),
       })), total: result.total })
     } catch (error) {

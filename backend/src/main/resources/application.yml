@@ -35,6 +35,10 @@ server:
   port: 8080
 
 lms:
+  model:
+    provider: ${MODEL_PROVIDER:disabled}
+    name: ${MODEL_NAME:deepseek-flash}
+    api-key: ${MODEL_API_KEY:}
   ocr:
     enabled: ${OCR_ENABLED:false}
     provider: ${OCR_PROVIDER:disabled}

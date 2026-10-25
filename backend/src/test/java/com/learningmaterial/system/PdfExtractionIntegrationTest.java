@@ -45,9 +45,9 @@ class PdfExtractionIntegrationTest {
 
     @BeforeEach void setup() {
         String name = "pdfextract_" + UUID.randomUUID().toString().substring(0, 12);
-        jdbc.update("INSERT INTO app_user(username,password_hash,display_name,role,status,created_at,updated_at) VALUES(?,'unused',?,'USER','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))", name, name);
+        jdbc.update("INSERT INTO app_user(username,password_hash,display_name,role,status,created_at,updated_at) VALUES(?,'unused',?,'USER','ENABLED',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))", name, name);
         user = jdbc.queryForObject("SELECT id FROM app_user WHERE username=?", Long.class, name);
-        jdbc.update("INSERT INTO app_user(username,password_hash,display_name,role,status,created_at,updated_at) VALUES(?,'unused',?,'USER','ACTIVE',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))", name + "x", name);
+        jdbc.update("INSERT INTO app_user(username,password_hash,display_name,role,status,created_at,updated_at) VALUES(?,'unused',?,'USER','ENABLED',UTC_TIMESTAMP(6),UTC_TIMESTAMP(6))", name + "x", name);
         other = jdbc.queryForObject("SELECT id FROM app_user WHERE username=?", Long.class, name + "x");
     }
 
