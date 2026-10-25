@@ -27,6 +27,6 @@
 
 - [x] 独立规格审查后进行质量/安全审查，修复发现并重新验证。
 - [x] 更新契约、数据库实现说明、进度及D13证据，只记录真实运行结果；原生微信验证继续暂缓。
-- [ ] 提交并推送codex/d13-pdf-extraction。D12未合并时将PR基于codex/d12-confirmation，注明依赖PR #1；不自动合并main。
+- [x] 已上传codex/d13-pdf-extraction并创建[PR #2](https://github.com/limou5773-oss/learning-material-system/pull/2)，基于codex/d12-confirmation、依赖PR #1；未合并main。Git传输连接失败后改用GitHub API上传，逐个校验blob、tree及commit对象，文件树与已验证本地版本一致。
 
 参考：[PDFBox 3迁移说明](https://pdfbox.apache.org/3.0/migration.html)，使用Loader加载文件，并在关闭文档前完成按页文字读取。未引入新PDFBox版本。
