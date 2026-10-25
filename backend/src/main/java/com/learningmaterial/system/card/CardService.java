@@ -24,7 +24,7 @@ public class CardService {
                            String generationMode, boolean isEdited, Instant createdAt, Instant updatedAt) { }
     public record CardSourceView(String chunkId, String materialId, String materialTitle,
                                  int materialVersion, Integer pageNo, String quoteText, String content,
-                                 boolean isAvailable, String unavailableReason) { }
+                                 boolean isAvailable, String unavailableReason, String extractionMethod, String qualityNote) { }
     public record SourceList(List<CardSourceView> items) { }
 
     @Transactional(readOnly = true)
@@ -47,7 +47,7 @@ public class CardService {
             return new CardSourceView(row.getChunkId().toString(), row.getMaterialId().toString(),
                 row.getMaterialTitle(), row.getMaterialVersion(), row.getPageNo(),
                 reason == null ? row.getQuoteText() : null, reason == null ? row.getContent() : null,
-                reason == null, reason);
+                reason == null, reason, row.getExtractionMethod(), reason == null ? row.getQualityNote() : null);
         }).toList());
     }
 

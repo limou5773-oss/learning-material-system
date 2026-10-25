@@ -35,6 +35,11 @@ server:
   port: 8080
 
 lms:
+  ocr:
+    enabled: ${OCR_ENABLED:false}
+    provider: ${OCR_PROVIDER:disabled}
+    secret-id: ${OCR_SECRET_ID:}
+    secret-key: ${OCR_SECRET_KEY:}
   task:
     processor:
       mode: ${TASK_PROCESSOR_MODE:disabled}

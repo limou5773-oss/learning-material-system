@@ -3,7 +3,7 @@ const { sourceLocator, taskErrorMessage } = require('../../utils/source-presenta
 
 const goalLabels = { REVIEW_CARDS: '生成复习卡片', EXTRACT_KEY_POINTS: '提炼课件重点', LINK_NOTES: '整理并关联已有笔记' }
 const statusLabels = { QUEUED: '排队中', RUNNING: '执行中', WAIT_CONFIRM: '待确认', SUCCEEDED: '已完成', FAILED: '失败', CANCELLED: '已取消' }
-const stageLabels = { QUEUED: '等待领取', STARTING: '开始处理', FAILED: '处理失败', CANCELLED: '用户取消', SOURCE_DELETED: '原资料已删除', PREPARE_SOURCE: '准备来源', GENERATE_SUMMARY_CARDS: '生成模拟候选', VALIDATE_CANDIDATE: '核验候选', CANDIDATE_READY: '等待人工确认', CONFIRMED: '人工确认完成' }
+const stageLabels = { QUEUED: '等待领取', STARTING: '开始处理', FAILED: '处理失败', CANCELLED: '用户取消', SOURCE_DELETED: '原资料已删除', PREPARE_SOURCE: '准备来源', EXTRACT_PDF_TEXT: '提取PDF文字', RECOGNIZE_IMAGE: '识别图片文字', GENERATE_SUMMARY_CARDS: '生成模拟候选', VALIDATE_CANDIDATE: '核验候选', CANDIDATE_READY: '等待人工确认', CONFIRMED: '人工确认完成' }
 const stepStatusLabels = { RUNNING: '进行中', SUCCESS: '成功', FAILED: '失败', UNKNOWN: '结果未知' }
 
 Page({
@@ -29,12 +29,13 @@ Page({
         candidate = result
         candidateCards = result.cards.map(card => ({ ...card, sourceViews: card.sources.map(ref => ({
           ...ref, content: byId[ref.chunkId] && byId[ref.chunkId].content || '',
+          qualityNote: byId[ref.chunkId] && byId[ref.chunkId].qualityNote || '',
           locator: sourceLocator(byId[ref.chunkId]),
         })) }))
       }
       this.setData({ task: { ...task, goalLabel: goalLabels[task.goalType] || task.goalType,
         statusLabel: statusLabels[task.status] || task.status,
-        stageLabel: task.stage === 'EXTRACT_PDF_TEXT' ? '提取PDF文字' : stageLabels[task.stage] || task.stage || '等待更新',
+        stageLabel: stageLabels[task.stage] || task.stage || '等待更新',
         errorMessage: taskErrorMessage(task.errorCode) },
         steps: history.items.map(step => ({ ...step, statusLabel: stepStatusLabels[step.status] || step.status })),
         candidate, candidateCards })

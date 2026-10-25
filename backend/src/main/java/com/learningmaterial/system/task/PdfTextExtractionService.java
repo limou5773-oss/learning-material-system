@@ -45,7 +45,11 @@ public class PdfTextExtractionService {
     }
 
     public record Extraction(List<MaterialChunkRow> sources, int totalPages,
-                             List<Integer> processedPages, List<String> warnings) { }
+                             List<Integer> processedPages, List<String> warnings, List<Integer> needsOcrPages) {
+        public Extraction(List<MaterialChunkRow> sources,int totalPages,List<Integer> processedPages,List<String> warnings) {
+            this(sources,totalPages,processedPages,warnings,List.of());
+        }
+    }
 
     public Extraction extract(TaskLeaseService.Lease lease) {
         AiTaskRow snapshot = tasks.findById(lease.taskId());
@@ -113,7 +117,7 @@ public class PdfTextExtractionService {
         List<String> warnings = needsOcr.isEmpty() ? List.of()
             : List.of("第" + needsOcr.stream().map(String::valueOf).reduce((a, b) -> a + "、" + b).orElse("")
                 + "页没有可提取文字，可能需要OCR或为空白页；本次未生成这些页的内容。");
-        return new Extraction(saved, totalPages, List.copyOf(processed), warnings);
+        return new Extraction(saved, totalPages, List.copyOf(processed), warnings, List.copyOf(needsOcr));
     }
 
     private boolean readMissing(MaterialRow material, AiTaskRow task, int from, int to,

@@ -47,7 +47,7 @@ public interface CardMapper {
     long countOwned(long userId);
 
     @Select("""
-        SELECT c.id AS chunk_id,c.material_id,c.material_version,c.page_no,c.content,s.quote_text,
+        SELECT c.id AS chunk_id,c.material_id,c.material_version,c.page_no,c.content,s.quote_text,c.extraction_method,c.quality_note,
           m.title AS material_title,m.status AS material_status,m.access_state
         FROM card_source s JOIN material_chunk c ON c.id=s.chunk_id
         JOIN material m ON m.id=c.material_id AND m.user_id=#{userId}

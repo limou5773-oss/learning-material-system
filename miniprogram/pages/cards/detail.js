@@ -1,4 +1,5 @@
 const { ApiError, getToken, request } = require('../../utils/api')
+const { sourceLocator } = require('../../utils/source-presentation')
 const reasons = { SOURCE_DELETED: '原资料已删除，来源内容不可访问', SOURCE_RESTRICTED: '原资料暂时受限，来源内容不可访问' }
 Page({
   data: { id: '', card: null, sources: [], loading: false, error: '' },
@@ -12,6 +13,7 @@ Page({
       const path = `/cards/${encodeURIComponent(this.data.id)}`
       const [card, sourceList] = await Promise.all([request(path), request(`${path}/sources`)])
       this.setData({ card, sources: sourceList.items.map(source => ({ ...source,
+        locator: sourceLocator(source),
         reasonLabel: reasons[source.unavailableReason] || source.unavailableReason || '来源暂不可用' })) })
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) wx.reLaunch({ url: '/pages/login/index?reason=expired' })

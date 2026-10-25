@@ -9,6 +9,7 @@ import com.learningmaterial.system.task.AiTaskDtos.CandidateResult;
 import com.learningmaterial.system.task.AiTaskDtos.SourceRef;
 import com.learningmaterial.system.task.TaskCandidateService.SourceDraft;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import com.learningmaterial.system.ocr.OcrSettings;
 import org.springframework.stereotype.Component;
 
 import java.util.ArrayList;
@@ -22,14 +23,17 @@ public class MockTaskProcessor implements TaskProcessor {
     private final TaskCandidateService candidates;
     private final ObjectMapper json;
     private final PdfTextExtractionService pdfText;
+    private final OcrExtractionService ocr;
+    private final OcrSettings ocrSettings;
 
     public MockTaskProcessor(AiTaskMapper tasks, TaskLeaseService leases,
-                             TaskCandidateService candidates, ObjectMapper json, PdfTextExtractionService pdfText) {
+                             TaskCandidateService candidates, ObjectMapper json, PdfTextExtractionService pdfText, OcrExtractionService ocr, OcrSettings ocrSettings) {
         this.tasks = tasks;
         this.leases = leases;
         this.candidates = candidates;
         this.json = json;
         this.pdfText = pdfText;
+        this.ocr = ocr; this.ocrSettings = ocrSettings;
     }
 
     @Override
@@ -44,19 +48,25 @@ public class MockTaskProcessor implements TaskProcessor {
             .put("materialId", task.getMaterialId().toString())
             .put("materialVersion", task.getMaterialVersion());
         boolean pdf = "PDF".equals(config.path("inputSnapshot").path("type").asText());
-        String prepareTool = pdf ? "extract_pdf_text" : "prepare_source";
+        boolean imageOcr = ocrSettings.enabled() && "IMAGE".equals(config.path("inputSnapshot").path("type").asText());
+        String prepareTool = pdf ? "extract_pdf_text" : imageOcr ? "recognize_image" : "prepare_source";
         if (pdf) prepareArgs.set("pageRange", config.path("pageRange"));
         MockToolProtocol.validate(prepareTool, prepareArgs, task);
-        Long prepareCall = leases.startStep(lease, prepareTool, "LOCAL");
+        Long prepareCall = leases.startStep(lease, prepareTool, imageOcr ? "OCR" : "LOCAL");
         if (prepareCall == null) return;
         List<MaterialChunkRow> sources;
         PdfTextExtractionService.Extraction extraction = null;
+        OcrExtractionService.Outcome recognized = null;
         try {
             if (pdf) {
                 extraction = pdfText.extract(lease);
                 if (extraction == null) return;
                 sources = extraction.sources();
-                if (sources.isEmpty()) throw new TaskExecutionException("PDF_OCR_REQUIRED");
+                if (sources.isEmpty() && !ocrSettings.enabled()) throw new TaskExecutionException("PDF_OCR_REQUIRED");
+            } else if (imageOcr) {
+                recognized = ocr.extract(lease, null);
+                if (recognized == null) return;
+                extraction = recognized.extraction(); sources = extraction.sources();
             } else sources = candidates.saveSources(lease, prepare(config.path("inputSnapshot")));
         } catch (TaskExecutionException ex) {
             String explanation = switch (ex.errorCode()) {
@@ -64,15 +74,27 @@ public class MockTaskProcessor implements TaskProcessor {
                 case "PDF_TEXT_LIMIT_EXCEEDED" -> "所选页文字超过处理上限，请缩小页段后重试；未截断文字。";
                 default -> "来源文字提取未完成，请检查资料后重试。";
             };
-            leases.completeStep(lease, prepareCall, false, explanation, ex.errorCode());
+            leases.completeStep(lease, prepareCall, false, imageOcr ? ocr.attemptSummary(lease) : explanation, ex.errorCode());
             throw ex;
         }
         if (sources == null || !leases.completeStep(lease, prepareCall, true,
-            sources.size() + (pdf ? "个PDF文字层来源片段" : "个可核验的模拟来源片段"), null)) return;
+            recognized != null ? recognized.summary() : sources.size() + (pdf ? "个PDF文字层来源片段" : "个可核验的模拟来源片段"), null)) return;
+        if (pdf && ocrSettings.enabled() && extraction != null && !extraction.needsOcrPages().isEmpty()) {
+            Long ocrCall = leases.startStep(lease, "recognize_image", "OCR");
+            if (ocrCall == null) return;
+            try {
+                recognized = ocr.extract(lease, extraction);
+                if (recognized == null) return;
+                extraction = recognized.extraction(); sources = extraction.sources();
+            } catch (TaskExecutionException ex) {
+                leases.completeStep(lease, ocrCall, false, ocr.attemptSummary(lease), ex.errorCode()); throw ex;
+            }
+            if (!leases.completeStep(lease, ocrCall, true, recognized.summary(), null)) return;
+        }
 
         ObjectNode generateArgs = json.createObjectNode().put("goalType", task.getGoalType());
         var ids = generateArgs.putArray("chunkIds");
-        sources.forEach(row -> ids.add(row.getId().toString()));
+        for (MaterialChunkRow row : sources) ids.add(row.getId().toString());
         MockToolProtocol.validate("generate_summary_cards", generateArgs, task);
         Long generateCall = leases.startStep(lease, "generate_summary_cards", "LOCAL");
         if (generateCall == null) return;
@@ -126,7 +148,7 @@ public class MockTaskProcessor implements TaskProcessor {
         for (int i = 0; i < sources.size(); i++) {
             MaterialChunkRow source = sources.get(i);
             if (source.getContent().isBlank()) continue;
-            int offset = "PDF_TEXT".equals(source.getExtractionMethod())
+            int offset = ("PDF_TEXT".equals(source.getExtractionMethod()) || "OCR".equals(source.getExtractionMethod()))
                 ? source.getContent().length() - source.getContent().stripLeading().length() : 0;
             int end = safeEnd(source.getContent(), offset, 160);
             String quote = source.getContent().substring(offset, end);
@@ -145,7 +167,7 @@ public class MockTaskProcessor implements TaskProcessor {
         if (!metadataOnly && note.length() > 1500) warnings.add("本次模拟仅处理文字笔记前1500个字符。");
         Integer totalPages = snapshot.path("pageCount").isIntegralNumber()
             ? snapshot.path("pageCount").intValue() : null;
-        if (extraction != null) totalPages = extraction.totalPages();
+        if (extraction != null && "PDF".equals(snapshot.path("type").asText())) totalPages = extraction.totalPages();
         if (!pageRange.isMissingNode() && !pageRange.isNull() && metadataOnly) {
             warnings.add("所选PDF页段尚未解析，实际处理页数为0。");
         }

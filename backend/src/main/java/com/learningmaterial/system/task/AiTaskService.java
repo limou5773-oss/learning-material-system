@@ -36,15 +36,17 @@ public class AiTaskService {
 
     private final AiTaskMapper tasks;
     private final AiToolCallMapper calls;
+    private final OcrAttemptMapper ocrAttempts;
     private final MaterialMapper materials;
     private final UserMapper users;
     private final ObjectMapper json;
     private final Clock clock;
 
     public AiTaskService(AiTaskMapper tasks, AiToolCallMapper calls, MaterialMapper materials, UserMapper users,
-                         ObjectMapper json, Clock clock) {
+                         ObjectMapper json, Clock clock, OcrAttemptMapper ocrAttempts) {
         this.tasks = tasks;
         this.calls = calls;
+        this.ocrAttempts = ocrAttempts;
         this.materials = materials;
         this.users = users;
         this.json = json;
@@ -155,6 +157,7 @@ public class AiTaskService {
         LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
         tasks.cancelOwned(taskId, userId, now);
         calls.markRunningUnknown(taskId, "TASK_CANCELLED", now);
+        ocrAttempts.markRunningUnknown(taskId, "TASK_CANCELLED", now);
         return TaskView.from(tasks.findOwned(userId, taskId));
     }
 

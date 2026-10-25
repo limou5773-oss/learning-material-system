@@ -4,6 +4,7 @@ public class CardSourceRow {
     private Long chunkId, materialId;
     private Integer materialVersion, pageNo;
     private String materialTitle, quoteText, content, materialStatus, accessState;
+    private String extractionMethod, qualityNote;
     public Long getChunkId() { return chunkId; }
     public void setChunkId(Long chunkId) { this.chunkId = chunkId; }
     public Long getMaterialId() { return materialId; }
@@ -22,4 +23,8 @@ public class CardSourceRow {
     public void setMaterialStatus(String materialStatus) { this.materialStatus = materialStatus; }
     public String getAccessState() { return accessState; }
     public void setAccessState(String accessState) { this.accessState = accessState; }
+    public String getExtractionMethod() { return extractionMethod; }
+    public void setExtractionMethod(String extractionMethod) { this.extractionMethod = extractionMethod; }
+    public String getQualityNote() { return qualityNote; }
+    public void setQualityNote(String qualityNote) { this.qualityNote = qualityNote; }
 }
