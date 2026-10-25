@@ -46,11 +46,49 @@ export interface CandidateResult {
   generationMode: 'MOCK'
   summary: string
   tags: string[]
-  cards: { candidateKey: string; title: string; content: string; sources: CandidateSourceRef[] }[]
-  relations: unknown[]
+  cards: CandidateCard[]
+  relations: CandidateRelation[]
   totalPages: number | null
   processedPages: number[]
   warnings: string[]
+}
+
+export interface CandidateCard {
+  candidateKey: string
+  title: string
+  content: string
+  summary?: string | null
+  subject?: string | null
+  tags?: string[]
+  sources: CandidateSourceRef[]
+  parentCandidateKey?: string | null
+}
+
+export interface RelationEndpoint { candidateKey?: string; cardId?: string; cardVersion?: number }
+export interface CandidateRelation {
+  relationKey: string
+  source: RelationEndpoint
+  target: RelationEndpoint
+  type: 'RELATED' | 'PREREQUISITE' | 'EXAMPLE'
+  evidenceText: string
+}
+
+export interface ConfirmationInput {
+  resultVersion: number
+  sourceVersion: number
+  summary: string
+  tags: string[]
+  tagMode: 'MERGE' | 'REPLACE'
+  cards: CandidateCard[]
+  relations: CandidateRelation[]
+}
+
+export interface ConfirmationResult {
+  taskId: string
+  status: 'SUCCEEDED'
+  cardIds: string[]
+  resultingMaterialVersion: number
+  confirmedAt: string
 }
 
 export interface CandidateSource {
@@ -80,6 +118,7 @@ export const stageLabels: Record<string, string> = {
   CANCELLED: '用户取消', SOURCE_DELETED: '原资料已删除',
   PREPARE_SOURCE: '准备来源', GENERATE_SUMMARY_CARDS: '生成模拟候选',
   VALIDATE_CANDIDATE: '核验候选', CANDIDATE_READY: '等待人工确认',
+  CONFIRMED: '人工确认完成',
 }
 
 export const stepStatusLabels: Record<TaskStep['status'], string> = {

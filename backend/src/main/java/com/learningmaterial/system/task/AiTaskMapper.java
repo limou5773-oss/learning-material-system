@@ -12,6 +12,11 @@ import java.util.List;
 
 @Mapper
 public interface AiTaskMapper {
+    @Update("UPDATE ai_task SET status='SUCCEEDED', stage='CONFIRMED', finished_at=#{now}, updated_at=#{now}, lease_until=NULL WHERE id=#{id} AND status='WAIT_CONFIRM' AND cancel_flag=0")
+    int confirm(@Param("id") long id, @Param("now") LocalDateTime now);
+
+    @Update("UPDATE ai_task SET status='FAILED', stage='FAILED', error_code='SOURCE_VERSION_CHANGED', finished_at=#{now}, updated_at=#{now}, lease_until=NULL WHERE id=#{id} AND status='WAIT_CONFIRM'")
+    int failStaleConfirmation(@Param("id") long id, @Param("now") LocalDateTime now);
     @Insert("""
         INSERT INTO ai_task (user_id, material_id, material_version, request_key, request_hash, parent_task_id,
                              goal_type, instruction, status, stage, step_count, cancel_flag,

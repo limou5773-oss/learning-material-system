@@ -8,6 +8,8 @@ public class AiResultRow {
     private String candidateJson;
     private String validationJson;
     private String status;
+    private String confirmationJson;
+    private LocalDateTime confirmedAt;
     private LocalDateTime createdAt;
     private LocalDateTime updatedAt;
 
@@ -21,6 +23,10 @@ public class AiResultRow {
     public void setValidationJson(String validationJson) { this.validationJson = validationJson; }
     public String getStatus() { return status; }
     public void setStatus(String status) { this.status = status; }
+    public String getConfirmationJson() { return confirmationJson; }
+    public void setConfirmationJson(String confirmationJson) { this.confirmationJson = confirmationJson; }
+    public LocalDateTime getConfirmedAt() { return confirmedAt; }
+    public void setConfirmedAt(LocalDateTime confirmedAt) { this.confirmedAt = confirmedAt; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

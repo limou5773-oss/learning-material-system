@@ -1,0 +1,35 @@
+<view class="page">
+  <text class="eyebrow">REVIEW AND SAVE</text><view class="title">确认整理结果</view>
+  <view class="lead">模拟候选需核对来源，经你确认后才会保存。</view>
+  <view wx:if="{{loading}}" class="state">正在读取候选…</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view><view wx:if="{{draftWarning}}" class="notice">{{draftWarning}}</view>
+  <view wx:if="{{restored && !receipt}}" class="notice">已恢复当前账号的编辑草稿。</view>
+  <view wx:if="{{receipt}}" class="card"><view class="card-title">已保存 {{receipt.cardIds.length}} 张卡片</view><view class="muted">资料版本更新为 {{receipt.resultingMaterialVersion}}，重复提交不会创建副本。</view><button wx:for="{{receipt.cardIds}}" wx:key="*this" class="outline" data-id="{{item}}" bindtap="openCard">查看卡片 #{{item}}</button></view>
+  <view wx:elif="{{cards.length}}" class="card">
+    <view wx:if="{{task.status === 'SUCCEEDED'}}" class="notice">任务已完成，可读取上次保存结果，不会再次创建卡片。</view>
+    <view wx:for="{{warnings}}" wx:key="*this" class="notice">{{item}}</view>
+    <view class="muted">候选版本 {{resultVersion}} · 来源版本 {{sourceVersion}}</view>
+    <view wx:if="{{conflict}}" class="confirm-source">
+      <view class="field-label">保留的编辑草稿（可长按选择复制）</view>
+      <text selectable="true">摘要：{{summary}}\n资料标签：{{tagsText}}</text>
+      <view wx:for="{{cards}}" wx:for-item="draftCard" wx:key="candidateKey" class="draft-copy">
+        <text selectable="true">{{draftCard.selected ? '已选择' : '未选择'}}\n标题：{{draftCard.title}}\n正文：{{draftCard.content}}\n卡片标签：{{draftCard.tagsText}}</text>
+      </view>
+    </view>
+    <label class="field-label" for="confirm-summary">资料摘要</label><textarea id="confirm-summary" class="confirm-textarea" value="{{summary}}" maxlength="4000" bindinput="onSummaryInput" disabled="{{conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />
+    <label class="field-label" for="confirm-tags">资料标签 用逗号分隔</label><input id="confirm-tags" class="field-input" value="{{tagsText}}" maxlength="650" bindinput="onTagsInput" disabled="{{conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />
+    <view class="field-label">标签保存方式</view><radio-group bindchange="onTagModeChange"><label class="mode"><radio value="MERGE" checked="{{tagMode === 'MERGE'}}" disabled="{{conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />合并原标签</label><label class="mode"><radio value="REPLACE" checked="{{tagMode === 'REPLACE'}}" disabled="{{conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />替换原标签</label></radio-group>
+    <view class="field-label">选择知识卡片 已选择 {{selectedCount}} 张</view><view class="muted">未选择父卡片时，子卡片会保存为根节点。</view>
+    <checkbox-group bindchange="onCardSelection"><view wx:for="{{cards}}" wx:for-item="card" wx:key="candidateKey" class="confirm-card">
+      <label><checkbox value="{{card.candidateKey}}" checked="{{card.selected}}" disabled="{{conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />保存此卡片</label>
+      <view class="field-label">标题</view><input class="field-input" value="{{card.title}}" maxlength="255" data-key="{{card.candidateKey}}" data-field="title" bindinput="onCardInput" disabled="{{!card.selected || conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />
+      <view class="field-label">正文</view><textarea class="confirm-textarea" value="{{card.content}}" maxlength="8000" data-key="{{card.candidateKey}}" data-field="content" bindinput="onCardInput" disabled="{{!card.selected || conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />
+      <view class="field-label">卡片标签</view><input class="field-input" value="{{card.tagsText}}" maxlength="650" data-key="{{card.candidateKey}}" data-field="tagsText" bindinput="onCardInput" disabled="{{!card.selected || conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />
+      <view wx:for="{{card.sources}}" wx:for-item="source" wx:key="chunkId" class="confirm-source"><view class="muted">来源片段 #{{source.chunkId}}</view><text selectable="true">{{source.quoteText}}</text></view>
+    </view></checkbox-group>
+    <view wx:if="{{relations.length}}"><view class="field-label">关联建议 核对后再勾选</view><checkbox-group bindchange="onRelationSelection"><label wx:for="{{relations}}" wx:key="relationKey" class="relation"><checkbox value="{{item.relationKey}}" checked="{{item.selected}}" disabled="{{conflict || saving || task.status !== 'WAIT_CONFIRM'}}" />{{item.sourceLabel}} → {{item.targetLabel}}：{{item.evidenceText}}</label></checkbox-group></view>
+    <button class="primary" bindtap="submit" loading="{{saving}}" disabled="{{saving || loading || conflict || !selectedCount}}">{{task.status === 'SUCCEEDED' ? '读取上次保存结果' : '确认保存选中卡片'}}</button>
+  </view>
+  <view wx:if="{{sources.length && !receipt}}" class="card source-panel"><view class="card-title">完整来源对照</view><view wx:for="{{sources}}" wx:key="chunkId" class="confirm-source"><view class="muted">片段 #{{item.chunkId}} · {{item.extractionMethod === 'METADATA' ? '标题元数据，正文未提取' : '文字来源'}}</view><text selectable="true">{{item.content}}</text></view></view>
+  <button class="outline" bindtap="openTask">返回任务详情</button>
+</view>

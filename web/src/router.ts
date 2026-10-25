@@ -12,6 +12,9 @@ import PdfUploadView from './views/PdfUploadView.vue'
 import TaskCreateView from './views/TaskCreateView.vue'
 import TasksView from './views/TasksView.vue'
 import TaskDetailView from './views/TaskDetailView.vue'
+import TaskConfirmView from './views/TaskConfirmView.vue'
+import CardsView from './views/CardsView.vue'
+import CardDetailView from './views/CardDetailView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -29,7 +32,10 @@ const router = createRouter({
     { path: '/materials/:id/edit', name: 'note-edit', component: NoteEditView, meta: { requiresAuth: true } },
     { path: '/materials/:id', name: 'material-detail', component: MaterialDetailView, meta: { requiresAuth: true } },
     { path: '/ai-tasks', name: 'tasks', component: TasksView, meta: { requiresAuth: true } },
+    { path: '/ai-tasks/:id/confirm', name: 'task-confirm', component: TaskConfirmView, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id', name: 'task-detail', component: TaskDetailView, meta: { requiresAuth: true } },
+    { path: '/cards', name: 'cards', component: CardsView, meta: { requiresAuth: true } },
+    { path: '/cards/:id', name: 'card-detail', component: CardDetailView, meta: { requiresAuth: true } },
   ],
 })
 

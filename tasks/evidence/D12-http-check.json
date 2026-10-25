@@ -1,0 +1,11 @@
+{
+  "date": "2026-10-25",
+  "webAndMiniUserIdsMatch": true,
+  "taskId": "4",
+  "cardId": "3",
+  "savedViaMiniPageAndRealHttp": true,
+  "identicalWebAndMiniCard": true,
+  "sourcesAvailable": true,
+  "generationMode": "MOCK",
+  "nativeWechatVerified": false
+}

@@ -17,6 +17,7 @@ import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.GetMapping;
 import org.springframework.web.bind.annotation.PathVariable;
 import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RequestParam;
@@ -28,10 +29,19 @@ import java.util.List;
 public class AiTaskController {
     private final AiTaskService tasks;
     private final TaskCandidateService candidates;
+    private final TaskConfirmationService confirmations;
 
-    public AiTaskController(AiTaskService tasks, TaskCandidateService candidates) {
+    public AiTaskController(AiTaskService tasks, TaskCandidateService candidates, TaskConfirmationService confirmations) {
         this.tasks = tasks;
         this.candidates = candidates;
+        this.confirmations = confirmations;
+    }
+
+    @PutMapping("/{id}/confirmation")
+    public ApiResponse<AiTaskDtos.ConfirmationResult> confirm(@AuthenticationPrincipal AuthPrincipal principal,
+        @PathVariable String id, @Valid @RequestBody AiTaskDtos.ConfirmationInput input,
+        HttpServletRequest request) {
+        return ApiResponse.of(confirmations.confirm(principal.userId(), id, input), request);
     }
 
     @PostMapping

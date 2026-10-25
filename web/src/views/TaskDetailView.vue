@@ -102,7 +102,8 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
             <details><summary>查看完整来源片段</summary><p class="candidate-copy">{{ sources.find(source => source.chunkId === ref.chunkId)?.content }}</p></details>
           </div>
         </div>
-        <p class="task-hint">当前仅供预览。编辑和确认保存将在下一阶段提供。</p>
+        <p v-if="task.status === 'WAIT_CONFIRM'" class="task-hint">候选尚未保存。请核对来源，再编辑并确认需要的卡片。</p>
+        <div class="detail-actions"><router-link v-if="task.status === 'WAIT_CONFIRM'" :to="`/ai-tasks/${task.id}/confirm`">编辑并确认保存</router-link><router-link v-if="task.status === 'SUCCEEDED'" to="/cards">查看已保存卡片</router-link></div>
       </section>
       <section class="task-steps"><h2>执行记录</h2><p v-if="!steps.length" class="task-state">暂无执行步骤。</p><ol v-else><li v-for="step in steps" :key="`${step.stepNo}-${step.attemptNo}`"><strong>{{ step.toolName }}</strong> · {{ stepStatusLabels[step.status] }}<span v-if="step.outputSummary"> · {{ step.outputSummary }}</span><span v-if="step.errorCode"> · {{ step.errorCode }}</span></li></ol></section>
       <label v-if="task.canRetry" class="task-retry-consent"><input v-model="consent" type="checkbox">我同意再次将当前资料提交外部处理</label>
