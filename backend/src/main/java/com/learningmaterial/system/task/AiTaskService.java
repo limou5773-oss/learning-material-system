@@ -37,20 +37,23 @@ public class AiTaskService {
     private final AiTaskMapper tasks;
     private final AiToolCallMapper calls;
     private final OcrAttemptMapper ocrAttempts;
+    private final ModelAttemptMapper modelAttempts;
     private final MaterialMapper materials;
     private final UserMapper users;
     private final ObjectMapper json;
     private final Clock clock;
+    private final com.learningmaterial.system.model.ModelSettings modelSettings;
 
     public AiTaskService(AiTaskMapper tasks, AiToolCallMapper calls, MaterialMapper materials, UserMapper users,
-                         ObjectMapper json, Clock clock, OcrAttemptMapper ocrAttempts) {
+                         ObjectMapper json, Clock clock, OcrAttemptMapper ocrAttempts, ModelAttemptMapper modelAttempts, com.learningmaterial.system.model.ModelSettings modelSettings) {
         this.tasks = tasks;
         this.calls = calls;
-        this.ocrAttempts = ocrAttempts;
+        this.ocrAttempts = ocrAttempts; this.modelAttempts = modelAttempts;
         this.materials = materials;
         this.users = users;
         this.json = json;
         this.clock = clock;
+        this.modelSettings = modelSettings;
     }
 
     @Transactional
@@ -158,6 +161,7 @@ public class AiTaskService {
         tasks.cancelOwned(taskId, userId, now);
         calls.markRunningUnknown(taskId, "TASK_CANCELLED", now);
         ocrAttempts.markRunningUnknown(taskId, "TASK_CANCELLED", now);
+        modelAttempts.markRunningUnknown(taskId, "TASK_CANCELLED", now);
         return TaskView.from(tasks.findOwned(userId, taskId));
     }
 
@@ -212,13 +216,16 @@ public class AiTaskService {
         source.put("pageCount", material.getPageCount());
         source.put("fileHash", material.getFileHash());
         source.put("storageKey", material.getStorageKey());
+        source.put("fileSize", material.getFileSize());
+        source.put("mimeType", material.getMimeType());
         Map<String, Object> config = new LinkedHashMap<>();
         config.put("pageRange", range);
         config.put("allowRelatedSearch", allowRelatedSearch);
         config.put("externalProcessingConsentAt", consentAt.toString());
         config.put("inputSnapshot", source);
-        config.put("modelConfig", Map.of("status", "NOT_CONFIGURED"));
-        config.put("budget", Map.of("maxSteps", 8, "maxModelAttempts", 12, "maxOcrPages", 20));
+        config.put("modelConfig", Map.of("provider", modelSettings.provider(), "model", modelSettings.model(),
+            "status", "disabled".equalsIgnoreCase(modelSettings.provider()) ? "NOT_CONFIGURED" : "SNAPSHOT"));
+        config.put("budget", Map.of("maxSteps", 8, "maxModelAttempts", 2, "maxOcrPages", 20));
         return serialize(config);
     }
 

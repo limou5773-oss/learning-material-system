@@ -12,6 +12,7 @@ import com.learningmaterial.system.material.MaterialDtos.TagView;
 import com.learningmaterial.system.task.AiTaskMapper;
 import com.learningmaterial.system.task.AiToolCallMapper;
 import com.learningmaterial.system.task.OcrAttemptMapper;
+import com.learningmaterial.system.task.ModelAttemptMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
@@ -40,12 +41,13 @@ public class MaterialService {
     private final AiTaskMapper tasks;
     private final AiToolCallMapper toolCalls;
     private final OcrAttemptMapper ocrAttempts;
+    private final ModelAttemptMapper modelAttempts;
     private final ObjectMapper objectMapper;
 
     public MaterialService(MaterialMapper materials, TagMapper tags, Clock clock,
                            FileStorage storage, ImageValidator imageValidator, PdfValidator pdfValidator,
                            FavoriteMapper favorites, AiTaskMapper tasks, AiToolCallMapper toolCalls,
-                           ObjectMapper objectMapper, OcrAttemptMapper ocrAttempts) {
+                           ObjectMapper objectMapper, OcrAttemptMapper ocrAttempts, ModelAttemptMapper modelAttempts) {
         this.materials = materials;
         this.tags = tags;
         this.clock = clock;
@@ -55,7 +57,7 @@ public class MaterialService {
         this.favorites = favorites;
         this.tasks = tasks;
         this.toolCalls = toolCalls;
-        this.ocrAttempts = ocrAttempts;
+        this.ocrAttempts = ocrAttempts; this.modelAttempts = modelAttempts;
         this.objectMapper = objectMapper;
     }
 
@@ -218,6 +220,7 @@ public class MaterialService {
         tasks.cancelForDeletedMaterial(userId, materialId, now);
         toolCalls.markDeletedSourceUnknown(userId, materialId, now);
         ocrAttempts.markDeletedSourceUnknown(userId, materialId, now);
+        modelAttempts.markDeletedSourceUnknown(userId, materialId, now);
     }
 
     @Transactional(readOnly = true)

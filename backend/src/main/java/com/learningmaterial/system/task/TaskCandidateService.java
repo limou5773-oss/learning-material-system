@@ -28,6 +28,8 @@ public class TaskCandidateService {
     public static final int MOCK_METADATA_CHUNK_NO = 1_000_000;
     public static final int PDF_CHUNK_BASE = 2_000_000;
     public static final int OCR_CHUNK_BASE = 3_000_000;
+    public static final int MODEL_NOTE_CHUNK_BASE = 4_000_000;
+    private final com.learningmaterial.system.auth.UserMapper users;
     private final AiTaskMapper tasks;
     private final MaterialMapper materials;
     private final MaterialChunkMapper chunks;
@@ -36,7 +38,8 @@ public class TaskCandidateService {
     private final Clock clock;
 
     public TaskCandidateService(AiTaskMapper tasks, MaterialMapper materials, MaterialChunkMapper chunks,
-                                AiResultMapper results, ObjectMapper json, Clock clock) {
+                                AiResultMapper results, ObjectMapper json, Clock clock, com.learningmaterial.system.auth.UserMapper users) {
+        this.users = users;
         this.tasks = tasks;
         this.materials = materials;
         this.chunks = chunks;
@@ -65,7 +68,8 @@ public class TaskCandidateService {
         for (SourceDraft draft : drafts) {
             boolean ocr = "OCR".equals(draft.extractionMethod());
             boolean pdf = "PDF_TEXT".equals(draft.extractionMethod()) || ocr && "PDF".equals(material.getMaterialType());
-            boolean longSource = pdf || ocr;
+            boolean modelNote = "TEXT".equals(draft.extractionMethod()) && draft.chunkNo() >= MODEL_NOTE_CHUNK_BASE;
+            boolean longSource = pdf || ocr || modelNote;
             if (pdf && (!"PDF".equals(material.getMaterialType()) || draft.pageNo() == null
                 || draft.pageNo() < 1 || draft.pageNo() > 100)) invalidCandidate();
             if (ocr && !Set.of("PDF", "IMAGE").contains(material.getMaterialType())) invalidCandidate();
@@ -81,6 +85,7 @@ public class TaskCandidateService {
             int part = longSource ? pageParts.merge(pageKey, 1, Integer::sum) - 1 : 0;
             int expectedChunkNo = ocr ? OCR_CHUNK_BASE + pageKey * 100 + part
                 : pdf ? PDF_CHUNK_BASE + pageKey * 100 + part
+                : modelNote ? MODEL_NOTE_CHUNK_BASE + saved.size() + 1
                 : "METADATA".equals(draft.extractionMethod()) ? MOCK_METADATA_CHUNK_NO : saved.size() + 1;
             if (draft.chunkNo() != expectedChunkNo || draft.content() == null
                 || draft.content().isEmpty() || (!longSource && draft.content().isBlank())
@@ -123,7 +128,7 @@ public class TaskCandidateService {
         result.setTaskId(task.getId());
         result.setVersion(1);
         result.setCandidateJson(serialize(candidate));
-        result.setValidationJson("{\"valid\":true,\"mode\":\"MOCK\",\"sourceChecked\":true}");
+        result.setValidationJson("{\"valid\":true,\"mode\":\"" + candidate.generationMode() + "\",\"sourceChecked\":true}");
         result.setStatus("CANDIDATE");
         result.setCreatedAt(now);
         result.setUpdatedAt(now);
@@ -174,26 +179,34 @@ public class TaskCandidateService {
     private void validateCandidate(AiTaskRow task, CandidateResult candidate) {
         if (candidate == null || !task.getId().toString().equals(candidate.taskId())
             || candidate.resultVersion() != 1 || candidate.sourceVersion() != task.getMaterialVersion()
-            || !"MOCK".equals(candidate.generationMode()) || candidate.summary() == null
+            || candidate.generationMode() == null || !Set.of("MOCK", "MODEL").contains(candidate.generationMode()) || candidate.summary() == null
             || candidate.summary().isBlank() || candidate.summary().length() > 4000
             || candidate.tags() == null || candidate.tags().size() > 10
             || candidate.cards() == null || candidate.cards().isEmpty() || candidate.cards().size() > 30
             || candidate.relations() == null || !candidate.relations().isEmpty()
             || candidate.warnings() == null || candidate.warnings().isEmpty()) invalidCandidate();
+        if (!validTags(candidate.tags()) || candidate.processedPages() == null) invalidCandidate();
+        if ("MODEL".equals(candidate.generationMode()) && (candidate.generationInfo() == null
+            || !safeIdentifier(candidate.generationInfo().provider(),96) || !safeIdentifier(candidate.generationInfo().model(),128)
+            || !safeIdentifier(candidate.generationInfo().promptVersion(),64))) invalidCandidate();
         Set<String> keys = new HashSet<>();
         for (var card : candidate.cards()) {
-            if (card.candidateKey() == null || !keys.add(card.candidateKey())
-                || card.candidateKey().length() > 64 || card.title() == null || card.title().isBlank()
+            if (card == null || card.candidateKey() == null || !keys.add(card.candidateKey())
+                || card.candidateKey().isBlank() || card.candidateKey().length() > 64 || card.title() == null || card.title().isBlank()
                 || card.title().length() > 255 || card.content() == null || card.content().isBlank()
                 || card.content().length() > 8000 || card.sources() == null || card.sources().isEmpty()
-                || card.sources().size() > 20) invalidCandidate();
+                || card.sources().size() > 20 || card.parentCandidateKey() != null
+                || card.summary() != null && card.summary().length() > 2000
+                || card.subject() != null && card.subject().length() > 64 || !validTags(card.tags())) invalidCandidate();
             for (SourceRef ref : card.sources()) {
                 long id;
                 try { id = Long.parseLong(ref.chunkId()); }
                 catch (RuntimeException ex) { invalidCandidate(); return; }
                 MaterialChunkRow source = chunks.findSource(task.getMaterialId(), task.getMaterialVersion(), id);
-                if (source == null || ref.quoteText() == null || ref.quoteText().isBlank()
+                if (source == null || ref.startOffset() == null || ref.endOffset() == null || ref.quoteText() == null || ref.quoteText().isBlank()
                     || ref.quoteText().length() > 2000 || ref.startOffset() < 0
+                    || ref.startOffset() > source.getContent().length()
+                    || ref.endOffset() < ref.startOffset()
                     || ref.endOffset() != ref.startOffset() + ref.quoteText().length()
                     || ref.endOffset() > source.getContent().length()
                     || !source.getContent().substring(ref.startOffset(), ref.endOffset()).equals(ref.quoteText())) {
@@ -203,7 +216,15 @@ public class TaskCandidateService {
         }
     }
 
+    private static boolean validTags(List<String> tags) {
+        return tags != null && tags.size() <= 10 && tags.stream().allMatch(t -> t != null && !t.isBlank() && t.length() <= 64);
+    }
+    private static boolean safeIdentifier(String value,int limit) {
+        return value != null && value.length() <= limit && value.matches("[A-Za-z0-9_.:-]+");
+    }
     private void checkMaterial(MaterialRow material, AiTaskRow task) {
+        var user = users.findById(task.getUserId());
+        if (user == null || !"ENABLED".equals(user.getStatus())) throw new TaskExecutionException("SOURCE_UNAVAILABLE");
         if (material == null || !"NORMAL".equals(material.getAccessState())
             || !Objects.equals(material.getId(), task.getMaterialId())
             || !Objects.equals(material.getUserId(), task.getUserId())) {

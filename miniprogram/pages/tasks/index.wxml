@@ -1,6 +1,6 @@
-<view class="page"><text class="eyebrow">ORGANIZE QUEUE</text><view class="title">整理任务</view><view class="lead">查看本人提交的任务与实际状态。</view>
+<view class="page"><text class="eyebrow">ORGANIZE QUEUE</text><view class="title">整理任务</view><view class="lead">查看本人提交的任务与实际状态。处理模式由服务端配置决定，生成结果均需人工确认。</view>
   <view wx:if="{{error}}" class="error">{{error}}<view class="retry" bindtap="load">点击重试</view></view>
   <view wx:if="{{loading && !items.length}}" class="state">正在读取任务…</view><view wx:elif="{{!items.length}}" class="state">暂无整理任务。</view>
-  <view wx:else><view wx:for="{{items}}" wx:key="id" class="card task-item" data-id="{{item.id}}" bindtap="openDetail"><text class="eyebrow">{{item.statusLabel}}</text><view class="card-title">{{item.goalLabel}}</view><view class="muted">资料 #{{item.materialId}} · 版本 {{item.materialVersion}}</view><view class="muted">{{item.shortDate}}</view></view></view>
+  <view wx:else><view wx:for="{{items}}" wx:key="id" class="card task-item" data-id="{{item.id}}" bindtap="openDetail"><text class="eyebrow">{{item.statusLabel}}</text><view class="card-title">{{item.goalLabel}}</view><view class="muted">资料 #{{item.materialId}} · 版本 {{item.materialVersion}}</view><view wx:if="{{item.errorMessage}}" class="notice">{{item.errorMessage}}</view><view class="muted">{{item.shortDate}}</view></view></view>
   <view wx:if="{{total > pageSize}}" class="pagination"><button bindtap="previous" disabled="{{page === 1 || loading}}">上一页</button><text>第 {{page}} 页 · 共 {{total}} 条</text><button bindtap="next" disabled="{{page * pageSize >= total || loading}}">下一页</button></view>
 </view>

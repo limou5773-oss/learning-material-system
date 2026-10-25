@@ -5,7 +5,7 @@ import { api, ApiRequestError } from '../api'
 import { clearSession, session } from '../auth'
 import { buildConfirmationInput, createConfirmationDraft, isConfirmationDraft, type ConfirmationDraft } from '../confirmation'
 import type { AiTask, CandidateResult, CandidateSource, ConfirmationResult, RelationEndpoint } from '../tasks'
-import { sourceLocator } from '../tasks'
+import { sourceLocator, generationPresentation } from '../tasks'
 
 const route = useRoute()
 const router = useRouter()
@@ -14,6 +14,7 @@ const draftKey = `lms.confirmDraft.v1.${session.value?.user.id}.${taskId}`
 const task = ref<AiTask | null>(null)
 const draft = ref<ConfirmationDraft | null>(null)
 const candidate = ref<CandidateResult | null>(null)
+const generationView = computed(() => generationPresentation(candidate.value?.generationMode, candidate.value?.generationInfo))
 const sources = ref<CandidateSource[]>([])
 const receipt = ref<ConfirmationResult | null>(null)
 const loading = ref(false)
@@ -93,8 +94,10 @@ onMounted(load)
   <div class="confirmation-layout">
     <router-link class="back-link" :to="`/ai-tasks/${taskId}`">← 返回任务详情</router-link>
     <section class="materials-panel editor-panel">
-      <div class="candidate-heading"><h1>确认整理结果</h1><span class="candidate-badge">模拟生成</span></div>
+      <div class="candidate-heading"><h1>确认整理结果</h1><span v-if="candidate" class="candidate-badge">{{ generationView.label }}</span></div>
       <p class="task-state">核对来源后，选择需要的卡片并修改文字。确认保存后，两端均可查阅。</p>
+      <p v-if="candidate && generationView.modelLabel" class="task-state">{{ generationView.modelLabel }}</p>
+      <p v-if="candidate" class="candidate-warning">{{ generationView.warning }}</p>
       <p v-if="loading" role="status">正在读取候选结果…</p>
       <p v-if="error" class="inline-error" role="alert">{{ error }} <button v-if="!conflict" type="button" @click="load">重试读取</button></p>
       <p v-if="restored && !receipt" class="task-hint">已恢复当前账号的确认草稿，来源版本保持不变。</p>

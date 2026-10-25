@@ -137,3 +137,51 @@ test('确认后查阅正式卡片仍保留扫描页OCR来源和质量说明', as
   assert.equal(detail.data.sources[0].qualityNote, 'OCR置信度较低，请核对原图')
   assert.equal(detail.data.card.generationMode, 'MOCK')
 })
+
+test('本地API桩：MODEL候选经人工确认才写入，正式卡片保留模型与核对标识', async () => {
+  storage.clear(); storage.set('lms.accessToken.v1', token)
+  const result = { taskId: 'model-local', resultVersion: 1, sourceVersion: 1,
+    generationMode: 'MODEL', generationInfo: { provider: 'deepseek', model: 'local-stub', promptVersion: 'test-v1' },
+    summary: '本地桩摘要', tags: [], relations: [], warnings: [], processedPages: [],
+    cards: [{ candidateKey: 'a', title: '本地桩卡片', content: '需要人工确认的内容',
+      sources: [{ chunkId: '17', quoteText: '原文', startOffset: 0, endOffset: 2 }] }] }
+  let writes = 0
+  handler = options => {
+    if (options.method === 'PUT') {
+      writes++
+      assert.equal(options.data.cards[0].content, '人工核对后正文')
+      assert.equal(options.data.generationMode, undefined)
+      assert.equal(options.data.generationInfo, undefined)
+      options.success({ statusCode: 200, data: { data: { taskId: 'model-local', status: 'SUCCEEDED', cardIds: ['125'], resultingMaterialVersion: 2 } } })
+      return
+    }
+    const data = options.url.endsWith('/users/me') ? { id: '7' }
+      : options.url.endsWith('/result') ? result
+      : options.url.includes('/steps?') ? { items: [], total: 0 }
+      : options.url.endsWith('/sources') ? [{ chunkId: '17', content: '原文', extractionMethod: 'TEXT', chunkNo: 1 }]
+      : { id: 'model-local', status: 'WAIT_CONFIRM' }
+    options.success({ statusCode: 200, data: { data } })
+  }
+  const detail = page('../miniprogram/pages/tasks/detail')
+  detail.onLoad({ id: 'model-local' }); await detail.load()
+  assert.equal(detail.data.generationView.label, '模型生成')
+  assert.match(detail.data.generationView.modelLabel, /deepseek.*local-stub/)
+  assert.match(detail.data.generationView.warning, /人工核对/)
+  assert.equal(writes, 0)
+  const form = page('../miniprogram/pages/tasks/confirm')
+  form.onLoad({ id: 'model-local' }); await form.load()
+  assert.equal(form.data.generationView.label, '模型生成')
+  assert.match(form.data.generationView.modelLabel, /deepseek.*local-stub/)
+  assert.equal(writes, 0)
+  form.onCardInput({ currentTarget: { dataset: { key: 'a', field: 'content' } }, detail: { value: '人工核对后正文' } })
+  await form.submit()
+  assert.equal(writes, 1)
+  assert.deepEqual(form.data.receipt.cardIds, ['125'])
+  handler = options => options.success({ statusCode: 200, data: { data:
+    options.url.endsWith('/sources') ? { items: [] } : { id: '125', generationMode: 'MODEL', tags: [] } } })
+  const card = page('../miniprogram/pages/cards/detail')
+  card.onLoad({ id: '125' }); await card.load()
+  assert.equal(card.data.card.generationLabel, '模型生成 · 人工确认')
+  assert.match(card.data.card.generationWarning, /人工核对/)
+  assert.doesNotMatch(card.data.card.generationWarning, /模拟/)
+})

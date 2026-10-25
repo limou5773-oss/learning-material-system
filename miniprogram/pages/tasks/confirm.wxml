@@ -1,6 +1,7 @@
 <view class="page">
   <text class="eyebrow">REVIEW AND SAVE</text><view class="title">确认整理结果</view>
-  <view class="lead">模拟候选需核对来源，经你确认后才会保存。</view>
+  <view class="lead">候选需核对来源，经你确认后才会保存。</view>
+  <view wx:if="{{generationView}}" class="notice">{{generationView.label}}<view wx:if="{{generationView.modelLabel}}">{{generationView.modelLabel}}</view><view>{{generationView.warning}}</view></view>
   <view wx:if="{{loading}}" class="state">正在读取候选…</view>
   <view wx:if="{{error}}" class="error">{{error}}</view><view wx:if="{{draftWarning}}" class="notice">{{draftWarning}}</view>
   <view wx:if="{{restored && !receipt}}" class="notice">已恢复当前账号的编辑草稿。</view>

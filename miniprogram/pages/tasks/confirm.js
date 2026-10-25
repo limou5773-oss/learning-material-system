@@ -1,5 +1,5 @@
 const { ApiError, getToken, getMe, request } = require('../../utils/api')
-const { sourceLocator } = require('../../utils/source-presentation')
+const { sourceLocator, generationPresentation } = require('../../utils/source-presentation')
 
 function tagNames(value) {
   const tags = value.split(/[,，]/).map(name => name.trim()).filter(Boolean)
@@ -22,7 +22,7 @@ function validDraft(value, id) {
 }
 
 Page({
-  data: { id: '', userId: '', task: null, resultVersion: 0, sourceVersion: 0, summary: '', tagsText: '',
+  data: { generationView: null, id: '', userId: '', task: null, resultVersion: 0, sourceVersion: 0, summary: '', tagsText: '',
     tagMode: 'MERGE', cards: [], relations: [], selectedCount: 0, sources: [], warnings: [],
     loading: false, saving: false, conflict: false, restored: false, receipt: null, error: '', draftWarning: '' },
   onLoad(options) { this.setData({ id: options.id || '' }) },
@@ -63,7 +63,7 @@ Page({
           sourceLabel: relation.source.candidateKey || `已有卡片 #${relation.source.cardId}`,
           targetLabel: relation.target.candidateKey || `已有卡片 #${relation.target.cardId}` })),
         selectedCount: result.cards.length })
-      this.setData({ sources: sources.map(source => ({ ...source, locator: sourceLocator(source) })), warnings: result.warnings || [] })
+      this.setData({ generationView: generationPresentation(result.generationMode, result.generationInfo), sources: sources.map(source => ({ ...source, locator: sourceLocator(source) })), warnings: result.warnings || [] })
       if (this.data.resultVersion !== result.resultVersion || this.data.sourceVersion !== result.sourceVersion) {
         this.setData({ conflict: true, error: '候选版本已变化，原草稿已保留，请复制修改后重新整理。' })
       }

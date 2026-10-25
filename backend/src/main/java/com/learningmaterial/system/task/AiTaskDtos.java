@@ -101,10 +101,21 @@ public final class AiTaskDtos {
     public record ConfirmationResult(String taskId, String status, List<String> cardIds,
                                       int resultingMaterialVersion, Instant confirmedAt) { }
 
+    public record GenerationInfo(String provider, String model, String promptVersion) { }
+
     public record CandidateResult(String taskId, int resultVersion, int sourceVersion,
                                   String generationMode, String summary, List<String> tags,
                                   List<CandidateCard> cards, List<CandidateRelation> relations,
-                                  Integer totalPages, List<Integer> processedPages, List<String> warnings) { }
+                                  Integer totalPages, List<Integer> processedPages, List<String> warnings,
+                                  GenerationInfo generationInfo) {
+        public CandidateResult(String taskId, int resultVersion, int sourceVersion,
+                               String generationMode, String summary, List<String> tags,
+                               List<CandidateCard> cards, List<CandidateRelation> relations,
+                               Integer totalPages, List<Integer> processedPages, List<String> warnings) {
+            this(taskId, resultVersion, sourceVersion, generationMode, summary, tags, cards, relations,
+                totalPages, processedPages, warnings, null);
+        }
+    }
 
     public record SourceView(String chunkId, String materialId, int materialVersion, int chunkNo,
                              Integer pageNo, String extractionMethod, String content, String qualityNote) {

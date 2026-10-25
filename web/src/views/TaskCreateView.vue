@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { api, ApiRequestError } from '../api'
 import { clearSession } from '../auth'
 import type { Material } from '../materials'
-import type { AiTask, GoalType } from '../tasks'
+import { externalProcessingConsent, type AiTask, type GoalType } from '../tasks'
 
 const route = useRoute()
 const router = useRouter()
@@ -67,7 +67,7 @@ onMounted(load)
 <template>
   <div class="materials-layout narrow">
     <router-link class="back-link" :to="`/materials/${route.params.id}`">← 返回资料</router-link>
-    <div class="section-heading"><div><span class="intro-eyebrow">ORGANIZE</span><h1>提交整理任务</h1><p>任务先进入队列；本地启用模拟处理器后可生成候选预览。</p></div></div>
+    <div class="section-heading"><div><span class="intro-eyebrow">ORGANIZE</span><h1>提交整理任务</h1><p>任务先进入队列；处理模式由服务端配置决定，候选均需人工确认。</p></div></div>
     <p v-if="loading" class="list-state">正在读取资料…</p>
     <section v-if="material" class="materials-panel editor-panel">
       <p class="task-source">资料：{{ material.title }} · 版本 {{ material.version }}</p>
@@ -77,7 +77,7 @@ onMounted(load)
         <label for="task-instruction">补充说明</label><textarea id="task-instruction" v-model="form.instruction" maxlength="1000" rows="4" placeholder="可选，说明希望关注的内容" />
         <div v-if="material.type === 'PDF'" class="task-range"><label for="task-from">起始页<input id="task-from" v-model.number="form.from" type="number" min="1" :max="material.pageCount || 1" /></label><label for="task-to">结束页<input id="task-to" v-model.number="form.to" type="number" min="1" :max="material.pageCount || 1" /></label><small>一次最多整理 20 页，共 {{ material.pageCount }} 页</small></div>
         <label class="task-check"><input v-model="form.allowRelatedSearch" type="checkbox" /> 允许检索本人相关笔记</label>
-        <label class="task-check"><input v-model="form.consent" type="checkbox" /> 我同意所选资料用于整理，并在OCR启用时发送给配置的OCR服务；摘要和卡片当前为模拟生成</label>
+        <label class="task-check"><input v-model="form.consent" type="checkbox" /> {{ externalProcessingConsent }}</label>
         <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
         <div class="editor-actions"><span>提交后可在“整理任务”查看状态</span><button type="submit" :disabled="saving">{{ saving ? '正在提交…' : '提交任务' }}</button></div>
       </form>

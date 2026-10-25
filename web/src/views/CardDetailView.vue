@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { onMounted, ref } from 'vue'
+import { savedGenerationLabel, savedGenerationWarning } from '../tasks'
 import { useRoute, useRouter } from 'vue-router'
 import { api, ApiRequestError } from '../api'
 import { clearSession } from '../auth'
@@ -29,9 +30,9 @@ onMounted(load)
     <p v-if="loading" class="list-state" role="status">正在读取卡片…</p>
     <p v-if="error" class="inline-error" role="alert">{{ error }} <button @click="load">重试</button></p>
     <article v-if="card" class="materials-panel detail-panel">
-      <span class="candidate-badge">{{ card.generationMode === 'MOCK' ? '模拟候选 · 人工确认' : '人工确认保存' }}</span>
+      <span class="candidate-badge">{{ savedGenerationLabel(card.generationMode) }}</span>
       <h1>{{ card.title }}</h1><div class="detail-meta"><span>卡片 #{{ card.id }} · 版本 {{ card.version }}</span><span v-if="card.isEdited">已人工修改</span><span v-if="card.subject">{{ card.subject }}</span><span v-for="tag in card.tags" :key="tag" class="mini-tag">{{ tag }}</span></div>
-      <p v-if="card.generationMode === 'MOCK'" class="candidate-warning">本卡片经人工确认保存，生成内容仍为模拟结果。请核对下方固定版本来源与OCR质量提示；识别文字可能有误，标题元数据来源不代表文件正文。</p>
+      <p class="candidate-warning">{{ savedGenerationWarning(card.generationMode) }}</p>
       <p v-if="card.summary" class="candidate-copy">{{ card.summary }}</p><div class="detail-text">{{ card.content }}</div>
       <section class="task-steps"><h2>来源与依据</h2><div v-for="source in sources" :key="source.chunkId" class="candidate-source">
         <h3>{{ source.materialTitle }} · 来源版本 {{ source.materialVersion }}<span v-if="source.pageNo"> · 第 {{ source.pageNo }} 页</span></h3>

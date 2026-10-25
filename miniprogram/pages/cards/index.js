@@ -1,4 +1,5 @@
 const { ApiError, getToken, request } = require('../../utils/api')
+const { savedGenerationLabel } = require('../../utils/source-presentation')
 Page({
   data: { items: [], page: 1, total: 0, loading: false, error: '' },
   onShow() { this.load() },
@@ -9,7 +10,7 @@ Page({
     this.setData({ loading: true, error: '' })
     try {
       const result = await request(`/cards?page=${page}&pageSize=20`)
-      this.setData({ items: result.items, page, total: result.total })
+      this.setData({ items: result.items.map(card => ({ ...card, generationLabel: savedGenerationLabel(card.generationMode) })), page, total: result.total })
     } catch (error) {
       if (error instanceof ApiError && error.status === 401) wx.reLaunch({ url: '/pages/login/index?reason=expired' })
       else this.setData({ error: error.message || '卡片读取失败' })

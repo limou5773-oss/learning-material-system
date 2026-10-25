@@ -7,7 +7,6 @@ import com.fasterxml.jackson.databind.node.ObjectNode;
 import com.learningmaterial.system.task.AiTaskDtos.CandidateCard;
 import com.learningmaterial.system.task.AiTaskDtos.CandidateResult;
 import com.learningmaterial.system.task.AiTaskDtos.SourceRef;
-import com.learningmaterial.system.task.TaskCandidateService.SourceDraft;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import com.learningmaterial.system.ocr.OcrSettings;
 import org.springframework.stereotype.Component;
@@ -22,9 +21,7 @@ public class MockTaskProcessor implements TaskProcessor {
     private final TaskLeaseService leases;
     private final TaskCandidateService candidates;
     private final ObjectMapper json;
-    private final PdfTextExtractionService pdfText;
-    private final OcrExtractionService ocr;
-    private final OcrSettings ocrSettings;
+    private final TaskSourcePreparation preparation;
 
     public MockTaskProcessor(AiTaskMapper tasks, TaskLeaseService leases,
                              TaskCandidateService candidates, ObjectMapper json, PdfTextExtractionService pdfText, OcrExtractionService ocr, OcrSettings ocrSettings) {
@@ -32,8 +29,7 @@ public class MockTaskProcessor implements TaskProcessor {
         this.leases = leases;
         this.candidates = candidates;
         this.json = json;
-        this.pdfText = pdfText;
-        this.ocr = ocr; this.ocrSettings = ocrSettings;
+        this.preparation = new TaskSourcePreparation(leases,candidates,json,pdfText,ocr,ocrSettings);
     }
 
     @Override
@@ -44,53 +40,10 @@ public class MockTaskProcessor implements TaskProcessor {
         try { config = json.readTree(task.getConfigJson()); }
         catch (JsonProcessingException ex) { throw new TaskExecutionException("INVALID_TASK_CONFIG"); }
 
-        ObjectNode prepareArgs = json.createObjectNode()
-            .put("materialId", task.getMaterialId().toString())
-            .put("materialVersion", task.getMaterialVersion());
-        boolean pdf = "PDF".equals(config.path("inputSnapshot").path("type").asText());
-        boolean imageOcr = ocrSettings.enabled() && "IMAGE".equals(config.path("inputSnapshot").path("type").asText());
-        String prepareTool = pdf ? "extract_pdf_text" : imageOcr ? "recognize_image" : "prepare_source";
-        if (pdf) prepareArgs.set("pageRange", config.path("pageRange"));
-        MockToolProtocol.validate(prepareTool, prepareArgs, task);
-        Long prepareCall = leases.startStep(lease, prepareTool, imageOcr ? "OCR" : "LOCAL");
-        if (prepareCall == null) return;
-        List<MaterialChunkRow> sources;
-        PdfTextExtractionService.Extraction extraction = null;
-        OcrExtractionService.Outcome recognized = null;
-        try {
-            if (pdf) {
-                extraction = pdfText.extract(lease);
-                if (extraction == null) return;
-                sources = extraction.sources();
-                if (sources.isEmpty() && !ocrSettings.enabled()) throw new TaskExecutionException("PDF_OCR_REQUIRED");
-            } else if (imageOcr) {
-                recognized = ocr.extract(lease, null);
-                if (recognized == null) return;
-                extraction = recognized.extraction(); sources = extraction.sources();
-            } else sources = candidates.saveSources(lease, prepare(config.path("inputSnapshot")));
-        } catch (TaskExecutionException ex) {
-            String explanation = switch (ex.errorCode()) {
-                case "PDF_OCR_REQUIRED" -> "所选页没有可提取文字，需要OCR或为空白页；未生成候选。";
-                case "PDF_TEXT_LIMIT_EXCEEDED" -> "所选页文字超过处理上限，请缩小页段后重试；未截断文字。";
-                default -> "来源文字提取未完成，请检查资料后重试。";
-            };
-            leases.completeStep(lease, prepareCall, false, imageOcr ? ocr.attemptSummary(lease) : explanation, ex.errorCode());
-            throw ex;
-        }
-        if (sources == null || !leases.completeStep(lease, prepareCall, true,
-            recognized != null ? recognized.summary() : sources.size() + (pdf ? "个PDF文字层来源片段" : "个可核验的模拟来源片段"), null)) return;
-        if (pdf && ocrSettings.enabled() && extraction != null && !extraction.needsOcrPages().isEmpty()) {
-            Long ocrCall = leases.startStep(lease, "recognize_image", "OCR");
-            if (ocrCall == null) return;
-            try {
-                recognized = ocr.extract(lease, extraction);
-                if (recognized == null) return;
-                extraction = recognized.extraction(); sources = extraction.sources();
-            } catch (TaskExecutionException ex) {
-                leases.completeStep(lease, ocrCall, false, ocr.attemptSummary(lease), ex.errorCode()); throw ex;
-            }
-            if (!leases.completeStep(lease, ocrCall, true, recognized.summary(), null)) return;
-        }
+        var prepared = preparation.prepare(lease,task,config,false);
+        if(prepared == null) return;
+        var sources = prepared.sources();
+        var extraction = prepared.extraction();
 
         ObjectNode generateArgs = json.createObjectNode().put("goalType", task.getGoalType());
         var ids = generateArgs.putArray("chunkIds");
@@ -112,28 +65,6 @@ public class MockTaskProcessor implements TaskProcessor {
         if (validateCall == null) return;
         if (!leases.completeStep(lease, validateCall, true, "来源归属与引用位置已核验", null)) return;
         candidates.finish(lease, result);
-    }
-
-    private List<SourceDraft> prepare(JsonNode snapshot) {
-        String type = snapshot.path("type").asText("");
-        if ("NOTE".equals(type)) {
-            String note = snapshot.path("noteText").asText("").trim();
-            if (note.isEmpty()) throw new TaskExecutionException("SOURCE_TEXT_NOT_AVAILABLE");
-            List<SourceDraft> drafts = new ArrayList<>();
-            for (int start = 0; start < note.length() && drafts.size() < 3; start += 500) {
-                String part = note.substring(start, Math.min(start + 500, note.length()));
-                drafts.add(new SourceDraft(drafts.size() + 1, part, "TEXT", "文字笔记原文片段"));
-            }
-            return drafts;
-        }
-        if ("IMAGE".equals(type)) {
-            String title = snapshot.path("title").asText("").trim();
-            if (title.isEmpty()) throw new TaskExecutionException("SOURCE_TEXT_NOT_AVAILABLE");
-            return List.of(new SourceDraft(TaskCandidateService.MOCK_METADATA_CHUNK_NO,
-                title.substring(0, Math.min(title.length(), 500)),
-                "METADATA", "仅引用资料标题；尚未提取文件正文"));
-        }
-        throw new TaskExecutionException("UNSUPPORTED_SOURCE_TYPE");
     }
 
     private CandidateResult generate(AiTaskRow task, JsonNode snapshot,
