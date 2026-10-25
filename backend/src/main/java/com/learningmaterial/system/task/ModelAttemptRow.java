@@ -3,6 +3,16 @@ package com.learningmaterial.system.task;
 import java.time.LocalDateTime;
 
 public class ModelAttemptRow {
+    private String purpose = "GENERATION";
+
+    public String getPurpose() {
+        return purpose;
+    }
+
+    public void setPurpose(String value) {
+        purpose = value;
+    }
+
     private Long id;
 
     public Long getId() {

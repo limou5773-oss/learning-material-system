@@ -185,3 +185,29 @@ test('本地API桩：MODEL候选经人工确认才写入，正式卡片保留模
   assert.match(card.data.card.generationWarning, /人工核对/)
   assert.doesNotMatch(card.data.card.generationWarning, /模拟/)
 })
+
+test('agent本地桩：关联显示候选标题与已有卡片，明确勾选后才带版本提交', async () => {
+  storage.clear(); storage.set('lms.accessToken.v1', token)
+  install()
+  const previousHandler = handler
+  const relation = { relationKey: 'r1', source: { candidateKey: 'a' },
+    target: { cardId: '123', cardVersion: 4 }, type: 'RELATED', evidenceText: '同一知识点' }
+  handler = options => {
+    if (!options.url.endsWith('/result')) return previousHandler(options)
+    options.success({ statusCode: 200, data: { data: { taskId: '91', resultVersion: 1, sourceVersion: 1,
+      generationMode: 'MODEL', generationInfo: { provider: 'deepseek', model: 'local-stub', promptVersion: 'd16-agent-v1' },
+      summary: '摘要', tags: [], relations: [relation], warnings: [],
+      cards: [{ candidateKey: 'a', title: '可核对标题', content: '正文', sources: [] }] } } })
+  }
+  const form = page('../miniprogram/pages/tasks/confirm')
+  form.onLoad({ id: '91' }); await form.load()
+  assert.equal(form.data.generationView.label, '模型生成')
+  assert.equal(form.data.relations[0].sourceLabel, '可核对标题')
+  assert.equal(form.data.relations[0].targetLabel, '已有卡片 #123')
+  assert.deepEqual(form.input().relations, [])
+  form.onRelationSelection({ detail: { value: ['r1'] } })
+  assert.deepEqual(form.input().relations, [relation])
+  form.data.cards.push({ ...form.data.cards[0], candidateKey: 'b' })
+  form.onCardSelection({ detail: { value: ['b'] } })
+  assert.throws(() => form.input(), /关联.*未选择/)
+})

@@ -28,10 +28,30 @@ public class ModelOutputProtocol {
             AiTaskRow task,
             TaskSourcePreparation.Prepared prepared,
             GenerationInfo info) {
+        return parseInternal(content, task, prepared, info, false, List.of());
+    }
+
+    public CandidateResult parseAgent(
+            String content,
+            AiTaskRow task,
+            TaskSourcePreparation.Prepared prepared,
+            GenerationInfo info,
+            List<PersonalMaterialSearchService.Match> matches) {
+        return parseInternal(content, task, prepared, info, true, matches);
+    }
+
+    private CandidateResult parseInternal(
+            String content,
+            AiTaskRow task,
+            TaskSourcePreparation.Prepared prepared,
+            GenerationInfo info,
+            boolean agent,
+            List<PersonalMaterialSearchService.Match> matches) {
         try {
             if (content == null || content.length() > 200_000) invalid();
             JsonNode root = reader.readTree(content);
-            fields(root, "summary", "tags", "cards");
+            if (agent) fields(root, "summary", "tags", "cards", "relations");
+            else fields(root, "summary", "tags", "cards");
             String summary = text(root.get("summary"), 4000, false);
             List<String> tags = tags(root.get("tags"));
             var cards = root.get("cards");
@@ -84,7 +104,7 @@ public class ModelOutputProtocol {
                     summary,
                     tags,
                     List.copyOf(result),
-                    List.of(),
+                    agent ? relations(root.get("relations"), result, matches) : List.of(),
                     extraction == null ? null : extraction.totalPages(),
                     extraction == null ? List.of() : extraction.processedPages(),
                     List.copyOf(warnings),
@@ -94,6 +114,38 @@ public class ModelOutputProtocol {
         } catch (Exception ex) {
             throw new TaskExecutionException("MODEL_OUTPUT_INVALID");
         }
+    }
+
+    private static List<CandidateRelation> relations(
+            JsonNode node,
+            List<CandidateCard> cards,
+            List<PersonalMaterialSearchService.Match> matches) {
+        if (node == null || !node.isArray() || node.size() > 10) invalid();
+        Map<String, PersonalMaterialSearchService.Match> allowed = new HashMap<>();
+        matches.forEach(match -> allowed.put(match.cardId(), match));
+        List<CandidateRelation> result = new ArrayList<>();
+        Set<String> edges = new HashSet<>();
+        for (JsonNode relation : node) {
+            fields(relation, "sourceIndex", "targetCardId", "evidenceText");
+            JsonNode source = relation.get("sourceIndex");
+            if (!source.isIntegralNumber()
+                    || !source.canConvertToInt()
+                    || source.intValue() < 0
+                    || source.intValue() >= cards.size()) invalid();
+            String target = text(relation.get("targetCardId"), 20, false);
+            var match = allowed.get(target);
+            if (match == null || !edges.add(source.intValue() + ":" + target)) invalid();
+            String evidence = text(relation.get("evidenceText"), 2000, false);
+            result.add(
+                    new CandidateRelation(
+                            "agent-rel-" + (result.size() + 1),
+                            new CardEndpoint(
+                                    cards.get(source.intValue()).candidateKey(), null, null),
+                            new CardEndpoint(null, target, match.cardVersion()),
+                            "RELATED",
+                            evidence));
+        }
+        return List.copyOf(result);
     }
 
     private static void fields(JsonNode node, String... expected) {

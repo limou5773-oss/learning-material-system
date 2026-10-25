@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { api, ApiRequestError } from '../api'
 import { clearSession } from '../auth'
 import type { Material, Page } from '../materials'
-import { goalLabels, stageLabels, statusLabels, stepStatusLabels, sourceLocator, taskErrorMessage, generationPresentation, externalProcessingConsent, type AiTask, type TaskStep, type CandidateResult, type CandidateSource } from '../tasks'
+import { goalLabels, stageLabels, statusLabels, stepStatusLabels, toolLabel, sourceLocator, taskErrorMessage, generationPresentation, externalProcessingConsent, type AiTask, type TaskStep, type CandidateResult, type CandidateSource } from '../tasks'
 
 const route = useRoute()
 const router = useRouter()
@@ -109,7 +109,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
         <p v-if="task.status === 'WAIT_CONFIRM'" class="task-hint">候选尚未保存。请核对来源，再编辑并确认需要的卡片。</p>
         <div class="detail-actions"><router-link v-if="task.status === 'WAIT_CONFIRM'" :to="`/ai-tasks/${task.id}/confirm`">编辑并确认保存</router-link><router-link v-if="task.status === 'SUCCEEDED'" to="/cards">查看已保存卡片</router-link></div>
       </section>
-      <section class="task-steps"><h2>执行记录</h2><p v-if="!steps.length" class="task-state">暂无执行步骤。</p><ol v-else><li v-for="step in steps" :key="`${step.stepNo}-${step.attemptNo}`"><strong>{{ step.toolName }}</strong> · {{ stepStatusLabels[step.status] }}<span v-if="step.outputSummary"> · {{ step.outputSummary }}</span><span v-if="step.errorCode"> · {{ step.errorCode }}</span></li></ol></section>
+      <section class="task-steps"><h2>执行记录</h2><p class="task-state">以下为服务端实际记录的动作与结果摘要。</p><p v-if="!steps.length" class="task-state">暂无执行步骤。</p><ol v-else><li v-for="step in steps" :key="`${step.stepNo}-${step.attemptNo}`"><strong>{{ toolLabel(step.toolName) }}</strong> · {{ stepStatusLabels[step.status] }}<span v-if="step.outputSummary"> · {{ step.outputSummary }}</span><span v-if="step.errorCode"> · {{ taskErrorMessage(step.errorCode) }}（{{ step.errorCode }}）</span></li></ol></section>
       <label v-if="task.canRetry" class="task-retry-consent"><input v-model="consent" type="checkbox">{{ externalProcessingConsent }}</label>
       <div class="detail-actions"><router-link :to="`/materials/${task.materialId}`">查看原资料</router-link><button type="button" :disabled="loading" @click="load">刷新状态</button><button v-if="task.canCancel" type="button" class="danger-action" :disabled="busy" @click="cancel">取消任务</button><button v-if="task.canRetry" type="button" :disabled="busy || !consent" @click="retry">创建重试任务</button></div>
     </article>

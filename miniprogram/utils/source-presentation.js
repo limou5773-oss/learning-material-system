@@ -1,3 +1,21 @@
+const goalDescriptions = {
+  REVIEW_CARDS: '围绕所选资料生成便于复习的知识卡片，并保留原文引用供核对。',
+  EXTRACT_KEY_POINTS: '提炼所选课件的核心重点，按知识点整理为候选卡片。',
+  LINK_NOTES: '整理所选资料；允许检索时可参考本人已有知识卡片提出关联建议，逐条确认后才保存关联。',
+}
+const relatedSearchDescription = '允许检索本人已有知识卡片；模型启用时，将召回的相关片段发送给模型用于关联建议。不开启则不检索。'
+function toolLabel(name) {
+  const labels = {
+    planner: '规划下一步', search_personal_materials: '检索本人已有卡片', prepare_source: '准备来源',
+    extract_pdf_text: '提取PDF文字', recognize_image: '识别图片文字',
+    generate_summary_cards: '生成候选内容', validate_candidate: '核验候选',
+  }
+  return labels[name] || name
+}
+function relationEndpointLabel(endpoint, cards) {
+  const card = endpoint.candidateKey && cards.find(item => item.candidateKey === endpoint.candidateKey)
+  return endpoint.candidateKey ? card && card.title || endpoint.candidateKey : `已有卡片 #${endpoint.cardId}`
+}
 function sourceLocator(source) {
   if (!source) return '来源暂不可用'
   if (source.extractionMethod === 'METADATA') return '资料标题元数据，正文未提取'
@@ -7,6 +25,14 @@ function sourceLocator(source) {
 }
 function taskErrorMessage(code) {
   const messages = {
+    AGENT_PLAN_INVALID: '规划响应格式、工具或参数不符合约定，任务已停止，未发布候选。',
+    AGENT_ACTION_NOT_ALLOWED: '规划动作不符合当前处理状态，任务已停止，未发布候选。',
+    AGENT_SEARCH_NOT_ALLOWED: '本任务未允许检索本人已有卡片，检索动作已拒绝，未发布候选。',
+    AGENT_PLANNER_LIMIT: '本任务已达到规划请求上限，未发布候选；请查看执行记录后重新提交。',
+    STEP_LIMIT: '本任务已达到执行步骤上限，未发布候选；请查看执行记录或缩小资料范围后重新提交。',
+    AGENT_STOP_SOURCE_UNREADABLE: '规划已明确停止：来源无法读取，未发布候选；请检查原资料后重新提交。',
+    AGENT_STOP_NO_USABLE_SOURCE: '规划已明确停止：没有可用正文，未发布候选；请检查文字层或OCR识别结果。',
+    AGENT_STOP_UNSUPPORTED_REQUEST: '规划已明确停止：当前支持的工具无法完成此请求，未发布候选；请调整整理目标或补充说明。',
     MODEL_CONFIG_INVALID: '模型配置无效，请检查后端厂商与模型名称配置。',
     MODEL_INPUT_LIMIT: '所选文字超过模型处理上限，请缩小页段或拆分笔记后重试。',
     MODEL_INVALID_INPUT: '模型输入无效，请检查所选文字来源后重新整理。',
@@ -56,9 +82,10 @@ function taskErrorMessage(code) {
     PDF_ENCRYPTED: '暂不支持加密PDF，请上传可直接读取的文件。',
     PDF_EXTRACTION_FORBIDDEN: '文件未授予文字提取权限，请换用允许提取文字的PDF。',
   }
-  return messages[code] || (code && code.startsWith('MODEL_') ? '模型处理失败，未发布候选；请查看执行记录并检查后端配置后重试。' : '')
+  return messages[code] || (code && code.startsWith('AGENT_') ? '智能体处理失败，未发布候选；请查看执行记录及失败步骤后重新提交。'
+    : code && code.startsWith('MODEL_') ? '模型处理失败，未发布候选；请查看执行记录并检查后端配置后重试。' : '')
 }
-const externalProcessingConsent = '我同意所选资料的文字、OCR识别文字及补充说明在模型启用时发送给已配置的模型服务，并在OCR启用时将所选图片或页面图像发送给已配置的OCR服务。处理模式由服务端配置决定。'
+const externalProcessingConsent = '我同意所选资料的文字、OCR识别文字及补充说明，以及选择允许检索时召回的本人已有知识卡片相关片段，在模型启用时发送给已配置的模型服务，并在OCR启用时将所选图片或页面图像发送给已配置的OCR服务。处理模式由服务端配置决定。'
 function generationPresentation(mode, info) {
   if (mode === 'MODEL') return {
     label: '模型生成',
@@ -82,4 +109,4 @@ function savedGenerationWarning(mode) {
   return '请核对固定版本来源与OCR质量。'
 }
 
-module.exports = { sourceLocator, taskErrorMessage, externalProcessingConsent, generationPresentation, savedGenerationLabel, savedGenerationWarning }
+module.exports = { goalDescriptions, relatedSearchDescription, toolLabel, relationEndpointLabel, sourceLocator, taskErrorMessage, externalProcessingConsent, generationPresentation, savedGenerationLabel, savedGenerationWarning }

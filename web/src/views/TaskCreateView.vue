@@ -4,7 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { api, ApiRequestError } from '../api'
 import { clearSession } from '../auth'
 import type { Material } from '../materials'
-import { externalProcessingConsent, type AiTask, type GoalType } from '../tasks'
+import { externalProcessingConsent, goalDescriptions, relatedSearchDescription, type AiTask, type GoalType } from '../tasks'
 
 const route = useRoute()
 const router = useRouter()
@@ -74,9 +74,10 @@ onMounted(load)
       <form @submit.prevent="submit">
         <label for="task-goal">整理目标</label>
         <select id="task-goal" v-model="form.goalType"><option value="REVIEW_CARDS">生成复习卡片</option><option value="EXTRACT_KEY_POINTS">提炼课件重点</option><option value="LINK_NOTES">整理并关联已有笔记</option></select>
+        <p class="task-state">{{ goalDescriptions[form.goalType] }}</p>
         <label for="task-instruction">补充说明</label><textarea id="task-instruction" v-model="form.instruction" maxlength="1000" rows="4" placeholder="可选，说明希望关注的内容" />
         <div v-if="material.type === 'PDF'" class="task-range"><label for="task-from">起始页<input id="task-from" v-model.number="form.from" type="number" min="1" :max="material.pageCount || 1" /></label><label for="task-to">结束页<input id="task-to" v-model.number="form.to" type="number" min="1" :max="material.pageCount || 1" /></label><small>一次最多整理 20 页，共 {{ material.pageCount }} 页</small></div>
-        <label class="task-check"><input v-model="form.allowRelatedSearch" type="checkbox" /> 允许检索本人相关笔记</label>
+        <label class="task-check"><input v-model="form.allowRelatedSearch" type="checkbox" /> {{ relatedSearchDescription }}</label>
         <label class="task-check"><input v-model="form.consent" type="checkbox" /> {{ externalProcessingConsent }}</label>
         <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
         <div class="editor-actions"><span>提交后可在“整理任务”查看状态</span><button type="submit" :disabled="saving">{{ saving ? '正在提交…' : '提交任务' }}</button></div>

@@ -1,6 +1,6 @@
 const { ApiError, getToken, request } = require('../../utils/api')
 
-const { externalProcessingConsent } = require('../../utils/source-presentation')
+const { externalProcessingConsent, goalDescriptions, relatedSearchDescription } = require('../../utils/source-presentation')
 
 const goals = [
   { value: 'REVIEW_CARDS', label: '生成复习卡片' },
@@ -9,7 +9,7 @@ const goals = [
 ]
 
 Page({
-  data: { externalProcessingConsent, id: '', material: null, goals, goalIndex: 0, instruction: '', from: '1', to: '1',
+  data: { externalProcessingConsent, goalDescriptions, relatedSearchDescription, id: '', material: null, goals, goalIndex: 0, instruction: '', from: '1', to: '1',
     allowRelatedSearch: false, consent: false, loading: false, saving: false, error: '' },
   onLoad(options) { this.setData({ id: options.id || '' }) },
   onShow() { this.load() },

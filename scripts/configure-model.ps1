@@ -2,7 +2,9 @@ param(
     [ValidateSet('User', 'Process')]
     [string]$Scope = 'User',
     [ValidateSet('deepseek-flash', 'deepseek-v4-pro')]
-    [string]$Model = 'deepseek-flash'
+    [string]$Model = 'deepseek-flash',
+    [ValidateSet('model', 'agent')]
+    [string]$ProcessorMode = 'model'
 )
 
 $modelKeyInput = $null
@@ -18,7 +20,7 @@ try {
     [Environment]::SetEnvironmentVariable('MODEL_API_KEY', $modelKeyValue, $Scope)
     [Environment]::SetEnvironmentVariable('MODEL_PROVIDER', 'deepseek', $Scope)
     [Environment]::SetEnvironmentVariable('MODEL_NAME', $Model, $Scope)
-    [Environment]::SetEnvironmentVariable('TASK_PROCESSOR_MODE', 'model', $Scope)
+    [Environment]::SetEnvironmentVariable('TASK_PROCESSOR_MODE', $ProcessorMode, $Scope)
     Write-Output "DeepSeek model environment configured for $Scope. Credential values were not printed."
     Write-Output 'Enable TASK_WORKER_ENABLED=true only when ready to process consented tasks.'
     if ($Scope -eq 'User') { Write-Output 'Restart the backend terminal to use the new environment.' }
