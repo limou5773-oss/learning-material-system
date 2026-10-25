@@ -2,7 +2,7 @@
 "info":
   "title": "个人学习资料智能整理系统开发接口"
   "version": "1.0.0-draft"
-  "description": "依据开题报告的编码契约；D02至D13账号、资料、资料收藏、异步任务、PDF指定页段文字提取、模拟候选、原子确认及卡片查阅已实现。PDF文字来源带页码和固定版本缓存，无文字页明确提示。生成仍为MOCK；真实模型与OCR、卡片编辑/搜索/收藏、图谱及管理接口仍为拟议。所有ID为字符串，时间为UTC。"
+  "description": "依据开题报告的编码契约；D02至D13账号、资料、资料收藏、异步任务、PDF指定页段文字提取、模拟候选、原子确认及卡片查阅已实现。D14增加默认关闭的腾讯云OCR代码、扫描页识别和质量提示；真实厂商联调待本机凭证。生成仍为MOCK；真实模型、卡片编辑/搜索/收藏、图谱及管理接口仍为拟议。所有ID为字符串，时间为UTC。"
 "servers":
   -
     "url": "http://localhost:8080/api/v1"
@@ -1919,7 +1919,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "D10提供worker租约与取消协议；D11接入显式启用的MOCK生成器，默认不领取任务。D13 PDF指定最多20页有效pageRange，真实提取文字层并保留页码与版本缓存；NOTE和IMAGE不传pageRange。生成仍为MOCK，不调用OCR或外部模型。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
+      "description": "D10提供worker租约与取消协议；D11接入显式启用的MOCK生成器，默认不领取任务。D13 PDF指定最多20页有效pageRange，真实提取文字层并保留页码与版本缓存；NOTE和IMAGE不传pageRange。生成仍为MOCK，不调用外部模型。D14显式启用OCR时，IMAGE及所选无文字PDF页调用配置的腾讯云服务；默认OCR_ENABLED=false不调用OCR。记录外部处理同意时间及输入快照。相同键且相同输入返回同一Task；相同键不同输入409。每人最多2个QUEUED或RUNNING任务。"
       "requestBody":
         "required": true
         "content":
@@ -5821,7 +5821,7 @@
           "maxItems": 60
         "processedPages":
           "type": "array"
-          "description": "D13仅列出本次所选页段中成功获得文字层内容的实际页码；不表示页内图片或全部信息已识别。无文字页列入warnings，全无文字任务失败。"
+          "description": "仅列出本次所选PDF页段中通过文字层或启用的OCR获得内容的实际页码，不表示全部信息已识别。未识别页列入warnings；图片使用空数组，不伪造页码。"
           "items":
             "type": "integer"
             "minimum": 1
@@ -5871,7 +5871,8 @@
             - "TEXT"
             - "METADATA"
             - "PDF_TEXT"
-          "description": "PDF_TEXT为D13按所选页段提取的真实PDF文字，pageNo非空；METADATA仅标题，不代表正文。"
+            - "OCR"
+          "description": "PDF_TEXT为文字层提取；OCR为图片或扫描页识别文字，PDF保留页码、图片pageNo为空；METADATA仅标题，不代表正文。"
         "content":
           "type": "string"
         "qualityNote":
@@ -6105,7 +6106,14 @@
         - "parentCardId"
     "CardSource":
       "type": "object"
+      "description": "固定版本来源；extractionMethod保留提取方式，qualityNote保留OCR质量提示。来源删除或受限时quoteText、content、qualityNote返回null。"
       "properties":
+        "extractionMethod":
+          "type": "string"
+          "enum": ["TEXT", "METADATA", "PDF_TEXT", "OCR"]
+        "qualityNote":
+          "type": "string"
+          "nullable": true
         "chunkId":
           "type": "string"
           "pattern": "^[1-9][0-9]*$"

@@ -98,6 +98,7 @@ onUnmounted(() => { if (timer) clearInterval(timer) })
           <div v-for="ref in card.sources" :key="ref.chunkId" class="candidate-source">
             <strong>来源片段 #{{ ref.chunkId }}</strong>
             <span> · {{ sourceLocator(sources.find(source => source.chunkId === ref.chunkId)) }}</span>
+            <p v-if="sources.find(source => source.chunkId === ref.chunkId)?.qualityNote" class="task-state">{{ sources.find(source => source.chunkId === ref.chunkId)?.qualityNote }}</p>
             <blockquote>{{ ref.quoteText }}</blockquote>
             <details><summary>查看完整来源片段</summary><p class="candidate-copy">{{ sources.find(source => source.chunkId === ref.chunkId)?.content }}</p></details>
           </div>

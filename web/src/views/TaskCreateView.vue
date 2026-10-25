@@ -77,7 +77,7 @@ onMounted(load)
         <label for="task-instruction">补充说明</label><textarea id="task-instruction" v-model="form.instruction" maxlength="1000" rows="4" placeholder="可选，说明希望关注的内容" />
         <div v-if="material.type === 'PDF'" class="task-range"><label for="task-from">起始页<input id="task-from" v-model.number="form.from" type="number" min="1" :max="material.pageCount || 1" /></label><label for="task-to">结束页<input id="task-to" v-model.number="form.to" type="number" min="1" :max="material.pageCount || 1" /></label><small>一次最多整理 20 页，共 {{ material.pageCount }} 页</small></div>
         <label class="task-check"><input v-model="form.allowRelatedSearch" type="checkbox" /> 允许检索本人相关笔记</label>
-        <label class="task-check"><input v-model="form.consent" type="checkbox" /> 我同意所选资料用于整理及后续配置的外部处理；当前模拟模式不发送到外部服务</label>
+        <label class="task-check"><input v-model="form.consent" type="checkbox" /> 我同意所选资料用于整理，并在OCR启用时发送给配置的OCR服务；摘要和卡片当前为模拟生成</label>
         <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
         <div class="editor-actions"><span>提交后可在“整理任务”查看状态</span><button type="submit" :disabled="saving">{{ saving ? '正在提交…' : '提交任务' }}</button></div>
       </form>

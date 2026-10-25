@@ -14,7 +14,7 @@ final class MockToolProtocol {
     static void validate(String name, JsonNode args, AiTaskRow task) {
         if (task == null || args == null || !args.isObject()) invalid();
         switch (name) {
-            case "prepare_source" -> {
+            case "prepare_source", "recognize_image" -> {
                 fields(args, Set.of("materialId", "materialVersion"));
                 if (!task.getMaterialId().toString().equals(args.path("materialId").textValue())
                     || !args.path("materialVersion").isIntegralNumber()

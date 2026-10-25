@@ -27,6 +27,7 @@ import java.util.Objects;
 public class TaskCandidateService {
     public static final int MOCK_METADATA_CHUNK_NO = 1_000_000;
     public static final int PDF_CHUNK_BASE = 2_000_000;
+    public static final int OCR_CHUNK_BASE = 3_000_000;
     private final AiTaskMapper tasks;
     private final MaterialMapper materials;
     private final MaterialChunkMapper chunks;
@@ -62,10 +63,13 @@ public class TaskCandidateService {
         List<MaterialChunkRow> saved = new ArrayList<>();
         Map<Integer, Integer> pageParts = new HashMap<>();
         for (SourceDraft draft : drafts) {
-            boolean pdf = "PDF_TEXT".equals(draft.extractionMethod());
+            boolean ocr = "OCR".equals(draft.extractionMethod());
+            boolean pdf = "PDF_TEXT".equals(draft.extractionMethod()) || ocr && "PDF".equals(material.getMaterialType());
+            boolean longSource = pdf || ocr;
             if (pdf && (!"PDF".equals(material.getMaterialType()) || draft.pageNo() == null
                 || draft.pageNo() < 1 || draft.pageNo() > 100)) invalidCandidate();
-            if (!pdf && !("TEXT".equals(draft.extractionMethod()) && "NOTE".equals(material.getMaterialType()))
+            if (ocr && !Set.of("PDF", "IMAGE").contains(material.getMaterialType())) invalidCandidate();
+            if (!pdf && !ocr && !("TEXT".equals(draft.extractionMethod()) && "NOTE".equals(material.getMaterialType()))
                 && !("METADATA".equals(draft.extractionMethod()) && "IMAGE".equals(material.getMaterialType()))) invalidCandidate();
             if (pdf) {
                 try {
@@ -73,13 +77,16 @@ public class TaskCandidateService {
                     if (draft.pageNo() < range.path("from").asInt() || draft.pageNo() > range.path("to").asInt()) invalidCandidate();
                 } catch (JsonProcessingException ex) { throw new TaskExecutionException("INVALID_TASK_CONFIG"); }
             }
-            int part = pdf ? pageParts.merge(draft.pageNo(), 1, Integer::sum) - 1 : 0;
-            int expectedChunkNo = pdf ? PDF_CHUNK_BASE + draft.pageNo() * 100 + part
+            int pageKey = pdf ? draft.pageNo() : 0;
+            int part = longSource ? pageParts.merge(pageKey, 1, Integer::sum) - 1 : 0;
+            int expectedChunkNo = ocr ? OCR_CHUNK_BASE + pageKey * 100 + part
+                : pdf ? PDF_CHUNK_BASE + pageKey * 100 + part
                 : "METADATA".equals(draft.extractionMethod()) ? MOCK_METADATA_CHUNK_NO : saved.size() + 1;
             if (draft.chunkNo() != expectedChunkNo || draft.content() == null
-                || draft.content().isEmpty() || (!pdf && draft.content().isBlank()) || draft.content().length() > (pdf ? 2000 : 500)
-                || (!pdf && (draft.pageNo() != null || drafts.size() > 3))
-                || !Set.of("TEXT", "METADATA", "PDF_TEXT").contains(draft.extractionMethod())) invalidCandidate();
+                || draft.content().isEmpty() || (!longSource && draft.content().isBlank())
+                || draft.content().length() > (longSource ? 2000 : 500)
+                || (!pdf && draft.pageNo() != null) || (!longSource && drafts.size() > 3)
+                || !Set.of("TEXT", "METADATA", "PDF_TEXT", "OCR").contains(draft.extractionMethod())) invalidCandidate();
             MaterialChunkRow row = new MaterialChunkRow();
             row.setMaterialId(task.getMaterialId());
             row.setMaterialVersion(task.getMaterialVersion());

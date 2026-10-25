@@ -132,6 +132,6 @@ onMounted(load)
         </form>
       </template>
     </section>
-    <aside v-if="sources.length && !receipt" class="materials-panel confirmation-source-panel"><h2>原始来源</h2><section v-for="source in sources" :key="source.chunkId" class="candidate-source"><h3>片段 #{{ source.chunkId }}</h3><p class="task-state">{{ sourceLocator(source) }}</p><p class="candidate-copy">{{ source.content }}</p></section></aside>
+    <aside v-if="sources.length && !receipt" class="materials-panel confirmation-source-panel"><h2>原始来源</h2><section v-for="source in sources" :key="source.chunkId" class="candidate-source"><h3>片段 #{{ source.chunkId }}</h3><p class="task-state">{{ sourceLocator(source) }}</p><p v-if="source.qualityNote" class="candidate-warning">{{ source.qualityNote }}</p><p class="candidate-copy">{{ source.content }}</p></section></aside>
   </div>
 </template>

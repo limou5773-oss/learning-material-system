@@ -121,3 +121,19 @@ test('小程序知识卡片列表分页，任务只在待确认状态提供编�
   detail.openConfirmation()
   assert.equal(destination, '')
 })
+
+test('确认后查阅正式卡片仍保留扫描页OCR来源和质量说明', async () => {
+  storage.set('lms.accessToken.v1', token)
+  const detail = page('../miniprogram/pages/cards/detail')
+  detail.onLoad({ id: '124' })
+  handler = options => options.success({ statusCode: 200, data: { data:
+    options.url.endsWith('/sources') ? { items: [{ chunkId: '18', materialId: '43',
+      isAvailable: true, content: '识别文字', quoteText: '识别', pageNo: 3,
+      extractionMethod: 'OCR', qualityNote: 'OCR置信度较低，请核对原图' }] }
+      : { id: '124', title: '已确认卡片', generationMode: 'MOCK', tags: [] },
+  } })
+  await detail.load()
+  assert.equal(detail.data.sources[0].locator, 'PDF 第 3 页 · OCR 识别文字')
+  assert.equal(detail.data.sources[0].qualityNote, 'OCR置信度较低，请核对原图')
+  assert.equal(detail.data.card.generationMode, 'MOCK')
+})

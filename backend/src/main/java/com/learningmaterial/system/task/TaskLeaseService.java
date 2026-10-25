@@ -21,12 +21,14 @@ public class TaskLeaseService {
 
     private final AiTaskMapper tasks;
     private final AiToolCallMapper calls;
+    private final OcrAttemptMapper ocrAttempts;
     private final Clock clock;
     private final ObjectMapper json;
 
-    public TaskLeaseService(AiTaskMapper tasks, AiToolCallMapper calls, Clock clock, ObjectMapper json) {
+    public TaskLeaseService(AiTaskMapper tasks, AiToolCallMapper calls, Clock clock, ObjectMapper json, OcrAttemptMapper ocrAttempts) {
         this.tasks = tasks;
         this.calls = calls;
+        this.ocrAttempts = ocrAttempts;
         this.clock = clock;
         this.json = json;
     }
@@ -41,6 +43,7 @@ public class TaskLeaseService {
         if (row.getStartedAt() != null && !row.getStartedAt().plusSeconds(EXECUTION_SECONDS).isAfter(now)) {
             if (tasks.failTimedOut(row.getId(), row.getExecutionEpoch(), now) == 1) {
                 calls.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
+                ocrAttempts.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
             }
             return null;
         }
@@ -49,6 +52,7 @@ public class TaskLeaseService {
             return null;
         }
         calls.markOlderUnknown(row.getId(), nextEpoch, now);
+        ocrAttempts.markRunningUnknown(row.getId(), "LEASE_LOST", now);
         return new Lease(row.getId(), nextEpoch);
     }
 
@@ -120,6 +124,7 @@ public class TaskLeaseService {
         LocalDateTime now = now();
         if (tasks.failOwnedLease(lease.taskId(), lease.epoch(), errorCode, now) != 1) return false;
         calls.markRunningUnknown(lease.taskId(), errorCode, now);
+        ocrAttempts.markRunningUnknown(lease.taskId(), errorCode, now);
         return true;
     }
 

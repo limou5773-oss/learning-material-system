@@ -21,6 +21,7 @@
         <view class="steps-title">{{card.title}}</view><view class="candidate-copy">{{card.content}}</view>
         <view wx:for="{{card.sourceViews}}" wx:for-item="source" wx:key="chunkId" class="candidate-source">
           <view class="muted">来源片段 #{{source.chunkId}} · {{source.locator}}</view>
+          <view wx:if="{{source.qualityNote}}" class="notice">{{source.qualityNote}}</view>
           <view class="candidate-quote">{{source.quoteText}}</view>
           <view class="muted">完整来源片段</view><view class="candidate-copy">{{source.content}}</view>
         </view>

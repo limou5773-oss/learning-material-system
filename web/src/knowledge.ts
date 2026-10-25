@@ -20,6 +20,8 @@ export interface CardSource {
   materialTitle: string
   materialVersion: number
   pageNo: number | null
+  extractionMethod?: 'TEXT' | 'METADATA' | 'PDF_TEXT' | 'OCR'
+  qualityNote?: string | null
   quoteText: string | null
   content: string | null
   isAvailable: boolean
