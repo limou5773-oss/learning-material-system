@@ -35,6 +35,11 @@ server:
   port: 8080
 
 lms:
+  admin-bootstrap:
+    enabled: ${ADMIN_BOOTSTRAP_ENABLED:false}
+    username: ${ADMIN_BOOTSTRAP_USERNAME:}
+    password: ${ADMIN_BOOTSTRAP_PASSWORD:}
+    display-name: ${ADMIN_BOOTSTRAP_DISPLAY_NAME:}
   model:
     provider: ${MODEL_PROVIDER:disabled}
     name: ${MODEL_NAME:deepseek-flash}

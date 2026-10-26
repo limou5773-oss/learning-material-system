@@ -19,6 +19,8 @@ import CardEditorRoute from './views/CardEditorRoute.vue'
 import CardOrganizationRoute from './views/CardOrganizationRoute.vue'
 import KnowledgeGraphRoute from './views/KnowledgeGraphRoute.vue'
 import NotificationsRoute from './views/NotificationsRoute.vue'
+import AdminUsersRoute from './views/AdminUsersRoute.vue'
+import ForbiddenView from './views/ForbiddenView.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -37,6 +39,8 @@ const router = createRouter({
     { path: '/materials/:id', name: 'material-detail', component: MaterialDetailView, meta: { requiresAuth: true } },
     { path: '/ai-tasks', name: 'tasks', component: TasksView, meta: { requiresAuth: true } },
     { path: '/notifications', name: 'notifications', component: NotificationsRoute, meta: { requiresAuth: true } },
+    { path: '/admin/users', name: 'admin-users', component: AdminUsersRoute, meta: { requiresAuth: true, requiresRole: 'ADMIN' } },
+    { path: '/forbidden', name: 'forbidden', component: ForbiddenView, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id/confirm', name: 'task-confirm', component: TaskConfirmView, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id', name: 'task-detail', component: TaskDetailView, meta: { requiresAuth: true } },
     { path: '/cards', name: 'cards', component: CardsView, meta: { requiresAuth: true } },
@@ -51,6 +55,9 @@ const router = createRouter({
 router.beforeEach((to) => {
   if (to.meta.requiresAuth && !session.value) {
     return { name: 'login', query: { redirect: to.fullPath } }
+  }
+  if (to.meta.requiresRole && session.value?.user.role !== to.meta.requiresRole) {
+    return { name: 'forbidden' }
   }
 })
 

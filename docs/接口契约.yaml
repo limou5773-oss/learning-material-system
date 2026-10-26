@@ -4258,6 +4258,7 @@
     "get":
       "summary": "管理员查询用户"
       "operationId": "get_admin_users"
+      "description": "仅ADMIN；普通用户403、无效会话401。只返回User七字段，不含密码/令牌摘要/openid或资料正文。keyword按用户名/显示名称字面子串、最多100 UTF-16，空白不筛选；status空白不筛选、未知422。page>=1/pageSize1..100，按createdAt倒序/id倒序，DB失败不降为空列表。"
       "responses":
         "200":
           "description": "管理员查询用户"
@@ -4344,7 +4345,8 @@
           "required": false
           "schema":
             "type": "string"
-          "description": ""
+            "maxLength": 100
+          "description": "去首尾空白，用户名或显示名称字面子串，LIKE通配符按普通字符"
         -
           "name": "status"
           "in": "query"
@@ -4457,7 +4459,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "停用立即撤销会话；禁止停用当前操作账号或最后一个启用管理员。"
+      "description": "仅ADMIN且写事务复核当前操作者及会话。严格单一JSON对象status/reason，错误类型/未知字段/尾随内容400，缺失/null/空白原因/无效状态或原因超过1000 UTF-16为422；原因trim保存。目标不存在/非法ID404，自停用或最后启用管理员409。状态、全部会话撤销和USER_STATUS审计同事务；同值请求也审计。重新启用不复活旧token，须重新登录。只修改状态，不接受角色或operatorId。"
       "parameters":
         -
           "name": "id"
@@ -6484,6 +6486,7 @@
         - "createdAt"
     "UserStatusInput":
       "type": "object"
+      "description": "仅status及reason。原因必须非空白，长度最多1000 UTF-16，trim后审计；不能借此修改角色。"
       "properties":
         "status":
           "type": "string"
