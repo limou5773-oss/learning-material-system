@@ -70,7 +70,7 @@ public class AuthService {
 
     @Transactional
     public SessionToken login(LoginInput input) {
-        UserRow user = users.findByUsername(input.username().trim().toLowerCase(Locale.ROOT));
+        UserRow user = users.findByUsernameForUpdate(input.username().trim().toLowerCase(Locale.ROOT));
         boolean matches = passwords.matches(input.password(), user == null ? dummyHash : user.getPasswordHash());
         if (user == null || !matches || !"ENABLED".equals(user.getStatus())) {
             throw new ApiException(HttpStatus.UNAUTHORIZED, "INVALID_CREDENTIALS", "账号或密码错误");

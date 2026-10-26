@@ -13,6 +13,7 @@ import { session } from './auth'
         <router-link v-if="session" to="/materials">我的资料</router-link>
         <router-link v-if="session" to="/ai-tasks">整理任务</router-link>
         <router-link v-if="session" to="/notifications">通知</router-link>
+        <router-link v-if="session?.user.role === 'ADMIN'" to="/admin/users">用户管理</router-link>
         <router-link v-if="session" to="/cards">知识卡片</router-link>
         <router-link v-if="session" to="/me">我的信息</router-link>
         <router-link v-else to="/login">登录</router-link>

@@ -2,11 +2,12 @@
 import { onMounted, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, ApiRequestError } from '../api'
-import { clearSession } from '../auth'
+import { clearSession, session } from '../auth'
 import type { Material, Page, Tag } from '../materials'
 
 const router = useRouter()
 const route = useRoute()
+const ownerToken = session.value?.accessToken, routePath = route.fullPath
 const keyword = ref('')
 const subject = ref('')
 const tagId = ref('')
@@ -49,9 +50,10 @@ async function load() {
 }
 
 function handleError(cause: unknown) {
+  if (session.value?.accessToken !== ownerToken) return
   if (cause instanceof ApiRequestError && cause.status === 401) {
     clearSession()
-    router.replace({ name: 'login', query: { redirect: route.fullPath } })
+    router.replace({ name: 'login', query: { redirect: routePath } })
   } else {
     error.value = cause instanceof Error ? cause.message : '资料加载失败'
   }

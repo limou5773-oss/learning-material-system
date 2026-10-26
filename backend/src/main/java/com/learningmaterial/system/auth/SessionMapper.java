@@ -25,6 +25,18 @@ public interface SessionMapper {
         """)
     SessionRow findActive(@Param("tokenHash") String tokenHash, @Param("now") LocalDateTime now);
 
+    @Select("""
+        SELECT * FROM auth_session WHERE id=#{id} AND user_id=#{userId}
+        AND revoked_at IS NULL AND expires_at > #{now} FOR UPDATE
+        """)
+    SessionRow findActiveById(@Param("id") long id, @Param("userId") long userId, @Param("now") LocalDateTime now);
+
+    @Update("""
+        UPDATE auth_session SET revoked_at=#{now},updated_at=#{now}
+        WHERE user_id=#{userId} AND revoked_at IS NULL
+        """)
+    int revokeAll(@Param("userId") long userId, @Param("now") LocalDateTime now);
+
     @Update("""
         UPDATE auth_session SET revoked_at = #{now}, updated_at = #{now}
         WHERE id = #{id} AND revoked_at IS NULL

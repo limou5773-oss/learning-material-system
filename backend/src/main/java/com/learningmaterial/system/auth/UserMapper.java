@@ -20,6 +20,12 @@ public interface UserMapper {
     @Select("SELECT * FROM app_user WHERE id = #{id} LIMIT 1")
     UserRow findById(long id);
 
+    @Select("SELECT * FROM app_user WHERE id = #{id} FOR UPDATE")
+    UserRow findByIdForUpdate(long id);
+
+    @Select("SELECT * FROM app_user WHERE username = #{username} LIMIT 1 FOR UPDATE")
+    UserRow findByUsernameForUpdate(String username);
+
     @Select("SELECT id FROM app_user WHERE id = #{id} FOR UPDATE")
     Long lockById(long id);
 }
