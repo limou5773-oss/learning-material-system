@@ -13,7 +13,14 @@ import org.springframework.web.bind.annotation.*;
 @RequestMapping("/api/v1/cards")
 public class CardController {
     private final CardService cards;
-    public CardController(CardService cards) { this.cards = cards; }
+    private final CardHierarchyService hierarchy;
+    public CardController(CardService cards, CardHierarchyService hierarchy) { this.cards = cards; this.hierarchy = hierarchy; }
+
+    @PutMapping("/{id}/parent")
+    public ApiResponse<CardService.CardView> setParent(@AuthenticationPrincipal AuthPrincipal principal,
+        @PathVariable String id, @Valid @RequestBody CardDtos.ParentInput input, HttpServletRequest request) {
+        return ApiResponse.of(hierarchy.setParent(principal.userId(), id, input), request);
+    }
 
     @GetMapping
     public ApiResponse<PageView<CardService.CardView>> list(@AuthenticationPrincipal AuthPrincipal principal,

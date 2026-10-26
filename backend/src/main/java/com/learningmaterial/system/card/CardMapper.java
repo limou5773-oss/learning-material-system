@@ -43,6 +43,13 @@ public interface CardMapper {
     @Select("SELECT * FROM knowledge_card WHERE user_id=#{userId} AND id=#{id} AND status != 'DELETED' FOR UPDATE")
     CardRow findOwnedForUpdate(@Param("userId") long userId, @Param("id") long id);
 
+    @Select("SELECT id,parent_card_id FROM knowledge_card WHERE user_id=#{userId} AND status != 'DELETED'")
+    List<CardRow> listOwnedParents(long userId);
+
+    @Update("UPDATE knowledge_card SET parent_card_id=#{parentId},version=version+1,updated_at=#{now} WHERE user_id=#{userId} AND id=#{id}")
+    int updateParent(@Param("userId") long userId, @Param("id") long id,
+                     @Param("parentId") Long parentId, @Param("now") LocalDateTime now);
+
     String FILTERS = """
         WHERE k.user_id=#{userId} AND k.status != 'DELETED'
         <if test="keyword != null">AND (LOCATE(#{keyword},k.title)>0 OR LOCATE(#{keyword},k.content)>0)</if>

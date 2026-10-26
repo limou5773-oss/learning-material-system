@@ -3267,6 +3267,7 @@
     "put":
       "summary": "按版本设置卡片父节点"
       "operationId": "put_cards_id_parent"
+      "description": "本人未删除卡片与父节点；parentCardId必需，null设为根。成功card version+1，正文与模式/来源/isEdited不变；旧版本409 VERSION_CONFLICT含currentVersion，自父或间接环422 PARENT_CYCLE。"
       "responses":
         "200":
           "description": "按版本设置卡片父节点"
@@ -3833,7 +3834,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "不存在返回layoutVersion=0和空items。"
+      "description": "读取本人布局，键区分大小写；正常不存在返回layoutVersion=0和空items，数据库错误不伪装为空布局。保存的失效引用不静默过滤。"
       "parameters":
         -
           "name": "layoutKey"
@@ -3845,6 +3846,7 @@
     "put":
       "summary": "按整体版本保存布局"
       "operationId": "put_card_layouts_layoutKey"
+      "description": "完整替换本人该画布，最多200项；全部卡片须本人未删，ID和orderNo均不可重复。version=0仅首次创建，成功version+1，旧版本409 LAYOUT_VERSION_CONFLICT含currentVersion。布局保存不改变卡片版本，items=[]可清空；无效引用404且整体回滚。"
       "responses":
         "200":
           "description": "按整体版本保存布局"
@@ -5140,8 +5142,8 @@
                 "type": "string"
             "currentVersion":
               "type": "integer"
-              "minimum": 1
-              "description": "VERSION_CONFLICT 时返回当前资料版本"
+              "minimum": 0
+              "description": "版本冲突时返回资源当前版本；资料和卡片从1开始，布局尚不存在时为0。"
             "existingMaterialId":
               "type": "string"
               "pattern": "^[1-9][0-9]*$"
@@ -6129,6 +6131,7 @@
         - "version"
     "ParentInput":
       "type": "object"
+      "description": "parentCardId必须存在，null明确设为根；不接收用户身份或正文。层级改变使用卡片版本，禁止自父与间接环。"
       "properties":
         "version":
           "type": "integer"
@@ -6284,6 +6287,7 @@
         - "hasMore"
     "LayoutItem":
       "type": "object"
+      "description": "逻辑坐标必须有限，范围[-100000,100000]；cardId和orderNo在同一布局内各自唯一。"
       "properties":
         "cardId":
           "type": "string"
@@ -6300,6 +6304,7 @@
         "orderNo":
           "type": "integer"
           "minimum": 0
+          "maximum": 2147483647
       "additionalProperties": false
       "required":
         - "cardId"
@@ -6308,6 +6313,7 @@
         - "orderNo"
     "LayoutInput":
       "type": "object"
+      "description": "最多200个本人未删除卡片，items为空代表清空。整体替换、按layoutVersion保护，不接收用户身份。"
       "properties":
         "layoutVersion":
           "type": "integer"
