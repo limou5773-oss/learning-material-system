@@ -16,6 +16,7 @@ import TaskConfirmView from './views/TaskConfirmView.vue'
 import CardsView from './views/CardsView.vue'
 import CardDetailView from './views/CardDetailView.vue'
 import CardEditorRoute from './views/CardEditorRoute.vue'
+import CardOrganizationRoute from './views/CardOrganizationRoute.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -37,6 +38,7 @@ const router = createRouter({
     { path: '/ai-tasks/:id', name: 'task-detail', component: TaskDetailView, meta: { requiresAuth: true } },
     { path: '/cards', name: 'cards', component: CardsView, meta: { requiresAuth: true } },
     { path: '/cards/new', name: 'card-create', component: CardEditorRoute, meta: { requiresAuth: true } },
+    { path: '/cards/organize', name: 'card-organize', component: CardOrganizationRoute, meta: { requiresAuth: true } },
     { path: '/cards/:id/edit', name: 'card-edit', component: CardEditorRoute, meta: { requiresAuth: true } },
     { path: '/cards/:id', name: 'card-detail', component: CardDetailView, meta: { requiresAuth: true } },
   ],

@@ -33,7 +33,7 @@ onMounted(() => load())
 
 <template>
   <div class="materials-layout">
-    <div class="section-heading"><div><h1>知识卡片</h1><p>管理自己的学习要点与创建时的来源。</p></div><div class="heading-actions"><router-link class="new-note-link" to="/cards/new">＋ 人工创建卡片</router-link><router-link class="back-link" to="/ai-tasks">前往整理任务</router-link></div></div>
+    <div class="section-heading"><div><h1>知识卡片</h1><p>管理自己的学习要点与创建时的来源。</p></div><div class="heading-actions"><router-link class="new-note-link" to="/cards/new">＋ 人工创建卡片</router-link><router-link class="new-note-link secondary-link" :to="{ path: '/cards/organize', query: { keyword: filters.keyword, subject: filters.subject, tag: filters.tag, favoriteOnly: String(filters.favoriteOnly) } }">组织卡片</router-link><router-link class="back-link" to="/ai-tasks">前往整理任务</router-link></div></div>
     <section class="materials-panel">
       <form class="search-row" @submit.prevent="search"><input v-model="filters.keyword" aria-label="搜索卡片标题或正文" placeholder="搜索标题或正文" maxlength="100" /><input v-model="filters.subject" aria-label="按学科筛选" placeholder="学科（精确匹配）" maxlength="64" class="subject-filter" /><input v-model="filters.tag" aria-label="按标签筛选" placeholder="标签（精确匹配）" maxlength="64" class="subject-filter" /><button type="submit" :disabled="loading">搜索</button></form>
       <label class="favorite-filter"><input v-model="filters.favoriteOnly" type="checkbox" /> 仅收藏（点击搜索应用）</label>

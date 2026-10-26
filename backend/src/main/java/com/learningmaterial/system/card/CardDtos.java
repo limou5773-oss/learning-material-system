@@ -10,6 +10,20 @@ import java.util.List;
 public final class CardDtos {
     private CardDtos() { }
 
+    public static final class ParentInput {
+        @NotNull @Min(1)
+        @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = CardOrganizationJson.IntegerValue.class)
+        private Integer version;
+        @com.fasterxml.jackson.databind.annotation.JsonDeserialize(using = CardOrganizationJson.StringValue.class)
+        private String parentCardId;
+        private boolean parentCardIdPresent;
+        public Integer getVersion() { return version; }
+        public void setVersion(Integer version) { this.version = version; }
+        public String getParentCardId() { return parentCardId; }
+        public void setParentCardId(String parentCardId) { parentCardIdPresent = true; this.parentCardId = parentCardId; }
+        public boolean hasParentCardId() { return parentCardIdPresent; }
+    }
+
     public record CardInput(
         @NotBlank @Size(max = 255) String title,
         @NotBlank @Size(max = 8000) String content,
