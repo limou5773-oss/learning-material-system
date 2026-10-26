@@ -1,0 +1,33 @@
+<view class="page">
+  <text class="eyebrow">CONFIRMED RELATIONS</text><view class="title">已确认关联</view>
+  <view class="lead">卡片 #{{cardId}} 的关联与两端来源</view><view class="notice">{{relationNotice}}</view>
+  <view wx:if="{{loading}}" class="state">正在读取关联…</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view><button wx:if="{{error}}" class="outline" bindtap="load">重试读取关联</button>
+  <view wx:if="{{!loading && !error && !items.length && total === 0}}" class="state">此卡片暂无已确认关联。</view>
+  <view wx:if="{{!loading && !error && !items.length && total > 0}}" class="state">当前页暂无关联，请返回上一页。</view>
+  <button wx:for="{{items}}" wx:key="id" class="relation-item {{selectedRelation.id === item.id ? 'selected' : ''}}" data-id="{{item.id}}" bindtap="selectRelation" disabled="{{loading}}">
+    <view class="relation-type">{{item.typeLabel}}</view><view>起点 #{{item.sourceCardId}} {{item.connector}} 终点 #{{item.targetCardId}}</view>
+    <view class="muted">{{item.directionLabel}}</view><view class="relation-evidence">{{item.evidenceText}}</view>
+    <view class="muted">{{selectedRelation.id === item.id ? '当前选中' : '查看两端卡片与来源'}}</view>
+  </button>
+  <view wx:if="{{page > 1 || total > 20}}" class="pagination"><button disabled="{{loading || page === 1}}" bindtap="previous">上一页</button><text>第 {{page}} 页 · 共 {{total}} 条</text><button disabled="{{loading || page * 20 >= total}}" bindtap="next">下一页</button></view>
+  <view wx:if="{{selectedRelation}}" class="card relation-detail">
+    <view class="card-title">{{selectedRelation.typeLabel}}</view><view class="muted">{{selectedRelation.directionLabel}}</view>
+    <view class="field-label">人工确认说明</view><text class="source-copy" selectable="true">{{selectedRelation.evidenceText}}</text>
+    <view wx:if="{{detailLoading}}" class="state">正在读取两端卡片与来源…</view>
+    <view wx:if="{{detailError}}" class="error">{{detailError}}</view><button wx:if="{{detailError}}" class="outline" bindtap="retryDetail">重试读取两端来源</button>
+    <view wx:for="{{endpoints}}" wx:for-item="endpoint" wx:key="label" class="endpoint">
+      <view class="field-label">{{endpoint.label}} #{{endpoint.card.id}}</view><view class="card-title">{{endpoint.card.title}}</view><view class="muted">{{endpoint.card.generationLabel}}</view>
+      <button class="outline" data-id="{{endpoint.card.id}}" bindtap="openCard">查看此卡片详情</button>
+      <view class="field-label">来源与依据</view><view wx:if="{{!endpoint.sources.length}}" class="notice">{{endpoint.emptySourceLabel}}</view>
+      <view wx:for="{{endpoint.sources}}" wx:for-item="source" wx:key="chunkId" class="source">
+        <view class="muted">{{source.materialTitle}} · 来源版本 {{source.materialVersion}}</view>
+        <block wx:if="{{source.isAvailable}}"><view class="muted">{{source.locator}}</view><view wx:if="{{source.qualityNote}}" class="notice">{{source.qualityNote}}</view>
+          <text class="source-copy" selectable="true">{{source.quoteText}}</text><view class="muted">完整片段</view><text class="source-copy" selectable="true">{{source.content}}</text>
+          <button class="outline" data-id="{{source.materialId}}" bindtap="openMaterial">查看原资料</button>
+        </block><view wx:else class="notice">{{source.reasonLabel}}</view>
+      </view>
+    </view>
+  </view>
+  <button class="outline" bindtap="openOriginCard">返回原卡片详情</button>
+</view>

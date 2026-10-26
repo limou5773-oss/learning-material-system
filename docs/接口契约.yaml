@@ -3366,6 +3366,7 @@
     "get":
       "summary": "分页查询已确认关系"
       "operationId": "get_card_relations"
+      "description": "本人已确认关系且两端均本人未删除；可按任一端cardId筛选，cardId不可访问时404。按关系ID倒序分页，真实无关系返回空列表，数据库错误不降为空。"
       "responses":
         "200":
           "description": "分页查询已确认关系"
@@ -3477,6 +3478,7 @@
     "post":
       "summary": "确认创建本人卡片关系"
       "operationId": "post_card_relations"
+      "description": "显式人工确认创建；两端须本人未删且版本匹配。RELATED按较小BIGINT ID为source规范化，另两类保持方向。重复409 RELATION_EXISTS不覆盖旧说明，旧卡片版本409 CARD_VERSION_CHANGED含currentVersion，自关联422 SELF_RELATION。成功不改变卡片版本。"
       "responses":
         "201":
           "description": "确认创建本人卡片关系"
@@ -3566,6 +3568,7 @@
     "delete":
       "summary": "删除本人关系"
       "operationId": "delete_card_relations_id"
+      "description": "只删除当前账号的关系，已不存在也204，不暴露他人关系是否存在；不删除卡片/来源或改变卡片版本。数据库失败仍报错。"
       "responses":
         "204":
           "description": "删除本人关系"
@@ -3733,7 +3736,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "最多200节点和600边，超出时hasMore=true并提示缩小筛选；不静默呈现为完整知识图。层级图由Card.parentCardId构建。"
+      "description": "最多200节点和600边，分别以上限加1检测截取；有省略hasMore=true并提示缩小范围。rootCardId为本人中心卡片及入/出边直接邻域，不代表全连通分量；subject精确筛选与根组合AND，根不匹配学科则空图。匹配的根优先，其余节点及边按ID升序；边两端必须是实际返回的本人未删节点，不发出悬空边。父子图仍独立由parentCardId构建。"
       "parameters":
         -
           "name": "subject"
@@ -3741,7 +3744,8 @@
           "required": false
           "schema":
             "type": "string"
-          "description": ""
+            "maxLength": 64
+          "description": "去首尾空白后精确匹配学科；空白不筛选"
         -
           "name": "rootCardId"
           "in": "query"
@@ -6202,6 +6206,7 @@
         - "items"
     "RelationInput":
       "type": "object"
+      "description": "两端ID为字符串、版本为整数；手工说明去首尾空白且非空。RELATED无向；PREREQUISITE起点是终点的前置知识，EXAMPLE终点是起点的示例。来源已失效的本人卡片仍可手工关联，查看来源沿用隐藏原文规则。"
       "properties":
         "sourceCardId":
           "type": "string"
@@ -6237,6 +6242,7 @@
         - "evidenceText"
     "Relation":
       "type": "object"
+      "description": "人工确认的关系说明，不自动证明事实。RELATED无向并按ID归一，其他类型保持有向；卡片后续编辑不会改写历史说明。"
       "properties":
         "id":
           "type": "string"
@@ -6267,6 +6273,7 @@
         - "evidenceText"
     "Graph":
       "type": "object"
+      "description": "当前范围的已确认关系图；hasMore=true必须提示只是部分结果，边只能引用返回nodes。节点和关系均限本人未删除端点。"
       "properties":
         "nodes":
           "type": "array"

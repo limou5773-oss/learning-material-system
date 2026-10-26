@@ -13,6 +13,7 @@
     "pages/tasks/confirm",
     "pages/cards/index",
     "pages/cards/detail",
+    "pages/cards/relations",
     "pages/cards/editor"
   ],
   "window": {

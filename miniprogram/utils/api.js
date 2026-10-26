@@ -50,7 +50,7 @@ function request(path, options = {}) {
           return
         }
         if (status < 200 || status >= 300) {
-          if (status === 401 && authenticated) clearToken()
+          if (status === 401 && authenticated && getToken() === token) clearToken()
           const problem = payload && payload.error
           reject(new ApiError(status, problem && problem.message || '请求失败，请稍后重试', problem && problem.code,
             problem && problem.existingMaterialId, problem && problem.currentVersion))

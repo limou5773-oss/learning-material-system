@@ -108,7 +108,7 @@ public class CardService {
         return row;
     }
 
-    private CardView view(CardRow row) {
+    CardView view(CardRow row) {
         List<String> tags;
         try { tags = json.readValue(row.getTagsJson(), new TypeReference<List<String>>() { }); }
         catch (JsonProcessingException ex) { throw new IllegalStateException("卡片标签无法读取", ex); }
