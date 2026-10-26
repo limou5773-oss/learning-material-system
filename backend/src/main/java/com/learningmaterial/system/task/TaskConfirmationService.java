@@ -6,6 +6,7 @@ import com.learningmaterial.system.card.CardMapper;
 import com.learningmaterial.system.card.CardRow;
 import com.learningmaterial.system.card.CardService;
 import com.learningmaterial.system.common.ApiException;
+import com.learningmaterial.system.notification.NotificationService;
 import com.learningmaterial.system.material.*;
 import com.learningmaterial.system.task.AiTaskDtos.*;
 
@@ -32,6 +33,7 @@ public class TaskConfirmationService {
     private final Clock clock;
     private final TransactionTemplate transactions;
     private final PersonalMaterialSearchService related;
+    private final NotificationService notifications;
 
     public TaskConfirmationService(
             AiTaskMapper tasks,
@@ -43,7 +45,9 @@ public class TaskConfirmationService {
             ObjectMapper json,
             Clock clock,
             PlatformTransactionManager transactionManager,
-            PersonalMaterialSearchService related) {
+            PersonalMaterialSearchService related,
+            NotificationService notifications) {
+        this.notifications = notifications;
         this.related = related;
         this.tasks = tasks;
         this.results = results;
@@ -109,7 +113,9 @@ public class TaskConfirmationService {
         if (!material.getVersion().equals(task.getMaterialVersion())
                 || !task.getMaterialVersion().equals(input.sourceVersion())) {
             results.invalidate(task.getId(), now);
-            tasks.failStaleConfirmation(task.getId(), now);
+            if (tasks.failStaleConfirmation(task.getId(), now) != 1)
+                throw new IllegalStateException("候选失效时任务状态未更新");
+            notifications.recordTaskState(task.getUserId(), task.getId(), "FAILED", now);
             return new Outcome(
                     null,
                     new ApiException(

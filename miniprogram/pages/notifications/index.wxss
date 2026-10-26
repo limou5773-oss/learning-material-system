@@ -1,0 +1,15 @@
+.filters { display: flex; flex-wrap: wrap; gap: 14rpx; margin-bottom: 28rpx; }
+.filter { margin: 0; padding: 15rpx 23rpx; border: 1rpx solid #cad9ce; border-radius: 13rpx; background: #fff; color: #2b6142; font-size: 25rpx; line-height: 1.5; }
+.filter.active { background: #276c47; border-color: #276c47; color: #fff; }
+.filter.refresh { margin-left: auto; }
+.notification { margin-top: 24rpx; padding: 32rpx; }
+.notification.unread { border-left: 7rpx solid #276c47; }
+.notification-heading { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; }
+.notification-title { font-size: 32rpx; font-weight: 700; }
+.read-state { color: #537460; font-size: 24rpx; }
+.notification-content { display: block; margin: 22rpx 0; font-size: 28rpx; line-height: 1.7; white-space: pre-wrap; overflow-wrap: anywhere; }
+.notification-actions { display: flex; gap: 16rpx; }
+.notification-actions button { flex: 1; width: auto; height: 78rpx; margin-top: 28rpx; font-size: 25rpx; }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-top: 32rpx; color: #64736a; font-size: 23rpx; }
+.pagination button { margin: 0; padding: 14rpx 20rpx; background: #fff; color: #2b6142; font-size: 25rpx; line-height: 1.5; }
+button[disabled] { opacity: .55; }

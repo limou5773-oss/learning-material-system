@@ -3,6 +3,7 @@ package com.learningmaterial.system.task;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.learningmaterial.system.common.ApiException;
+import com.learningmaterial.system.notification.NotificationService;
 import com.learningmaterial.system.material.MaterialMapper;
 import com.learningmaterial.system.material.MaterialRow;
 import com.learningmaterial.system.task.AiTaskDtos.CandidateResult;
@@ -37,6 +38,7 @@ public class TaskCandidateService {
     private final AiResultMapper results;
     private final ObjectMapper json;
     private final Clock clock;
+    private final NotificationService notifications;
 
     public TaskCandidateService(
             AiTaskMapper tasks,
@@ -45,7 +47,9 @@ public class TaskCandidateService {
             AiResultMapper results,
             ObjectMapper json,
             Clock clock,
-            com.learningmaterial.system.auth.UserMapper users) {
+            com.learningmaterial.system.auth.UserMapper users,
+            NotificationService notifications) {
+        this.notifications = notifications;
         this.users = users;
         this.tasks = tasks;
         this.materials = materials;
@@ -187,6 +191,7 @@ public class TaskCandidateService {
                 != 1) {
             throw new TaskExecutionException("LEASE_LOST");
         }
+        notifications.recordTaskState(task.getUserId(), task.getId(), "WAIT_CONFIRM", now);
         return true;
     }
 

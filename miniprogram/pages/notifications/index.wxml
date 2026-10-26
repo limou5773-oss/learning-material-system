@@ -1,0 +1,34 @@
+<view class="page">
+  <text class="eyebrow">NOTIFICATIONS</text>
+  <view class="title">站内通知</view>
+  <view class="lead">查阅本人的整理结果与任务失败提醒。</view>
+  <view class="notice">{{channelNotice}}</view>
+  <view class="filters">
+    <button class="filter {{!unreadOnly ? 'active' : ''}}" bindtap="showAll" disabled="{{loading || saving}}">全部通知</button>
+    <button class="filter {{unreadOnly ? 'active' : ''}}" bindtap="showUnread" disabled="{{loading || saving}}">仅看未读</button>
+    <button class="filter refresh" bindtap="load" loading="{{loading}}" disabled="{{loading || saving}}">刷新</button>
+  </view>
+  <view wx:if="{{loading}}" class="state">正在读取通知…</view>
+  <view wx:if="{{saving}}" class="notice">正在保存已读状态…</view>
+  <view wx:if="{{error}}" class="error">{{error}}</view>
+  <button wx:if="{{error}}" class="outline" bindtap="load" disabled="{{loading || saving}}">重试读取通知</button>
+  <view wx:if="{{actionError}}" class="error">{{actionError}} 请重试相应操作。</view>
+  <view wx:if="{{!loading && !error && loaded && !items.length && page === 1 && total === 0}}" class="state">{{unreadOnly ? '暂无未读通知。' : '暂无站内通知。'}}</view>
+  <view wx:if="{{!loading && !error && loaded && !items.length && (page > 1 || total > 0)}}" class="state">当前页暂无通知，请返回上一页。</view>
+  <view wx:for="{{items}}" wx:key="id" class="card notification {{!item.isRead ? 'unread' : ''}}">
+    <view class="notification-heading"><text class="notification-title">{{item.typeLabel}}</text><text class="read-state">{{item.readLabel}}</text></view>
+    <text class="notification-content" selectable="true">{{item.content}}</text>
+    <view class="muted">{{item.createdAt}}</view>
+    <view class="muted">{{item.channelLabel}}</view>
+    <view class="notification-actions">
+      <button class="outline" data-id="{{item.id}}" bindtap="toggleRead" disabled="{{loading || saving}}">{{item.readAction}}</button>
+      <button class="primary" data-id="{{item.id}}" bindtap="openTask" disabled="{{loading || saving || !item.taskAvailable}}">查看任务</button>
+    </view>
+    <view wx:if="{{!item.taskAvailable}}" class="muted">通知的任务目标无效，无法打开。</view>
+  </view>
+  <view wx:if="{{page > 1 || total > pageSize}}" class="pagination">
+    <button disabled="{{loading || saving || page === 1}}" bindtap="previous">上一页</button>
+    <text>第 {{page}} 页 · 共 {{total}} 条</text>
+    <button disabled="{{loading || saving || page * pageSize >= total}}" bindtap="next">下一页</button>
+  </view>
+</view>
