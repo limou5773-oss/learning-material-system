@@ -21,6 +21,7 @@ Page({
     } finally { this.setData({ loading: false }) }
   },
   edit() { if (this.data.card) wx.navigateTo({ url: `/pages/cards/editor?id=${encodeURIComponent(this.data.id)}` }) },
+  openRelations() { if (this.data.card) wx.navigateTo({ url: `/pages/cards/relations?cardId=${encodeURIComponent(this.data.id)}` }) },
   async toggleFavorite() {
     const card = this.data.card
     if (!card || this.data.favoriteBusy) return

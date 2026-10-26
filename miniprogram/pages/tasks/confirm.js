@@ -1,5 +1,6 @@
 const { ApiError, getToken, getMe, request } = require('../../utils/api')
 const { sourceLocator, generationPresentation, relationEndpointLabel } = require('../../utils/source-presentation')
+const { relationPresentation } = require('../../utils/relation-presentation')
 
 function tagNames(value) {
   const tags = value.split(/[,，]/).map(name => name.trim()).filter(Boolean)
@@ -63,7 +64,10 @@ Page({
           sourceLabel: relationEndpointLabel(relation.source, result.cards),
           targetLabel: relationEndpointLabel(relation.target, result.cards) })),
         selectedCount: result.cards.length })
-      this.setData({ generationView: generationPresentation(result.generationMode, result.generationInfo), sources: sources.map(source => ({ ...source, locator: sourceLocator(source) })), warnings: result.warnings || [] })
+      this.setData({ relations: this.data.relations.map(relation => ({ ...relation, ...relationPresentation(relation.type),
+        sourceLabel: relationEndpointLabel(relation.source, this.data.cards),
+        targetLabel: relationEndpointLabel(relation.target, this.data.cards) })),
+        generationView: generationPresentation(result.generationMode, result.generationInfo), sources: sources.map(source => ({ ...source, locator: sourceLocator(source) })), warnings: result.warnings || [] })
       if (this.data.resultVersion !== result.resultVersion || this.data.sourceVersion !== result.sourceVersion) {
         this.setData({ conflict: true, error: '候选版本已变化，原草稿已保留，请复制修改后重新整理。' })
       }
@@ -85,6 +89,7 @@ Page({
     this.persistDraft()
   },
   onRelationSelection(event) {
+    if (this.data.saving || this.data.conflict || !this.data.task || this.data.task.status !== 'WAIT_CONFIRM') return
     const selected = new Set(event.detail.value)
     this.setData({ relations: this.data.relations.map(relation => ({ ...relation, selected: selected.has(relation.relationKey) })) })
     this.persistDraft()

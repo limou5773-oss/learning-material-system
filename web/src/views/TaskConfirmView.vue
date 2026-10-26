@@ -6,6 +6,7 @@ import { clearSession, session } from '../auth'
 import { buildConfirmationInput, createConfirmationDraft, isConfirmationDraft, type ConfirmationDraft } from '../confirmation'
 import type { AiTask, CandidateResult, CandidateSource, ConfirmationResult } from '../tasks'
 import { sourceLocator, generationPresentation, relationEndpointLabel } from '../tasks'
+import { relationDescription, relationTypeLabels } from '../relations'
 
 const route = useRoute()
 const router = useRouter()
@@ -124,7 +125,7 @@ onMounted(load)
               <details class="candidate-source"><summary>对照本卡片来源</summary><div v-for="source in card.sources" :key="source.chunkId"><p>来源片段 #{{ source.chunkId }}</p><blockquote>{{ source.quoteText }}</blockquote></div></details>
             </div>
             <section v-if="draft.relations.length"><h2>关联建议</h2><p class="task-state">关联默认不保存，请逐条核对后勾选。</p>
-              <label v-for="relation in draft.relations" :key="relation.relationKey" class="task-check"><input v-model="relation.selected" type="checkbox">{{ relationEndpointLabel(relation.source, draft.cards) }} → {{ relationEndpointLabel(relation.target, draft.cards) }}：{{ relation.evidenceText }}</label>
+              <label v-for="relation in draft.relations" :key="relation.relationKey" class="task-check"><input v-model="relation.selected" type="checkbox">{{ relationTypeLabels[relation.type] }} · {{ relationDescription(relation.type, relationEndpointLabel(relation.source, draft.cards), relationEndpointLabel(relation.target, draft.cards)) }}：{{ relation.evidenceText }}</label>
             </section>
           </fieldset>
           <div class="editor-actions"><span>输入将保留为当前账号的标签页草稿</span><button type="submit" class="primary-button" :disabled="saving || conflict || loading || !selectedCount">{{ saving ? '正在保存…' : task?.status === 'SUCCEEDED' ? '读取上次保存结果' : `确认保存 ${selectedCount} 张卡片` }}</button></div>
