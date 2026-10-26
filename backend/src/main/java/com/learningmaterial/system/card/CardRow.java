@@ -6,7 +6,7 @@ public class CardRow {
     private Long id, userId, taskId, parentCardId;
     private String candidateKey, title, content, summary, subject, tagsJson, origin, generationMode, status;
     private Integer version;
-    private Boolean isEdited;
+    private Boolean isEdited, favorite;
     private LocalDateTime createdAt, updatedAt;
 
     public Long getId() { return id; }
@@ -39,6 +39,8 @@ public class CardRow {
     public void setVersion(Integer version) { this.version = version; }
     public Boolean getIsEdited() { return isEdited; }
     public void setIsEdited(Boolean isEdited) { this.isEdited = isEdited; }
+    public Boolean getFavorite() { return favorite; }
+    public void setFavorite(Boolean favorite) { this.favorite = favorite; }
     public LocalDateTime getCreatedAt() { return createdAt; }
     public void setCreatedAt(LocalDateTime createdAt) { this.createdAt = createdAt; }
     public LocalDateTime getUpdatedAt() { return updatedAt; }

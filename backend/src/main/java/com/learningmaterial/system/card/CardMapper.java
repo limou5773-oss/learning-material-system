@@ -34,17 +34,39 @@ public interface CardMapper {
                        @Param("targetId") long targetId, @Param("type") String type,
                        @Param("evidence") String evidence, @Param("now") LocalDateTime now);
 
-    @Select("SELECT * FROM knowledge_card WHERE user_id=#{userId} AND id=#{id} AND status != 'DELETED'")
+    @Select("""
+        SELECT k.*, EXISTS(SELECT 1 FROM favorite f WHERE f.user_id=k.user_id AND f.card_id=k.id) AS favorite
+        FROM knowledge_card k WHERE k.user_id=#{userId} AND k.id=#{id} AND k.status != 'DELETED'
+        """)
     CardRow findOwned(@Param("userId") long userId, @Param("id") long id);
 
     @Select("SELECT * FROM knowledge_card WHERE user_id=#{userId} AND id=#{id} AND status != 'DELETED' FOR UPDATE")
     CardRow findOwnedForUpdate(@Param("userId") long userId, @Param("id") long id);
 
-    @Select("SELECT * FROM knowledge_card WHERE user_id=#{userId} AND status != 'DELETED' ORDER BY updated_at DESC,id DESC LIMIT #{limit} OFFSET #{offset}")
-    List<CardRow> listOwned(@Param("userId") long userId, @Param("limit") int limit, @Param("offset") long offset);
+    String FILTERS = """
+        WHERE k.user_id=#{userId} AND k.status != 'DELETED'
+        <if test="keyword != null">AND (LOCATE(#{keyword},k.title)>0 OR LOCATE(#{keyword},k.content)>0)</if>
+        <if test="subject != null">AND k.subject=#{subject}</if>
+        <if test="tag != null">AND JSON_CONTAINS(k.tags_json,JSON_QUOTE(#{tag}))</if>
+        <if test="favoriteOnly">AND EXISTS(SELECT 1 FROM favorite f WHERE f.user_id=k.user_id AND f.card_id=k.id)</if>
+        """;
 
-    @Select("SELECT COUNT(*) FROM knowledge_card WHERE user_id=#{userId} AND status != 'DELETED'")
-    long countOwned(long userId);
+    @Select("<script>SELECT k.*, EXISTS(SELECT 1 FROM favorite f WHERE f.user_id=k.user_id AND f.card_id=k.id) AS favorite "
+        + "FROM knowledge_card k " + FILTERS + " ORDER BY k.updated_at DESC,k.id DESC LIMIT #{limit} OFFSET #{offset}</script>")
+    List<CardRow> listOwned(@Param("userId") long userId, @Param("keyword") String keyword,
+        @Param("subject") String subject, @Param("tag") String tag, @Param("favoriteOnly") boolean favoriteOnly,
+        @Param("limit") int limit, @Param("offset") long offset);
+
+    @Select("<script>SELECT COUNT(*) FROM knowledge_card k " + FILTERS + "</script>")
+    long countOwned(@Param("userId") long userId, @Param("keyword") String keyword,
+        @Param("subject") String subject, @Param("tag") String tag, @Param("favoriteOnly") boolean favoriteOnly);
+
+    @Update("""
+        UPDATE knowledge_card SET title=#{title},content=#{content},summary=#{summary},subject=#{subject},
+          tags_json=#{tagsJson},version=version+1,is_edited=TRUE,updated_at=#{updatedAt}
+        WHERE id=#{id} AND user_id=#{userId}
+        """)
+    int updateContent(CardRow card);
 
     @Select("""
         SELECT c.id AS chunk_id,c.material_id,c.material_version,c.page_no,c.content,s.quote_text,c.extraction_method,c.quality_note,

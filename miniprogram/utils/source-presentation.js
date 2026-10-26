@@ -98,12 +98,18 @@ function generationPresentation(mode, info) {
   }
   return { label: '生成方式待核实', modelLabel: '', warning: '请人工核对固定版本来源与OCR质量后再确认保存。' }
 }
-function savedGenerationLabel(mode) {
+function savedGenerationLabel(mode, isEdited = false) {
+  if (mode === 'MANUAL') return isEdited ? '人工创建 · 已人工修改' : '人工创建'
+  if (isEdited && mode === 'MODEL') return '模型生成 · 已人工修改'
+  if (isEdited && mode === 'MOCK') return '模拟候选 · 已人工修改'
   if (mode === 'MODEL') return '模型生成 · 人工确认'
   if (mode === 'MOCK') return '模拟候选 · 人工确认'
   return '人工确认保存'
 }
-function savedGenerationWarning(mode) {
+function savedGenerationWarning(mode, isEdited = false) {
+  if (mode === 'MANUAL') return '本卡片为人工创建，无自动来源。请自行核对正文与依据。'
+  if (isEdited && mode === 'MODEL') return '本卡片由模型生成后经人工修改；来源为创建时的历史依据，请重新核对其与当前正文的对应关系及OCR质量。'
+  if (isEdited && mode === 'MOCK') return '本卡片最初为模拟候选，保存后经人工修改；来源为创建时的历史依据，请重新核对其与当前正文的对应关系及OCR质量。'
   if (mode === 'MODEL') return '本卡片由模型生成并经人工确认保存。仍须人工核对固定版本来源及OCR质量；引用能定位原文，不代表足以支持卡片结论。'
   if (mode === 'MOCK') return '本卡片经人工确认保存，生成内容仍为模拟结果。请核对固定版本来源与OCR质量；标题元数据不代表文件正文。'
   return '请核对固定版本来源与OCR质量。'

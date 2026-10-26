@@ -1,10 +1,11 @@
 <view class="page"><text class="eyebrow">KNOWLEDGE CARD</text><view class="title">知识卡片</view>
   <view wx:if="{{loading}}" class="state">正在读取…</view><view wx:if="{{error}}" class="error">{{error}}</view><button wx:if="{{error}}" class="outline" bindtap="load">重试</button>
   <view wx:if="{{card}}" class="card"><view class="notice">{{card.generationLabel}}</view><view class="card-title">{{card.title}}</view><view class="muted">卡片 #{{card.id}} · 版本 {{card.version}} {{card.isEdited ? '· 已人工修改' : ''}}</view>
+    <view wx:if="{{actionError}}" class="error">{{actionError}}</view><button class="outline" bindtap="edit">编辑卡片</button><button class="outline" bindtap="toggleFavorite" loading="{{favoriteBusy}}" disabled="{{favoriteBusy}}">{{card.favorite ? '取消收藏' : '收藏卡片'}}</button>
     <view class="notice">{{card.generationWarning}}</view>
     <view wx:if="{{card.subject}}" class="muted">学科 {{card.subject}}</view><text wx:for="{{card.tags}}" wx:key="*this" class="tag-pill">{{item}}</text>
     <view wx:if="{{card.summary}}" class="card-copy">{{card.summary}}</view><text class="card-copy" selectable="true">{{card.content}}</text>
-    <view class="field-label">来源与依据</view><view wx:for="{{sources}}" wx:key="chunkId" class="source"><view class="muted">{{item.materialTitle}} · 来源版本 {{item.materialVersion}} {{item.pageNo ? '· 第' + item.pageNo + '页' : ''}}</view>
+    <view class="field-label">来源与依据</view><view wx:if="{{card.origin === 'MANUAL'}}" class="notice">人工创建的卡片无自动来源。</view><view wx:for="{{sources}}" wx:key="chunkId" class="source"><view class="muted">{{item.materialTitle}} · 来源版本 {{item.materialVersion}} {{item.pageNo ? '· 第' + item.pageNo + '页' : ''}}</view>
       <block wx:if="{{item.isAvailable}}"><view class="muted">{{item.locator}}</view><view wx:if="{{item.qualityNote}}" class="notice">{{item.qualityNote}}</view><text class="card-copy" selectable="true">{{item.quoteText}}</text><view class="muted">完整片段</view><text class="card-copy" selectable="true">{{item.content}}</text><button class="outline" data-id="{{item.materialId}}" bindtap="openMaterial">查看原资料</button></block>
       <view wx:else class="notice">{{item.reasonLabel}}</view>
     </view>

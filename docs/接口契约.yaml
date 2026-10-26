@@ -1531,7 +1531,7 @@
     "put":
       "summary": "幂等添加本人收藏"
       "operationId": "put_favorites_type_id"
-      "description": "D08仅支持MATERIAL；CARD将在卡片功能完成后开放，当前返回422。"
+      "description": "支持MATERIAL及CARD；添加前校验本人未删除目标，重复添加幂等204。收藏不递增内容版本。"
       "responses":
         "204":
           "description": "幂等添加本人收藏"
@@ -1628,7 +1628,7 @@
     "delete":
       "summary": "幂等删除本人收藏"
       "operationId": "delete_favorites_type_id"
-      "description": "D08仅支持MATERIAL；删除不存在的本人收藏仍返回204。"
+      "description": "支持MATERIAL及CARD；只移除当前账号的收藏，不存在仍返回204，不改变目标版本。"
       "responses":
         "204":
           "description": "幂等删除本人收藏"
@@ -1726,7 +1726,7 @@
     "get":
       "summary": "查询收藏分页"
       "operationId": "get_favorites"
-      "description": "D08仅返回本人未删除的资料收藏；归档资料仍可见。CARD筛选当前返回422。"
+      "description": "返回本人未删除目标的收藏，type=MATERIAL或CARD；省略type时混合分页，按收藏时间及收藏ID倒序。归档资料仍可见，未知类型400。"
       "responses":
         "200":
           "description": "查询收藏分页"
@@ -2663,7 +2663,7 @@
     "get":
       "summary": "分页查询本人卡片"
       "operationId": "get_cards"
-      "description": "D12已实现本人未删除卡片的page/pageSize分页；keyword、subject、tag为D17拟议参数，当前不参与筛选。"
+      "description": "分页查询本人未删除卡片；keyword按标题或正文包含查询，subject/tag精确筛选，各条件AND，空白视为不筛选。参数化字面量匹配，updatedAt/id倒序；favoriteOnly=true仅返回本人收藏。"
       "responses":
         "200":
           "description": "分页查询本人卡片"
@@ -2750,21 +2750,32 @@
           "required": false
           "schema":
             "type": "string"
-          "description": ""
+            "maxLength": 100
+          "description": "标题或正文包含关键词，最多100个UTF-16单元，空白视为不筛选。"
         -
           "name": "subject"
           "in": "query"
           "required": false
           "schema":
             "type": "string"
-          "description": ""
+            "maxLength": 64
+          "description": "学科精确匹配，最多64个UTF-16单元。"
         -
           "name": "tag"
           "in": "query"
           "required": false
           "schema":
             "type": "string"
-          "description": ""
+            "maxLength": 64
+          "description": "标签精确匹配，最多64个UTF-16单元。"
+        -
+          "name": "favoriteOnly"
+          "in": "query"
+          "required": false
+          "schema":
+            "type": "boolean"
+            "default": false
+          "description": "仅显示本人收藏卡片；收藏不改变卡片版本。"
         -
           "name": "page"
           "in": "query"
@@ -2787,7 +2798,7 @@
     "post":
       "summary": "人工创建知识卡片"
       "operationId": "post_cards"
-      "description": "拟议接口，D17实现，当前尚未提供。"
+      "description": "人工创建本人卡片，服务端赋MANUAL来源及模式、版本1；无自动来源，不调用模型。"
       "responses":
         "201":
           "description": "人工创建知识卡片"
@@ -2968,6 +2979,7 @@
     "patch":
       "summary": "按版本编辑卡片"
       "operationId": "patch_cards_id"
+      "description": "至少提供一个可修改字段，缺省保留原值；summary/subject显式null或空白清除。成功version+1并标记isEdited，保留原模式与来源；冲突409含currentVersion。"
       "responses":
         "200":
           "description": "按版本编辑卡片"
@@ -6020,7 +6032,10 @@
           "enum":
             - "MOCK"
             - "MODEL"
-          "description": "正式卡片保留MOCK或MODEL生成模式，并均经人工确认；MODEL不等于事实正确。"
+            - "MANUAL"
+          "description": "人工创建为MANUAL；AI确认保留MOCK/MODEL，编辑不改变原模式。isEdited表示后续人工修改，历史来源不自动为修改后内容背书。"
+        "favorite":
+          "type": "boolean"
         "isEdited":
           "type": "boolean"
         "createdAt":
@@ -6041,10 +6056,12 @@
         - "origin"
         - "generationMode"
         - "isEdited"
+        - "favorite"
         - "createdAt"
         - "updatedAt"
     "CardInput":
       "type": "object"
+      "description": "标题及正文不得为空白；summary/subject可空，tags省略或null默认为[]。标签去首尾空白并按Locale.ROOT小写判重，保留原大小写；标签可以含逗号。客户端不能指定身份、模式、来源或任务。"
       "properties":
         "title":
           "type": "string"
@@ -6057,8 +6074,11 @@
         "summary":
           "type": "string"
           "maxLength": 2000
+          "nullable": true
         "tags":
           "type": "array"
+          "nullable": true
+          "default": []
           "items":
             "type": "string"
             "minLength": 1
@@ -6068,12 +6088,14 @@
         "subject":
           "type": "string"
           "maxLength": 64
+          "nullable": true
       "additionalProperties": false
       "required":
         - "title"
         - "content"
     "CardPatch":
       "type": "object"
+      "description": "version必填，至少提供一个编辑字段；title/content/tags显式null拒绝，summary/subject显式null或空白清除。其余字段缺省保留，成功标记人工修改并保留历史来源。"
       "properties":
         "version":
           "type": "integer"
