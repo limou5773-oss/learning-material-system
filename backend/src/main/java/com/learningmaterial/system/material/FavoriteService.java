@@ -1,6 +1,7 @@
 package com.learningmaterial.system.material;
 
 import com.learningmaterial.system.common.ApiException;
+import com.learningmaterial.system.card.CardMapper;
 import com.learningmaterial.system.material.MaterialDtos.PageView;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
@@ -15,47 +16,55 @@ import java.util.List;
 public class FavoriteService {
     private final FavoriteMapper favorites;
     private final MaterialMapper materials;
+    private final CardMapper cards;
     private final Clock clock;
 
-    public FavoriteService(FavoriteMapper favorites, MaterialMapper materials, Clock clock) {
+    public FavoriteService(FavoriteMapper favorites, MaterialMapper materials, CardMapper cards, Clock clock) {
         this.favorites = favorites;
         this.materials = materials;
+        this.cards = cards;
         this.clock = clock;
     }
 
     @Transactional
     public void add(long userId, String type, String id) {
-        materialType(type);
-        long materialId = parseId(id);
-        if (materials.findOwnedForUpdate(materialId, userId) == null) {
+        favoriteType(type);
+        long targetId = parseId(id);
+        LocalDateTime now = LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC);
+        if ("CARD".equals(type)) {
+            if (cards.findOwnedForUpdate(userId, targetId) == null)
+                throw new ApiException(HttpStatus.NOT_FOUND, "CARD_NOT_FOUND", "卡片不存在");
+            favorites.addCard(userId, targetId, now);
+            return;
+        }
+        if (materials.findOwnedForUpdate(targetId, userId) == null) {
             throw new ApiException(HttpStatus.NOT_FOUND, "MATERIAL_NOT_FOUND", "资料不存在");
         }
-        favorites.addMaterial(userId, materialId, LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC));
+        favorites.addMaterial(userId, targetId, now);
     }
 
     @Transactional
     public void remove(long userId, String type, String id) {
-        materialType(type);
-        favorites.removeMaterial(userId, parseId(id));
+        favoriteType(type);
+        if ("CARD".equals(type)) favorites.removeCard(userId, parseId(id));
+        else favorites.removeMaterial(userId, parseId(id));
     }
 
     @Transactional(readOnly = true)
     public PageView<FavoriteView> list(long userId, String type, int page, int pageSize) {
-        if (type != null) materialType(type);
+        if (type != null) favoriteType(type);
         if (page < 1 || pageSize < 1 || pageSize > 100) {
             throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY, "INVALID_PAGE", "分页参数无效");
         }
-        long total = favorites.countMaterials(userId);
-        List<FavoriteView> items = favorites.listMaterials(userId, pageSize, (long) (page - 1) * pageSize)
-            .stream().map(row -> new FavoriteView("MATERIAL", row.getMaterialId().toString(), row.getTitle(),
+        long total = favorites.count(userId, type);
+        List<FavoriteView> items = favorites.list(userId, type, pageSize, (long) (page - 1) * pageSize)
+            .stream().map(row -> new FavoriteView(row.getType(), row.getTargetId().toString(), row.getTitle(),
                 row.getCreatedAt().toInstant(ZoneOffset.UTC))).toList();
         return new PageView<>(items, page, pageSize, total);
     }
 
-    private static void materialType(String type) {
-        if ("MATERIAL".equals(type)) return;
-        if ("CARD".equals(type)) throw new ApiException(HttpStatus.UNPROCESSABLE_ENTITY,
-            "UNSUPPORTED_FAVORITE_TYPE", "卡片收藏将在卡片功能完成后开放");
+    private static void favoriteType(String type) {
+        if ("MATERIAL".equals(type) || "CARD".equals(type)) return;
         throw new ApiException(HttpStatus.BAD_REQUEST, "BAD_FAVORITE_TYPE", "收藏类型无效");
     }
 

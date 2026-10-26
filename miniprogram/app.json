@@ -12,7 +12,8 @@
     "pages/tasks/detail",
     "pages/tasks/confirm",
     "pages/cards/index",
-    "pages/cards/detail"
+    "pages/cards/detail",
+    "pages/cards/editor"
   ],
   "window": {
     "navigationBarTitleText": "学材",

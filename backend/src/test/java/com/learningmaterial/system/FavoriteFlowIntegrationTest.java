@@ -46,8 +46,10 @@ class FavoriteFlowIntegrationTest {
                 .isEqualTo(HttpStatus.UNAUTHORIZED);
             assertThat(exchange("/favorites/MATERIAL/" + foreign, HttpMethod.PUT, null, owner).getStatusCode())
                 .isEqualTo(HttpStatus.NOT_FOUND);
-            assertThat(exchange("/favorites/CARD/1", HttpMethod.PUT, null, owner).getStatusCode())
-                .isEqualTo(HttpStatus.UNPROCESSABLE_ENTITY);
+            assertThat(exchange("/favorites/CARD/9223372036854775807", HttpMethod.PUT, null, owner).getStatusCode())
+                .isEqualTo(HttpStatus.NOT_FOUND);
+            assertThat(exchange("/favorites/UNKNOWN/1", HttpMethod.PUT, null, owner).getStatusCode())
+                .isEqualTo(HttpStatus.BAD_REQUEST);
             assertThat(exchange("/favorites/MATERIAL/nope", HttpMethod.PUT, null, owner).getStatusCode())
                 .isEqualTo(HttpStatus.BAD_REQUEST);
 

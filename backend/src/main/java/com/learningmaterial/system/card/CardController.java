@@ -4,6 +4,8 @@ import com.learningmaterial.system.auth.AuthPrincipal;
 import com.learningmaterial.system.common.ApiResponse;
 import com.learningmaterial.system.material.MaterialDtos.PageView;
 import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import org.springframework.http.HttpStatus;
 import org.springframework.security.core.annotation.AuthenticationPrincipal;
 import org.springframework.web.bind.annotation.*;
 
@@ -15,9 +17,24 @@ public class CardController {
 
     @GetMapping
     public ApiResponse<PageView<CardService.CardView>> list(@AuthenticationPrincipal AuthPrincipal principal,
+        @RequestParam(required = false) String keyword, @RequestParam(required = false) String subject,
+        @RequestParam(required = false) String tag, @RequestParam(defaultValue = "false") boolean favoriteOnly,
         @RequestParam(defaultValue = "1") int page, @RequestParam(defaultValue = "20") int pageSize,
         HttpServletRequest request) {
-        return ApiResponse.of(cards.list(principal.userId(), page, pageSize), request);
+        return ApiResponse.of(cards.list(principal.userId(), keyword, subject, tag, favoriteOnly, page, pageSize), request);
+    }
+
+    @PostMapping
+    @ResponseStatus(HttpStatus.CREATED)
+    public ApiResponse<CardService.CardView> create(@AuthenticationPrincipal AuthPrincipal principal,
+        @Valid @RequestBody CardDtos.CardInput input, HttpServletRequest request) {
+        return ApiResponse.of(cards.create(principal.userId(), input), request);
+    }
+
+    @PatchMapping("/{id}")
+    public ApiResponse<CardService.CardView> patch(@AuthenticationPrincipal AuthPrincipal principal,
+        @PathVariable String id, @Valid @RequestBody CardDtos.CardPatch input, HttpServletRequest request) {
+        return ApiResponse.of(cards.patch(principal.userId(), id, input), request);
     }
 
     @GetMapping("/{id}")

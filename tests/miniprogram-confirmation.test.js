@@ -105,7 +105,11 @@ test('小程序查看正式卡片时区分模拟来源并保留来源不可用�
 test('小程序知识卡片列表分页，任务只在待确认状态提供编辑入口', async () => {
   const list = page('../miniprogram/pages/cards/index')
   handler = options => {
-    assert.match(options.url, /\/cards\?page=1&pageSize=20$/)
+    const query = new URL(options.url)
+    assert.equal(query.pathname.endsWith('/cards'), true)
+    assert.equal(query.searchParams.get('page'), '1')
+    assert.equal(query.searchParams.get('pageSize'), '20')
+    assert.equal(query.searchParams.get('favoriteOnly'), 'false')
     options.success({ statusCode: 200, data: { data: { items: [{ id: '123', title: '已保存卡片',
       generationMode: 'MOCK', tags: [] }], page: 1, pageSize: 20, total: 1 } } })
   }

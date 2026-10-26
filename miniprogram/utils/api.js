@@ -3,12 +3,13 @@ const { API_BASE_URL } = require('../config')
 const TOKEN_KEY = 'lms.accessToken.v1'
 
 class ApiError extends Error {
-  constructor(status, message, code, existingMaterialId) {
+  constructor(status, message, code, existingMaterialId, currentVersion) {
     super(message)
     this.name = 'ApiError'
     this.status = status
     this.code = code || ''
     this.existingMaterialId = existingMaterialId || ''
+    this.currentVersion = currentVersion
   }
 }
 
@@ -52,7 +53,7 @@ function request(path, options = {}) {
           if (status === 401 && authenticated) clearToken()
           const problem = payload && payload.error
           reject(new ApiError(status, problem && problem.message || '请求失败，请稍后重试', problem && problem.code,
-            problem && problem.existingMaterialId))
+            problem && problem.existingMaterialId, problem && problem.currentVersion))
           return
         }
         if (!payload || typeof payload !== 'object' || !Object.prototype.hasOwnProperty.call(payload, 'data')) {
