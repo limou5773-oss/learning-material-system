@@ -7,6 +7,7 @@ Page({
 
   openMaterials() { wx.navigateTo({ url: '/pages/materials/index' }) },
   openTasks() { wx.navigateTo({ url: '/pages/tasks/index' }) },
+  openNotifications() { wx.navigateTo({ url: '/pages/notifications/index' }) },
   openCards() { wx.navigateTo({ url: '/pages/cards/index' }) },
   newNote() { wx.navigateTo({ url: '/pages/note/new' }) },
 

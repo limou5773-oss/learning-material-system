@@ -3,6 +3,7 @@ package com.learningmaterial.system.task;
 import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.learningmaterial.system.notification.NotificationService;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 
@@ -25,8 +26,10 @@ public class TaskLeaseService {
     private final ModelAttemptMapper modelAttempts;
     private final Clock clock;
     private final ObjectMapper json;
+    private final NotificationService notifications;
 
-    public TaskLeaseService(AiTaskMapper tasks, AiToolCallMapper calls, Clock clock, ObjectMapper json, OcrAttemptMapper ocrAttempts, ModelAttemptMapper modelAttempts) {
+    public TaskLeaseService(AiTaskMapper tasks, AiToolCallMapper calls, Clock clock, ObjectMapper json, OcrAttemptMapper ocrAttempts, ModelAttemptMapper modelAttempts, NotificationService notifications) {
+        this.notifications = notifications;
         this.tasks = tasks;
         this.calls = calls;
         this.ocrAttempts = ocrAttempts; this.modelAttempts = modelAttempts;
@@ -46,6 +49,7 @@ public class TaskLeaseService {
                 calls.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
                 ocrAttempts.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
                 modelAttempts.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
+                notifications.recordTaskState(row.getUserId(), row.getId(), "FAILED", now);
             }
             return null;
         }
@@ -129,6 +133,8 @@ public class TaskLeaseService {
         calls.markRunningUnknown(lease.taskId(), errorCode, now);
         ocrAttempts.markRunningUnknown(lease.taskId(), errorCode, now);
         modelAttempts.markRunningUnknown(lease.taskId(), errorCode, now);
+        AiTaskRow task = tasks.findById(lease.taskId());
+        notifications.recordTaskState(task.getUserId(), task.getId(), "FAILED", now);
         return true;
     }
 

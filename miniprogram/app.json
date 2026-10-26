@@ -2,6 +2,7 @@
   "pages": [
     "pages/login/index",
     "pages/me/index",
+    "pages/notifications/index",
     "pages/materials/index",
     "pages/note/new",
     "pages/note/edit",

@@ -18,6 +18,7 @@ import CardDetailView from './views/CardDetailView.vue'
 import CardEditorRoute from './views/CardEditorRoute.vue'
 import CardOrganizationRoute from './views/CardOrganizationRoute.vue'
 import KnowledgeGraphRoute from './views/KnowledgeGraphRoute.vue'
+import NotificationsRoute from './views/NotificationsRoute.vue'
 
 const router = createRouter({
   history: createWebHistory(),
@@ -35,6 +36,7 @@ const router = createRouter({
     { path: '/materials/:id/edit', name: 'note-edit', component: NoteEditView, meta: { requiresAuth: true } },
     { path: '/materials/:id', name: 'material-detail', component: MaterialDetailView, meta: { requiresAuth: true } },
     { path: '/ai-tasks', name: 'tasks', component: TasksView, meta: { requiresAuth: true } },
+    { path: '/notifications', name: 'notifications', component: NotificationsRoute, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id/confirm', name: 'task-confirm', component: TaskConfirmView, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id', name: 'task-detail', component: TaskDetailView, meta: { requiresAuth: true } },
     { path: '/cards', name: 'cards', component: CardsView, meta: { requiresAuth: true } },

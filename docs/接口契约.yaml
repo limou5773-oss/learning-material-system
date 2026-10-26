@@ -3948,6 +3948,7 @@
     "get":
       "summary": "分页查询本人通知"
       "operationId": "get_notifications"
+      "description": "仅本人通知；unreadOnly默认false，按createdAt倒序/id倒序分页，范围page>=1/pageSize1..100。真实空列表与数据库失败分开。任务WAIT_CONFIRM或FAILED转换与通知同事务提交，按任务与状态事件去重；不回填历史终态。"
       "responses":
         "200":
           "description": "分页查询本人通知"
@@ -4034,7 +4035,8 @@
           "required": false
           "schema":
             "type": "boolean"
-          "description": ""
+            "default": false
+          "description": "仅接受true/false；省略为false，显式空值或其他文本400"
         -
           "name": "page"
           "in": "query"
@@ -4058,6 +4060,7 @@
     "put":
       "summary": "更新本人通知已读状态"
       "operationId": "put_notifications_id_read_state"
+      "description": "严格JSON仅isRead布尔；缺失/null422、错误类型、未知字段或单一对象后的尾随内容400。本人记录200，陌生/不存在/无效ID404。true保留首次read_at、false清空，重复同值幂等；不改创建时间、内容、归属及渠道。"
       "responses":
         "200":
           "description": "更新本人通知已读状态"
@@ -6354,6 +6357,7 @@
         - "items"
     "Notification":
       "type": "object"
+      "description": "任务状态与站内通知原子提交；正文为服务端固定提示，不包含原文或异常堆栈。微信账号绑定、授权和模板未开通，本轮仅NOT_REQUESTED，不发送真实微信消息。"
       "properties":
         "id":
           "type": "string"
@@ -6361,11 +6365,20 @@
           "description": "十进制BIGINT字符串"
         "type":
           "type": "string"
+          "enum": ["RESULT_READY", "TASK_FAILED"]
         "content":
           "type": "string"
         "target":
           "type": "object"
-          "additionalProperties": true
+          "additionalProperties": false
+          "properties":
+            "type":
+              "type": "string"
+              "enum": ["AI_TASK"]
+            "taskId":
+              "type": "string"
+              "pattern": "^[1-9][0-9]*$"
+          "required": ["type", "taskId"]
         "isRead":
           "type": "boolean"
         "createdAt":
@@ -6374,14 +6387,9 @@
           "description": "UTC ISO 8601，带Z"
         "channelStatus":
           "type": "string"
-          "nullable": true
+          "enum": ["NOT_REQUESTED"]
       "additionalProperties": false
-      "required":
-        - "id"
-        - "type"
-        - "content"
-        - "isRead"
-        - "createdAt"
+      "required": ["id", "type", "content", "target", "isRead", "createdAt", "channelStatus"]
     "ReadState":
       "type": "object"
       "properties":
