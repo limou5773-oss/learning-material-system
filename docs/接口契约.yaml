@@ -2,7 +2,7 @@
 "info":
   "title": "个人学习资料智能整理系统开发接口"
   "version": "1.0.0-draft"
-  "description": "依据开题报告的编码契约；D02至D13账号、资料、资料收藏、异步任务、PDF指定页段文字提取、模拟候选、原子确认及卡片查阅已实现。D14增加默认关闭的腾讯云OCR代码、扫描页识别和质量提示；真实厂商联调待本机凭证。D15增加显式启用的DeepSeek MODEL生成及generationInfo，真实厂商联调待凭证；MOCK仍保留。D16增加显式agent受限规划、工具反馈及本人卡片检索和人工确认关联；真实厂商验收待凭证。卡片编辑/搜索/收藏、图谱及管理接口仍为拟议。所有ID为字符串，时间为UTC。"
+  "description": "依据开题报告的编码契约。账号密码登录、资料、任务、来源校验与人工确认、卡片管理/布局/关系图、站内通知、用户管理、主动送审、统计及F21脱敏监控已有实现；D24提供自动验收工具。腾讯OCR、DeepSeek MODEL/agent代码显式启用，真实厂商效果待凭证；MOCK不代表真实AI。真实微信身份登录/绑定路径仍为拟议，原生微信及最终验收未全部完成。实施范围见各接口描述、开发进度与验收矩阵。所有ID为字符串，时间为UTC。"
 "servers":
   -
     "url": "http://localhost:8080/api/v1"
@@ -4343,27 +4343,27 @@
       "parameters":
       - "name": "id"
         "in": "path"
-        "required": !!bool "true"
+        "required": true
         "schema":
           "type": "string"
           "pattern": "^[1-9][0-9]*$"
           "description": "十进制BIGINT字符串"
       - "name": "page"
         "in": "query"
-        "required": !!bool "false"
+        "required": false
         "schema":
           "type": "integer"
-          "minimum": !!int "1"
-          "default": !!int "1"
+          "minimum": 1
+          "default": 1
         "description": ""
       - "name": "pageSize"
         "in": "query"
-        "required": !!bool "false"
+        "required": false
         "schema":
           "type": "integer"
-          "minimum": !!int "1"
-          "maximum": !!int "100"
-          "default": !!int "20"
+          "minimum": 1
+          "maximum": 100
+          "default": 20
         "description": ""
   "/admin/users":
     "get":
@@ -4901,7 +4901,7 @@
               "$ref": "#/components/schemas/ReviewDecision"
   "/admin/ai-tasks":
     "get":
-      "description": "拟议脱敏监控接口，截至D24尚无对应Controller及Web入口；D23提供聚合统计，不代表此接口已经实现。"
+      "description": "已实现F21。ADMIN只读查看所有账号任务的固定安全投影，不返回私人正文、标题、指令、配置/上下文、候选或工具输出。按createdAt/id降序；创建时间左闭右开，from/to均可独立省略。用时为起止均存在的已结束跨度，包含人工确认等待，非模型推理耗时。"
       "summary": "管理员查询脱敏任务"
       "operationId": "get_admin_ai_tasks"
       "responses":
@@ -4929,38 +4929,8 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-        "404":
-          "description": "资源不存在或无权访问"
-          "content":
-            "application/json":
-              "schema":
-                "$ref": "#/components/schemas/ApiError"
-        "409":
-          "description": "版本、状态或幂等冲突"
-          "content":
-            "application/json":
-              "schema":
-                "$ref": "#/components/schemas/ApiError"
-        "413":
-          "description": "文件过大"
-          "content":
-            "application/json":
-              "schema":
-                "$ref": "#/components/schemas/ApiError"
-        "415":
-          "description": "不支持类型"
-          "content":
-            "application/json":
-              "schema":
-                "$ref": "#/components/schemas/ApiError"
         "422":
           "description": "业务校验失败"
-          "content":
-            "application/json":
-              "schema":
-                "$ref": "#/components/schemas/ApiError"
-        "429":
-          "description": "频率或预算限制"
           "content":
             "application/json":
               "schema":
@@ -4971,70 +4941,53 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-        "502":
-          "description": "外部服务失败"
-          "content":
-            "application/json":
-              "schema":
-                "$ref": "#/components/schemas/ApiError"
-        "503":
-          "description": "服务暂不可用"
-          "content":
-            "application/json":
-              "schema":
-                "$ref": "#/components/schemas/ApiError"
       "parameters":
-        -
-          "name": "status"
-          "in": "query"
-          "required": false
-          "schema":
-            "type": "string"
-            "enum":
-              - "QUEUED"
-              - "RUNNING"
-              - "WAIT_CONFIRM"
-              - "SUCCEEDED"
-              - "FAILED"
-              - "CANCELLED"
-          "description": ""
-        -
-          "name": "from"
-          "in": "query"
-          "required": false
-          "schema":
-            "type": "string"
-            "format": "date-time"
-            "description": "UTC ISO 8601，带Z"
-          "description": ""
-        -
-          "name": "to"
-          "in": "query"
-          "required": false
-          "schema":
-            "type": "string"
-            "format": "date-time"
-            "description": "UTC ISO 8601，带Z"
-          "description": ""
-        -
-          "name": "page"
-          "in": "query"
-          "required": false
-          "schema":
-            "type": "integer"
-            "minimum": 1
-            "default": 1
-          "description": ""
-        -
-          "name": "pageSize"
-          "in": "query"
-          "required": false
-          "schema":
-            "type": "integer"
-            "minimum": 1
-            "maximum": 100
-            "default": 20
-          "description": ""
+      - "name": "status"
+        "in": "query"
+        "required": false
+        "schema":
+          "type": "string"
+          "enum":
+          - "QUEUED"
+          - "RUNNING"
+          - "WAIT_CONFIRM"
+          - "SUCCEEDED"
+          - "FAILED"
+          - "CANCELLED"
+        "description": "六个任务状态；省略或空字符串表示全部。"
+      - "name": "from"
+        "in": "query"
+        "required": false
+        "schema":
+          "type": "string"
+          "format": "date-time"
+          "description": "UTC ISO 8601，带Z"
+        "description": "可选UTC ISO时间，必须带Z；支持MySQL DATETIME的1000—9999年。from含/to不含，同时提供须from<to。格式400，范围422。"
+      - "name": "to"
+        "in": "query"
+        "required": false
+        "schema":
+          "type": "string"
+          "format": "date-time"
+          "description": "UTC ISO 8601，带Z"
+        "description": "可选UTC ISO时间，必须带Z；支持MySQL DATETIME的1000—9999年。from含/to不含，同时提供须from<to。格式400，范围422。"
+      - "name": "page"
+        "in": "query"
+        "required": false
+        "schema":
+          "type": "integer"
+          "minimum": 1
+          "default": 1
+        "description": ""
+      - "name": "pageSize"
+        "in": "query"
+        "required": false
+        "schema":
+          "type": "integer"
+          "minimum": 1
+          "maximum": 100
+          "default": 20
+        "description": ""
   "/admin/statistics":
     "get":
       "summary": "查询统一口径平台统计"
@@ -5241,6 +5194,80 @@
             "type": "string"
             "pattern": "^[1-9][0-9]*$"
             "description": "十进制BIGINT字符串"
+  "/admin/ai-tasks/{id}/steps":
+    "get":
+      "summary": "管理员查询任务脱敏工具记录"
+      "operationId": "get_admin_ai_tasks_id_steps"
+      "description": "ADMIN只读。按stepNo/attemptNo/id升序独立分页；任务不存在或ID非法404。固定九字段，不含outputSummary、inputDigest、usage、输入输出正文或费用；count与items同只读快照。"
+      "responses":
+        "200":
+          "description": "脱敏工具记录分页"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/AdminTaskStepPageResponse"
+        "400":
+          "description": "格式错误"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "401":
+          "description": "未认证"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "403":
+          "description": "功能未授权"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "422":
+          "description": "业务校验失败"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "500":
+          "description": "内部错误，仅返回安全说明"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "404":
+          "description": "任务不存在或ID无效"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+      "parameters":
+      - "name": "id"
+        "in": "path"
+        "required": true
+        "schema":
+          "type": "string"
+          "pattern": "^[1-9][0-9]*$"
+          "description": "十进制BIGINT字符串"
+        "description": "任务ID"
+      - "name": "page"
+        "in": "query"
+        "required": false
+        "schema":
+          "type": "integer"
+          "minimum": 1
+          "default": 1
+        "description": ""
+      - "name": "pageSize"
+        "in": "query"
+        "required": false
+        "schema":
+          "type": "integer"
+          "minimum": 1
+          "maximum": 100
+          "default": 20
+        "description": ""
 "components":
   "securitySchemes":
     "bearerSession":
@@ -6708,35 +6735,66 @@
           "description": "十进制BIGINT字符串"
         "goalType":
           "type": "string"
+          "enum":
+          - "REVIEW_CARDS"
+          - "EXTRACT_KEY_POINTS"
+          - "LINK_NOTES"
+          - "UNKNOWN"
         "status":
           "type": "string"
           "enum":
-            - "QUEUED"
-            - "RUNNING"
-            - "WAIT_CONFIRM"
-            - "SUCCEEDED"
-            - "FAILED"
-            - "CANCELLED"
+          - "QUEUED"
+          - "RUNNING"
+          - "WAIT_CONFIRM"
+          - "SUCCEEDED"
+          - "FAILED"
+          - "CANCELLED"
+          - "UNKNOWN"
+        "stage":
+          "type": "string"
+          "nullable": true
+          "description": "已知内部阶段；未记录null，未识别值UNKNOWN，不透传自由字符串"
+        "stepCount":
+          "type": "integer"
+          "minimum": 0
         "errorCode":
           "type": "string"
           "nullable": true
+          "description": "已知内部错误标识；未知非空为UNRECOGNIZED_ERROR，无错误为null"
         "createdAt":
           "type": "string"
           "format": "date-time"
           "description": "UTC ISO 8601，带Z"
-        "finishedAt":
+        "startedAt":
           "type": "string"
+          "nullable": true
           "format": "date-time"
           "description": "UTC ISO 8601，带Z"
+        "finishedAt":
+          "type": "string"
           "nullable": true
+          "format": "date-time"
+          "description": "UTC ISO 8601，带Z"
+        "durationMs":
+          "type": "integer"
+          "minimum": 0
+          "format": "int64"
+          "nullable": true
+          "description": "finishedAt-startedAt毫秒；缺少起止或负跨度为null，包含人工确认等待，不估计活动任务用时"
       "additionalProperties": false
       "required":
-        - "id"
-        - "userId"
-        - "materialId"
-        - "goalType"
-        - "status"
-        - "createdAt"
+      - "id"
+      - "userId"
+      - "materialId"
+      - "goalType"
+      - "status"
+      - "stage"
+      - "stepCount"
+      - "errorCode"
+      - "createdAt"
+      - "startedAt"
+      - "finishedAt"
+      - "durationMs"
     "CountBucket":
       "type": "object"
       "properties":
@@ -7444,3 +7502,102 @@
       "required":
         - "data"
         - "requestId"
+    "AdminTaskStep":
+      "type": "object"
+      "properties":
+        "stepNo":
+          "type": "integer"
+          "minimum": 1
+        "attemptNo":
+          "type": "integer"
+          "minimum": 1
+        "toolName":
+          "type": "string"
+          "enum":
+          - "prepare_source"
+          - "extract_pdf_text"
+          - "recognize_image"
+          - "search_personal_materials"
+          - "generate_summary_cards"
+          - "validate_candidate"
+          - "planner"
+          - "UNKNOWN"
+        "providerKind":
+          "type": "string"
+          "enum":
+          - "LOCAL"
+          - "MODEL"
+          - "OCR"
+          - "UNKNOWN"
+        "status":
+          "type": "string"
+          "enum":
+          - "RUNNING"
+          - "SUCCESS"
+          - "FAILED"
+          - "UNKNOWN"
+        "errorCode":
+          "type": "string"
+          "nullable": true
+          "description": "已知内部错误标识或UNRECOGNIZED_ERROR；无错误为null"
+        "startedAt":
+          "type": "string"
+          "format": "date-time"
+          "description": "UTC ISO 8601，带Z"
+        "finishedAt":
+          "type": "string"
+          "nullable": true
+          "format": "date-time"
+          "description": "UTC ISO 8601，带Z"
+        "durationMs":
+          "type": "integer"
+          "minimum": 0
+          "format": "int64"
+          "nullable": true
+          "description": "本条工具记录的非负结束跨度；未结束或无效为null，不代表厂商实际耗时/请求次数"
+      "additionalProperties": false
+      "required":
+      - "stepNo"
+      - "attemptNo"
+      - "toolName"
+      - "providerKind"
+      - "status"
+      - "errorCode"
+      - "startedAt"
+      - "finishedAt"
+      - "durationMs"
+    "AdminTaskStepPage":
+      "type": "object"
+      "properties":
+        "items":
+          "type": "array"
+          "items":
+            "$ref": "#/components/schemas/AdminTaskStep"
+        "page":
+          "type": "integer"
+          "minimum": 1
+        "pageSize":
+          "type": "integer"
+          "minimum": 1
+          "maximum": 100
+        "total":
+          "type": "integer"
+          "minimum": 0
+          "format": "int64"
+      "additionalProperties": false
+      "required":
+      - "items"
+      - "page"
+      - "pageSize"
+      - "total"
+    "AdminTaskStepPageResponse":
+      "type": "object"
+      "properties":
+        "data":
+          "$ref": "#/components/schemas/AdminTaskStepPage"
+        "requestId":
+          "type": "string"
+      "additionalProperties": false
+      "required":
+      - "data"
+      - "requestId"
