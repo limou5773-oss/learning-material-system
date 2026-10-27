@@ -42,6 +42,18 @@ function installed(rows = [notification()], total = rows.length) {
 const click = id => ({ currentTarget: { dataset: { id } } })
 const template = () => fs.readFileSync(path.join(__dirname, '../miniprogram/pages/notifications/index.wxml'), 'utf8')
 
+test('审核通知白名单资料与审核ID并先标已读，兼容既有任务通知', async () => {
+  reset(); const target = { type: 'MATERIAL', materialId: '42', reviewId: '8', url: 'https://evil.example' }
+  const item = { ...notification(), type: 'REVIEW_DECIDED', target }; installed([item]); const view = page(); await view.load()
+  assert.equal(view.data.items[0].typeLabel, '审核结果'); assert.equal(view.data.items[0].targetAction, '查看资料')
+  let write; handler = options => { write = options }; const opening = view.openTask(click('91')); assert.equal(destination, '')
+  ok(write, { ...item, isRead: true }); await opening; assert.equal(destination, '/pages/materials/detail?id=42')
+  for (const invalid of [{ ...target, materialId: '../me' }, { ...target, reviewId: 8 }, { ...target, reviewId: '9223372036854775808' }]) {
+    reset(); installed([{ ...item, target: invalid }]); const invalidView = page(); await invalidView.load()
+    let writes = 0; handler = () => { writes++ }; await invalidView.openTask(click('91')); assert.equal(writes, 0); assert.equal(destination, '')
+  }
+})
+
 test('我的信息提供通知入口并注册页面，明确微信渠道尚未开通', async () => {
   reset()
   const me = page('me/index')

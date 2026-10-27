@@ -5,6 +5,7 @@ import com.fasterxml.jackson.core.JsonToken;
 import com.fasterxml.jackson.databind.DeserializationContext;
 import com.fasterxml.jackson.databind.JsonDeserializer;
 import com.fasterxml.jackson.databind.JsonNode;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.annotation.JsonDeserialize;
 import jakarta.validation.constraints.NotNull;
 import java.io.IOException;
@@ -16,13 +17,22 @@ public final class NotificationDtos {
 
     @JsonDeserialize(using = ReadStateValue.class)
     public record ReadStateInput(@NotNull Boolean isRead) { }
-    public record Target(String type, String taskId) { }
-    public record NotificationView(String id, String type, String content, Target target,
+    public sealed interface NotificationTarget permits Target,MaterialTarget { }
+    public record Target(String type, String taskId) implements NotificationTarget { }
+    public record MaterialTarget(String type,String materialId,String reviewId) implements NotificationTarget { }
+    public record NotificationView(String id, String type, String content, NotificationTarget target,
                                    boolean isRead, Instant createdAt, String channelStatus) {
-        static NotificationView from(NotificationRow row) {
+        static NotificationView from(NotificationRow row, ObjectMapper json) {
             return new NotificationView(row.getId().toString(), row.getType(), row.getContent(),
-                new Target("AI_TASK", row.getTaskId().toString()), row.getReadAt() != null,
+                target(row, json), row.getReadAt() != null,
                 row.getCreatedAt().toInstant(ZoneOffset.UTC), row.getChannelStatus());
+        }
+        private static NotificationTarget target(NotificationRow row, ObjectMapper json) {
+            if(row.getReviewId()==null)return new Target("AI_TASK",row.getTaskId().toString());
+            try {
+                JsonNode stored=json.readTree(row.getTargetJson());
+                return new MaterialTarget("MATERIAL",stored.path("materialId").asText(),row.getReviewId().toString());
+            } catch(com.fasterxml.jackson.core.JsonProcessingException ex) {throw new IllegalStateException("通知目标无法读取",ex);}
         }
     }
 

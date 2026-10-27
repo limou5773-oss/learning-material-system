@@ -5,7 +5,7 @@ import RegisterView from './views/RegisterView.vue'
 import MeView from './views/MeView.vue'
 import MaterialsView from './views/MaterialsView.vue'
 import NoteCreateView from './views/NoteCreateView.vue'
-import MaterialDetailView from './views/MaterialDetailView.vue'
+import MaterialDetailRoute from './views/MaterialDetailRoute.vue'
 import NoteEditView from './views/NoteEditView.vue'
 import ImageUploadView from './views/ImageUploadView.vue'
 import PdfUploadView from './views/PdfUploadView.vue'
@@ -20,6 +20,7 @@ import CardOrganizationRoute from './views/CardOrganizationRoute.vue'
 import KnowledgeGraphRoute from './views/KnowledgeGraphRoute.vue'
 import NotificationsRoute from './views/NotificationsRoute.vue'
 import AdminUsersRoute from './views/AdminUsersRoute.vue'
+import AdminReviewsRoute from './views/AdminReviewsRoute.vue'
 import ForbiddenView from './views/ForbiddenView.vue'
 
 const router = createRouter({
@@ -36,10 +37,11 @@ const router = createRouter({
     { path: '/materials/pdf/new', name: 'pdf-upload', component: PdfUploadView, meta: { requiresAuth: true } },
     { path: '/materials/:id/organize', name: 'task-create', component: TaskCreateView, meta: { requiresAuth: true } },
     { path: '/materials/:id/edit', name: 'note-edit', component: NoteEditView, meta: { requiresAuth: true } },
-    { path: '/materials/:id', name: 'material-detail', component: MaterialDetailView, meta: { requiresAuth: true } },
+    { path: '/materials/:id', name: 'material-detail', component: MaterialDetailRoute, meta: { requiresAuth: true } },
     { path: '/ai-tasks', name: 'tasks', component: TasksView, meta: { requiresAuth: true } },
     { path: '/notifications', name: 'notifications', component: NotificationsRoute, meta: { requiresAuth: true } },
     { path: '/admin/users', name: 'admin-users', component: AdminUsersRoute, meta: { requiresAuth: true, requiresRole: 'ADMIN' } },
+    { path: '/admin/reviews', name: 'admin-reviews', component: AdminReviewsRoute, meta: { requiresAuth: true, requiresRole: 'ADMIN' } },
     { path: '/forbidden', name: 'forbidden', component: ForbiddenView, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id/confirm', name: 'task-confirm', component: TaskConfirmView, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id', name: 'task-detail', component: TaskDetailView, meta: { requiresAuth: true } },

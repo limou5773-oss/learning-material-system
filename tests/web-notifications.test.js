@@ -9,6 +9,18 @@ const notification = (id = '1', isRead = false, taskId = '91') => ({ id, type: '
 const page = (items = [notification()], number = 1, total = items.length) => ({ items, page: number, pageSize: 20, total })
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no }); return { promise, resolve, reject } }
 
+test('审核通知仅按MATERIAL与两个正BIGINT字符串跳本人资料，并先标已读', async t => {
+  const { notificationTaskPath } = await import('../web/src/notifications.ts')
+  const target = { type: 'MATERIAL', materialId: '42', reviewId: '9223372036854775807', url: 'https://evil.example' }
+  assert.equal(notificationTaskPath(target), '/materials/42')
+  for (const invalid of [{ ...target, materialId: '01' }, { ...target, reviewId: 8 }, { ...target, reviewId: '9223372036854775808' }]) assert.equal(notificationTaskPath(invalid), null)
+  const item = { ...notification(), type: 'REVIEW_DECIDED', target }; const calls = []
+  const h = await mount(t, async (url, method = 'GET', body) => { calls.push({ url, method, body }); return method === 'PUT' ? { ...item, isRead: true } : page([item]) })
+  assert.match(h.text(), /审核结果/); assert.ok(h.button('查看资料')); await h.state().openTask(h.state().results.items[0]); await h.flush()
+  assert.deepEqual(calls.at(-1), { url: '/notifications/1/read-state', method: 'PUT', body: { isRead: true } })
+  assert.equal(h.router.currentRoute.value.path, '/materials/42')
+})
+
 async function mount(t, request, initialPath = '/notifications') {
   assert.ok(fs.existsSync(path.join(__dirname, '../web/src/views/NotificationsView.vue')), '应实现通知页面')
   const vue = require('../web/node_modules/vue'), vueRouter = require('../web/node_modules/vue-router')

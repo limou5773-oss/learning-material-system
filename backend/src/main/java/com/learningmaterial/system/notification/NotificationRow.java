@@ -6,6 +6,12 @@ public class NotificationRow {
     private Long id;
     private Long userId;
     private Long taskId;
+    private Long reviewId;
+    private String targetJson;
+    public Long getReviewId(){return reviewId;}
+    public void setReviewId(Long value){reviewId=value;}
+    public String getTargetJson(){return targetJson;}
+    public void setTargetJson(String value){targetJson=value;}
     private String type;
     private String content;
     private LocalDateTime readAt;

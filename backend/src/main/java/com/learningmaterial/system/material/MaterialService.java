@@ -145,9 +145,6 @@ public class MaterialService {
     public StoredFile readFile(long userId, String id) {
         MaterialRow row = materials.findOwned(parseId(id), userId);
         if (row == null || row.getStorageKey() == null) throw notFound();
-        if (!"NORMAL".equals(row.getAccessState())) {
-            throw new ApiException(HttpStatus.FORBIDDEN, "FILE_RESTRICTED", "该文件暂不可读取");
-        }
         return new StoredFile(storage.open(row.getStorageKey()), row.getMimeType(), row.getFileSize());
     }
 
