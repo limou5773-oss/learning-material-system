@@ -77,7 +77,7 @@ function formatDate(value: string) {
 
 <template>
   <div class="materials-layout narrow">
-    <div class="section-heading"><div><span class="intro-eyebrow">NOTIFICATIONS</span><h1>通知</h1><p>整理结果待确认或任务失败时，可在这里查看最新消息。</p></div></div>
+    <div class="section-heading"><div><span class="intro-eyebrow">NOTIFICATIONS</span><h1>通知</h1><p>在这里查看整理任务和资料审核的最新消息。</p></div></div>
     <section class="materials-panel" :aria-busy="busy">
       <p class="notification-channel">微信订阅消息尚未开通，站内通知正常</p>
       <div class="task-toolbar">
@@ -95,13 +95,13 @@ function formatDate(value: string) {
           <article v-for="item in results.items" :key="item.id" class="material-item" role="listitem">
             <div class="material-item-main">
               <span class="note-badge">{{ item.isRead ? '已读' : '未读' }}</span>
-              <h2>{{ item.type === 'RESULT_READY' ? '整理结果待确认' : '整理任务失败' }}</h2>
+              <h2>{{ item.type === 'REVIEW_DECIDED' ? '资料审核结果' : item.type === 'RESULT_READY' ? '整理结果待确认' : '整理任务失败' }}</h2>
               <p class="notification-content">{{ item.content }}</p>
             </div>
-            <div class="material-item-meta"><span v-if="notificationTaskPath(item.target)">任务 #{{ item.target.taskId }}</span><span v-else>任务入口不可用</span><time :datetime="item.createdAt">{{ formatDate(item.createdAt) }}</time></div>
+            <div class="material-item-meta"><span v-if="notificationTaskPath(item.target)">{{ item.target.type === 'MATERIAL' ? `资料 #${item.target.materialId}` : `任务 #${item.target.taskId}` }}</span><span v-else>通知入口不可用</span><time :datetime="item.createdAt">{{ formatDate(item.createdAt) }}</time></div>
             <div class="notification-actions">
               <button type="button" :disabled="busy" @click="setRead(item, !item.isRead)">{{ item.isRead ? '标为未读' : '标为已读' }}</button>
-              <button type="button" :disabled="busy || !notificationTaskPath(item.target)" @click="openTask(item)">查看任务</button>
+              <button type="button" :disabled="busy || !notificationTaskPath(item.target)" @click="openTask(item)">{{ item.target?.type === 'MATERIAL' ? '查看资料' : '查看任务' }}</button>
             </div>
           </article>
         </div>

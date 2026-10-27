@@ -12,6 +12,12 @@ import java.util.List;
 
 @Mapper
 public interface AiToolCallMapper {
+    @Update("""
+        UPDATE ai_tool_call c JOIN ai_task t ON t.id=c.task_id
+        SET c.status='UNKNOWN',c.error_code='SOURCE_RESTRICTED',c.finished_at=#{now}
+        WHERE t.user_id=#{userId} AND t.material_id=#{materialId} AND c.status='RUNNING'
+        """)
+    int markRestrictedSourceUnknown(@Param("userId")long userId,@Param("materialId")long materialId,@Param("now")LocalDateTime now);
     @Insert("""
         INSERT INTO ai_tool_call (task_id, step_no, attempt_no, execution_epoch, tool_name,
                                   provider_kind, status, started_at)

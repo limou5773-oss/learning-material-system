@@ -7,3 +7,11 @@
 .original-image { display: block; width: 100%; }
 .pdf-preview { margin-top: 38rpx; padding-top: 38rpx; border-top: 1rpx solid #eaf0e9; color: #718076; }
 .pdf-preview button { margin: 24rpx 0; }
+.review-section { margin-top: 40rpx; padding-top: 32rpx; border-top: 1rpx solid #e5eaf2; }
+.review-heading { font-size: 34rpx; font-weight: 600; margin-bottom: 20rpx; }
+.review-help { color: #64748b; line-height: 1.7; font-size: 26rpx; margin: 16rpx 0; }
+.review-section textarea { box-sizing: border-box; width: 100%; padding: 20rpx; border: 1rpx solid #dfe6f0; border-radius: 12rpx; margin: 16rpx 0; }
+.review-notice { color: #286448; margin: 16rpx 0; }
+.review-restriction { background: #fff6e8; color: #815016; padding: 24rpx; margin: 24rpx 0; line-height: 1.7; border-radius: 12rpx; }
+.review-record { border-bottom: 1rpx solid #e5eaf2; padding: 24rpx 0; line-height: 1.7; }
+.review-record text { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }

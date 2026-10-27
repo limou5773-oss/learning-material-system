@@ -11,6 +11,8 @@ import java.time.LocalDateTime;
 
 @Mapper
 public interface SessionMapper {
+    @Select("SELECT * FROM auth_session WHERE id=#{id} AND user_id=#{userId} FOR UPDATE")
+    SessionRow findByIdForUpdate(@Param("id") long id, @Param("userId") long userId);
     @Insert("""
         INSERT INTO auth_session (user_id, token_hash, client_type, expires_at, revoked_at, created_at, updated_at)
         VALUES (#{userId}, #{tokenHash}, #{clientType}, #{expiresAt}, #{revokedAt}, #{createdAt}, #{updatedAt})

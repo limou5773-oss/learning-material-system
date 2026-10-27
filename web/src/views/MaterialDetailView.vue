@@ -1,9 +1,10 @@
 <script setup lang="ts">
-import { onMounted, onUnmounted, ref } from 'vue'
+import { onMounted, onUnmounted, ref, watch } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, ApiRequestError, materialFileBlob } from '../api'
-import { clearSession } from '../auth'
+import { clearSession, session } from '../auth'
 import type { Material } from '../materials'
+import OwnerMaterialReview from '../components/OwnerMaterialReview.vue'
 
 const route = useRoute()
 const router = useRouter()
@@ -15,6 +16,11 @@ const busy = ref(false)
 const favoriteBusy = ref(false)
 const fileUrl = ref('')
 const previewError = ref('')
+const ownerId = session.value?.user.id, ownerToken = session.value?.accessToken, routePath = route.fullPath
+let active = true, sequence = 0
+const current = () => active && session.value?.user.id === ownerId && session.value?.accessToken === ownerToken && route.fullPath === routePath
+function invalidate() { active = false; sequence++; clearPreview(); material.value = null; error.value = ''; actionError.value = ''; previewError.value = '' }
+watch(() => [session.value?.user.id, session.value?.accessToken, route.fullPath], invalidate, { flush: 'sync' })
 
 function clearPreview() {
   if (fileUrl.value) URL.revokeObjectURL(fileUrl.value)
@@ -22,6 +28,8 @@ function clearPreview() {
 }
 
 async function load() {
+  if (!current() || loading.value || busy.value) return
+  const request = ++sequence
   loading.value = true
   error.value = ''
   actionError.value = ''
@@ -29,10 +37,13 @@ async function load() {
   clearPreview()
   material.value = null
   try {
-    material.value = await api<Material>(`/materials/${encodeURIComponent(String(route.params.id))}`)
+    const value = await api<Material>(`/materials/${encodeURIComponent(String(route.params.id))}`)
+    if (!current() || request !== sequence) return
+    material.value = value
     if (material.value.type === 'IMAGE' || material.value.type === 'PDF') {
-      try { fileUrl.value = URL.createObjectURL(await materialFileBlob(material.value.id)) }
+      try { const blob = await materialFileBlob(value.id); if (current() && request === sequence) fileUrl.value = URL.createObjectURL(blob) }
       catch (cause) {
+        if (!current() || request !== sequence) return
         if (cause instanceof ApiRequestError && cause.status === 401) {
           clearSession()
           await router.replace({ name: 'login', query: { redirect: route.fullPath } })
@@ -41,23 +52,25 @@ async function load() {
     }
   }
   catch (cause) {
+    if (!current() || request !== sequence) return
     if (cause instanceof ApiRequestError && cause.status === 401) {
       clearSession()
       await router.replace({ name: 'login', query: { redirect: route.fullPath } })
     } else { error.value = cause instanceof Error ? cause.message : '资料加载失败' }
-  } finally { loading.value = false }
+  } finally { if (current() && request === sequence) loading.value = false }
 }
 
 onMounted(load)
-onUnmounted(clearPreview)
+onUnmounted(invalidate)
 
 async function changeArchive() {
   if (!material.value || busy.value) return
   busy.value = true; actionError.value = ''
   try {
-    material.value = await api<Material>(`/materials/${material.value.id}`, 'PATCH', {
+    const updated = await api<Material>(`/materials/${material.value.id}`, 'PATCH', {
       version: material.value.version, status: material.value.status === 'ARCHIVED' ? 'ACTIVE' : 'ARCHIVED',
     })
+    if (current()) material.value = updated
   } catch (cause) { await handleActionError(cause, '状态更新失败') }
   finally { busy.value = false }
 }
@@ -67,7 +80,7 @@ async function toggleFavorite() {
   favoriteBusy.value = true; actionError.value = ''
   try {
     await api<void>(`/favorites/MATERIAL/${material.value.id}`, material.value.favorite ? 'DELETE' : 'PUT')
-    material.value.favorite = !material.value.favorite
+    if (current() && material.value) material.value.favorite = !material.value.favorite
   } catch (cause) { await handleActionError(cause, '收藏操作失败') }
   finally { favoriteBusy.value = false }
 }
@@ -78,12 +91,13 @@ async function remove() {
   busy.value = true; actionError.value = ''
   try {
     await api<void>(`/materials/${material.value.id}?version=${material.value.version}`, 'DELETE')
-    await router.replace('/materials')
+    if (current()) await router.replace('/materials')
   } catch (cause) { await handleActionError(cause, '删除失败') }
   finally { busy.value = false }
 }
 
 async function handleActionError(cause: unknown, fallback: string) {
+  if (!current()) return
   if (cause instanceof ApiRequestError && cause.status === 401) {
     clearSession()
     await router.replace({ name: 'login', query: { redirect: route.fullPath } })
@@ -115,12 +129,14 @@ async function handleActionError(cause: unknown, fallback: string) {
       </div>
       <p v-if="actionError" class="inline-error" role="alert">{{ actionError }} <button type="button" @click="load">刷新版本</button></p>
       <div class="detail-actions">
-        <router-link :to="`/materials/${material.id}/organize`">提交整理任务</router-link>
+        <button v-if="material.accessState === 'RESTRICTED'" type="button" disabled>AI 整理已限制</button>
+        <router-link v-else :to="`/materials/${material.id}/organize`">提交整理任务</router-link>
         <router-link v-if="material.type === 'NOTE'" :to="`/materials/${material.id}/edit`">编辑笔记</router-link>
         <button type="button" :disabled="favoriteBusy" @click="toggleFavorite">{{ material.favorite ? '★ 取消收藏' : '☆ 收藏' }}</button>
         <button type="button" :disabled="busy" @click="changeArchive">{{ material.status === 'ARCHIVED' ? '恢复使用' : '归档' }}</button>
         <button type="button" class="danger-action" :disabled="busy" @click="remove">删除</button>
       </div>
+      <OwnerMaterialReview :material="material" @updated="material = $event" />
     </article>
   </div>
 </template>

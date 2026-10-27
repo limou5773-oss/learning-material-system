@@ -1,17 +1,18 @@
 const { ApiError, getToken, request } = require('../../utils/api')
 
-const typeLabels = { RESULT_READY: '结果待确认', TASK_FAILED: '任务失败' }
-function taskId(target) {
-  if (!target || target.type !== 'AI_TASK' || typeof target.taskId !== 'string') return ''
-  const id = target.taskId
-  if (!/^[1-9]\d{0,18}$/.test(id) || id.length === 19 && id > '9223372036854775807') return ''
-  return id
+const typeLabels = { RESULT_READY: '结果待确认', TASK_FAILED: '任务失败', REVIEW_DECIDED: '审核结果' }
+function targetPath(target) {
+  if (!target) return ''
+  const validId = id => typeof id === 'string' && /^[1-9]\d{0,18}$/.test(id) && (id.length < 19 || id <= '9223372036854775807')
+  if (target.type === 'AI_TASK' && validId(target.taskId)) return `/pages/tasks/detail?id=${target.taskId}`
+  if (target.type === 'MATERIAL' && validId(target.materialId) && validId(target.reviewId)) return `/pages/materials/detail?id=${target.materialId}`
+  return ''
 }
 function present(item) {
   return { ...item, typeLabel: typeLabels[item.type] || item.type,
     readLabel: item.isRead ? '已读' : '未读', readAction: item.isRead ? '标为未读' : '标为已读',
     channelLabel: item.channelStatus === 'NOT_REQUESTED' ? '微信订阅未开通' : item.channelStatus,
-    taskAvailable: !!taskId(item.target) }
+    taskAvailable: !!targetPath(item.target), targetAction: item.target && item.target.type === 'MATERIAL' ? '查看资料' : '查看任务' }
 }
 
 Page({
@@ -80,7 +81,7 @@ Page({
     if (this.data.loading || this.data.saving || !this.sessionCurrent(this.sessionToken)) return
     const item = this.data.items.find(row => row.id === id)
     if (!item) return
-    if (openTask && !taskId(item.target)) { this.setData({ actionError: '通知的任务目标无效，无法打开。' }); return }
+    if (openTask && !targetPath(item.target)) { this.setData({ actionError: '通知的任务目标无效，无法打开。' }); return }
     const token = this.sessionToken
     const sequence = this.requestVersion = (this.requestVersion || 0) + 1
     this.setData({ saving: true, actionError: '' })
@@ -92,9 +93,9 @@ Page({
       if (sequence !== this.requestVersion || !this.sessionCurrent(token)) return
       this.setData({ items: this.data.items.map(row => row.id === id ? present(updated) : row) })
       if (openTask) {
-        const targetId = taskId(updated.target)
-        if (!targetId) this.setData({ actionError: '已保存已读状态，但通知的任务目标无效，无法打开。' })
-        else wx.navigateTo({ url: `/pages/tasks/detail?id=${encodeURIComponent(targetId)}` })
+        const destination = targetPath(updated.target)
+        if (!destination) this.setData({ actionError: '已保存已读状态，但通知的任务目标无效，无法打开。' })
+        else wx.navigateTo({ url: destination })
       } else saved = true
     } catch (error) {
       if (sequence !== this.requestVersion) return

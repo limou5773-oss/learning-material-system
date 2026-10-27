@@ -1,7 +1,7 @@
 <view class="page">
   <text class="eyebrow">NOTIFICATIONS</text>
   <view class="title">站内通知</view>
-  <view class="lead">查阅本人的整理结果与任务失败提醒。</view>
+  <view class="lead">查阅本人的整理任务与资料审核提醒。</view>
   <view class="notice">{{channelNotice}}</view>
   <view class="filters">
     <button class="filter {{!unreadOnly ? 'active' : ''}}" bindtap="showAll" disabled="{{loading || saving}}">全部通知</button>
@@ -22,7 +22,7 @@
     <view class="muted">{{item.channelLabel}}</view>
     <view class="notification-actions">
       <button class="outline" data-id="{{item.id}}" bindtap="toggleRead" disabled="{{loading || saving}}">{{item.readAction}}</button>
-      <button class="primary" data-id="{{item.id}}" bindtap="openTask" disabled="{{loading || saving || !item.taskAvailable}}">查看任务</button>
+      <button class="primary" data-id="{{item.id}}" bindtap="openTask" disabled="{{loading || saving || !item.taskAvailable}}">{{item.targetAction}}</button>
     </view>
     <view wx:if="{{!item.taskAvailable}}" class="muted">通知的任务目标无效，无法打开。</view>
   </view>

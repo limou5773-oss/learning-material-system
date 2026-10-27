@@ -12,6 +12,12 @@ import java.util.List;
 
 @Mapper
 public interface AiTaskMapper {
+    @Update("""
+        UPDATE ai_task SET status='CANCELLED',stage='SOURCE_RESTRICTED',cancel_flag=1,
+          error_code='SOURCE_RESTRICTED',lease_until=NULL,finished_at=#{now},updated_at=#{now}
+        WHERE user_id=#{userId} AND material_id=#{materialId} AND status IN ('QUEUED','RUNNING','WAIT_CONFIRM')
+        """)
+    int cancelForRestrictedMaterial(@Param("userId")long userId,@Param("materialId")long materialId,@Param("now")LocalDateTime now);
     @Update("UPDATE ai_task SET status='SUCCEEDED', stage='CONFIRMED', finished_at=#{now}, updated_at=#{now}, lease_until=NULL WHERE id=#{id} AND status='WAIT_CONFIRM' AND cancel_flag=0")
     int confirm(@Param("id") long id, @Param("now") LocalDateTime now);
 

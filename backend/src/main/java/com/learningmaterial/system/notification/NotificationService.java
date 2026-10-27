@@ -3,6 +3,7 @@ package com.learningmaterial.system.notification;
 import com.learningmaterial.system.common.ApiException;
 import com.learningmaterial.system.material.MaterialDtos.PageView;
 import com.learningmaterial.system.notification.NotificationDtos.NotificationView;
+import com.fasterxml.jackson.databind.ObjectMapper;
 import org.springframework.http.HttpStatus;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Propagation;
@@ -15,10 +16,12 @@ import java.time.ZoneOffset;
 public class NotificationService {
     private final NotificationMapper notifications;
     private final Clock clock;
+    private final ObjectMapper json;
 
-    public NotificationService(NotificationMapper notifications, Clock clock) {
+    public NotificationService(NotificationMapper notifications, Clock clock, ObjectMapper json) {
         this.notifications = notifications;
         this.clock = clock;
+        this.json = json;
     }
 
     @Transactional(propagation = Propagation.MANDATORY)
@@ -42,7 +45,7 @@ public class NotificationService {
         boolean unread = Boolean.parseBoolean(unreadOnly);
         long total = notifications.countOwned(userId, unread);
         return new PageView<>(notifications.listOwned(userId, unread, pageSize, (long) (page - 1) * pageSize)
-            .stream().map(NotificationView::from).toList(), page, pageSize, total);
+            .stream().map(row -> NotificationView.from(row, json)).toList(), page, pageSize, total);
     }
 
     @Transactional
@@ -51,7 +54,7 @@ public class NotificationService {
         notifications.setReadState(userId, notificationId, isRead, LocalDateTime.ofInstant(clock.instant(), ZoneOffset.UTC));
         NotificationRow row = notifications.findOwned(userId, notificationId);
         if (row == null) throw notFound();
-        return NotificationView.from(row);
+        return NotificationView.from(row, json);
     }
 
     private static long parseId(String id) {

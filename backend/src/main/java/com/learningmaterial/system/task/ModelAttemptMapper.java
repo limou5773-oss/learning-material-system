@@ -6,6 +6,13 @@ import java.time.LocalDateTime;
 
 @Mapper
 public interface ModelAttemptMapper {
+    @Update("""
+        UPDATE model_attempt a JOIN ai_task t ON t.id=a.task_id
+        SET a.status='UNKNOWN',a.error_code='SOURCE_RESTRICTED',a.finished_at=#{now},
+          a.duration_ms=TIMESTAMPDIFF(MICROSECOND,a.started_at,#{now}) DIV 1000
+        WHERE t.user_id=#{userId} AND t.material_id=#{materialId} AND a.status='RUNNING'
+        """)
+    int markRestrictedSourceUnknown(@Param("userId")long userId,@Param("materialId")long materialId,@Param("now")LocalDateTime now);
     @Select("SELECT COUNT(*) FROM model_attempt WHERE task_id=#{taskId}")
     int countTask(long taskId);
 

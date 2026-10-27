@@ -4238,7 +4238,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "同一资料版本已存在审核记录时返回409，修正正文生成新版本后可重新送审；不扩大其他资料正文访问权限。"
+      "description": "本人显式授权页面所示版本正文及原文件。严格单一JSON对象version/reason；锁资料核对version，旧版本或同版本已送审409。reason非空白且最多1000 UTF-16，trim保存。仅USER_SUBMITTED，未启用自动规则扫描；编辑立即使旧送审失效。"
       "parameters":
         -
           "name": "id"
@@ -4254,6 +4254,114 @@
           "application/json":
             "schema":
               "$ref": "#/components/schemas/ReviewRequest"
+    "get":
+      "summary": "本人查看资料审核历史"
+      "operationId": "get_materials_id_review_requests"
+      "description": "仅资料本人可读，跨用户/删除资料/非法ID404。返回该资料全部送审版本及决定原因；旧PENDING保留且isCurrent=false。分页与管理员队列一致，错误不能降级为空。"
+      "responses":
+        "200":
+          "description": "管理员查询审核队列"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ReviewPageResponse"
+        "400":
+          "description": "格式错误"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "401":
+          "description": "未认证"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "403":
+          "description": "功能未授权"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "404":
+          "description": "资源不存在或无权访问"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "409":
+          "description": "版本、状态或幂等冲突"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "413":
+          "description": "文件过大"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "415":
+          "description": "不支持类型"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "422":
+          "description": "业务校验失败"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "429":
+          "description": "频率或预算限制"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "500":
+          "description": "内部错误，仅返回安全说明"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "502":
+          "description": "外部服务失败"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+        "503":
+          "description": "服务暂不可用"
+          "content":
+            "application/json":
+              "schema":
+                "$ref": "#/components/schemas/ApiError"
+      "parameters":
+      - "name": "id"
+        "in": "path"
+        "required": !!bool "true"
+        "schema":
+          "type": "string"
+          "pattern": "^[1-9][0-9]*$"
+          "description": "十进制BIGINT字符串"
+      - "name": "page"
+        "in": "query"
+        "required": !!bool "false"
+        "schema":
+          "type": "integer"
+          "minimum": !!int "1"
+          "default": !!int "1"
+        "description": ""
+      - "name": "pageSize"
+        "in": "query"
+        "required": !!bool "false"
+        "schema":
+          "type": "integer"
+          "minimum": !!int "1"
+          "maximum": !!int "100"
+          "default": !!int "20"
+        "description": ""
   "/admin/users":
     "get":
       "summary": "管理员查询用户"
@@ -4479,6 +4587,7 @@
     "get":
       "summary": "管理员查询审核队列"
       "operationId": "get_admin_reviews"
+      "description": "仅ADMIN；默认只返回送审元数据，title/type为送审快照，不含正文、摘要或本地文件路径。status空白不筛选，仅PENDING/APPROVED/REJECTED，page>=1/pageSize1..100，createdAt/id倒序。isCurrent表示资料未删除且仍为送审版本。"
       "responses":
         "200":
           "description": "管理员查询审核队列"
@@ -4672,7 +4781,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "仅PENDING记录且资料版本仍等于送审版本时允许，变更后409。文件只提供当前审核范围的受控路径，使用同一会话鉴权并再次校验记录。"
+      "description": "仅有效ADMIN会话；PENDING、MATERIAL_CONTENT及当前资料版本全部满足后写CONTENT_VIEW审计并返回正文。reason非空白且最多1000 UTF-16。fileAccessPath仅需同操作人同会话鉴权的本条审核文件路径，NOTE为null。旧版本或已处置409。"
       "parameters":
         -
           "name": "id"
@@ -4771,7 +4880,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "锁定审核及资料，校验送审版本。驳回设RESTRICTED并取消未结束任务；批准解除限制。更新版本并写审计及通知。"
+      "description": "仅有效ADMIN会话且该会话已有CONTENT_VIEW。锁资料与审核记录核对PENDING、资料送审版本及review.version，冲突409；原因必填且最多1000 UTF-16。APPROVED恢复NORMAL；REJECTED设RESTRICTED并取消未完成任务、将活动调用标UNKNOWN/SOURCE_RESTRICTED；已获准开始的外部请求不能撤回。review.version加一，material内容version不变；本人修正新版本后重送审。REVIEW_DECISION审计和REVIEW_DECIDED站内通知同事务，失败整体回滚。"
       "parameters":
         -
           "name": "id"
@@ -5118,7 +5227,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "管理员且PENDING、送审版本未变、存在该管理员的CONTENT_VIEW审计记录时允许；每次读取也记审计。"
+      "description": "仅ADMIN、PENDING且资料仍为送审版本；同操作人同会话必须已有CONTENT_VIEW，否则403。每次读取写FILE_VIEW审计；no-store/nosniff，不返回本地路径或永久公共URL。旧版本或已处置409，无文件404。本人原文件读取不受RESTRICTED影响。"
       "parameters":
         -
           "name": "id"
@@ -6367,20 +6476,24 @@
           "description": "十进制BIGINT字符串"
         "type":
           "type": "string"
-          "enum": ["RESULT_READY", "TASK_FAILED"]
+          "enum": ["RESULT_READY", "TASK_FAILED", "REVIEW_DECIDED"]
         "content":
           "type": "string"
         "target":
-          "type": "object"
-          "additionalProperties": false
-          "properties":
-            "type":
-              "type": "string"
-              "enum": ["AI_TASK"]
-            "taskId":
-              "type": "string"
-              "pattern": "^[1-9][0-9]*$"
-          "required": ["type", "taskId"]
+          "oneOf":
+            - "type": "object"
+              "additionalProperties": false
+              "properties":
+                "type": {"type": "string", "enum": ["AI_TASK"]}
+                "taskId": {"type": "string", "pattern": "^[1-9][0-9]*$"}
+              "required": ["type", "taskId"]
+            - "type": "object"
+              "additionalProperties": false
+              "properties":
+                "type": {"type": "string", "enum": ["MATERIAL"]}
+                "materialId": {"type": "string", "pattern": "^[1-9][0-9]*$"}
+                "reviewId": {"type": "string", "pattern": "^[1-9][0-9]*$"}
+              "required": ["type", "materialId", "reviewId"]
         "isRead":
           "type": "boolean"
         "createdAt":
@@ -6427,16 +6540,33 @@
     "ReviewRequest":
       "type": "object"
       "properties":
+        "version":
+          "type": "integer"
+          "minimum": 1
+          "description": "页面展示的资料version，必须与送审时当前版本相同"
         "reason":
           "type": "string"
           "minLength": 1
           "maxLength": 1000
       "additionalProperties": false
       "required":
+        - "version"
         - "reason"
     "Review":
       "type": "object"
       "properties":
+        "ownerId":
+          "type": "string"
+          "pattern": "^[1-9][0-9]*$"
+        "type":
+          "type": "string"
+          "enum": ["NOTE", "IMAGE", "PDF"]
+        "accessScope":
+          "type": "string"
+          "enum": ["MATERIAL_CONTENT"]
+        "isCurrent":
+          "type": "boolean"
+          "description": "资料未删除且当前version等于送审version"
         "id":
           "type": "string"
           "pattern": "^[1-9][0-9]*$"
@@ -6475,6 +6605,10 @@
           "description": "UTC ISO 8601，带Z"
       "additionalProperties": false
       "required":
+        - "ownerId"
+        - "type"
+        - "accessScope"
+        - "isCurrent"
         - "id"
         - "materialId"
         - "materialVersion"

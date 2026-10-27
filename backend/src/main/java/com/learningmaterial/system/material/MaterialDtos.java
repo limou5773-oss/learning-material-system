@@ -67,7 +67,7 @@ public final class MaterialDtos {
         String accessState, Long fileSize, Integer pageCount, boolean favorite,
         Instant createdAt, Instant updatedAt
     ) {
-        static MaterialView from(MaterialRow row, List<TagRow> tags, boolean favorite) {
+        public static MaterialView from(MaterialRow row, List<TagRow> tags, boolean favorite) {
             return new MaterialView(row.getId().toString(), row.getTitle(), row.getSubject(),
                 row.getMaterialType(), row.getSummary(), row.getNoteText(),
                 tags.stream().map(TagView::from).toList(), row.getVersion(), row.getStatus(),

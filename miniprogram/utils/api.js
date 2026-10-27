@@ -101,7 +101,7 @@ function downloadMaterialFile(id) {
       url: `${API_BASE_URL}/materials/${encodeURIComponent(id)}/file`,
       header: token ? { Authorization: `Bearer ${token}` } : {},
       success(response) {
-        if (response.statusCode === 401) clearToken()
+        if (response.statusCode === 401 && getToken() === token) clearToken()
         if (response.statusCode !== 200 || !response.tempFilePath) {
           reject(new ApiError(response.statusCode, '文件读取失败'))
           return
