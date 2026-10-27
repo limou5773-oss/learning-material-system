@@ -42,6 +42,10 @@ function shanghaiMidnight(wallTime: number) {
   throw new Error('所选日期在上海时区没有有效的午夜，请选择其他日期')
 }
 
+export function shanghaiDateStart(value: string) {
+  return shanghaiMidnight(dateValue(value))
+}
+
 export function defaultStatisticsDates(now = new Date(), days = 7) {
   const parts = new Intl.DateTimeFormat('en-CA', { timeZone: 'Asia/Shanghai', year: 'numeric', month: '2-digit', day: '2-digit' }).formatToParts(now)
   const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(value => value.type === type)!.value

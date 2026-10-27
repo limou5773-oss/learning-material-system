@@ -15,6 +15,7 @@ import { session } from './auth'
         <router-link v-if="session" to="/notifications">通知</router-link>
         <router-link v-if="session?.user.role === 'ADMIN'" to="/admin/users">用户管理</router-link>
         <router-link v-if="session?.user.role === 'ADMIN'" to="/admin/reviews">内容审核</router-link>
+        <router-link v-if="session?.user.role === 'ADMIN'" to="/admin/ai-tasks">任务监控</router-link>
         <router-link v-if="session?.user.role === 'ADMIN'" to="/admin/statistics">统计大屏</router-link>
         <router-link v-if="session" to="/cards">知识卡片</router-link>
         <router-link v-if="session" to="/me">我的信息</router-link>
