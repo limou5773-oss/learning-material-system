@@ -26,8 +26,8 @@ public interface OcrAttemptMapper {
 
     @Insert(
             """
-INSERT INTO ocr_attempt(task_id,execution_epoch,page_no,attempt_no,provider_key,dispatched,status,started_at)
-VALUES(#{taskId},#{executionEpoch},#{pageNo},#{attemptNo},#{providerKey},1,'RUNNING',#{startedAt})
+INSERT INTO ocr_attempt(task_id,execution_epoch,page_no,attempt_no,provider_key,dispatched,status,started_at,currency)
+VALUES(#{taskId},#{executionEpoch},#{pageNo},#{attemptNo},#{providerKey},1,'RUNNING',#{startedAt},#{currency})
 """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(OcrAttemptRow row);
