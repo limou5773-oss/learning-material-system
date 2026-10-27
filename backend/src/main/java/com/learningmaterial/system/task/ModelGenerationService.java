@@ -233,6 +233,11 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
                                     row.setTaskId(lease.taskId());
                                     row.setExecutionEpoch(lease.epoch());
                                     row.setAttemptNo(previous + 1);
+                                    // lockedCurrent holds this row; the submitted snapshot predates
+                                    // startStep and therefore cannot supply the current logical step.
+                                    int stepNo = tasks.findByIdForUpdate(lease.taskId()).getStepCount();
+                                    row.setStepNo(stepNo);
+                                    row.setStepAttemptNo(attempts.countStep(lease.taskId(), stepNo) + 1);
                                     row.setProviderKey(provider);
                                     row.setRequestedModel(settings.model());
                                     row.setPromptVersion(promptVersion);

@@ -42,6 +42,7 @@ const router = createRouter({
     { path: '/notifications', name: 'notifications', component: NotificationsRoute, meta: { requiresAuth: true } },
     { path: '/admin/users', name: 'admin-users', component: AdminUsersRoute, meta: { requiresAuth: true, requiresRole: 'ADMIN' } },
     { path: '/admin/reviews', name: 'admin-reviews', component: AdminReviewsRoute, meta: { requiresAuth: true, requiresRole: 'ADMIN' } },
+    { path: '/admin/statistics', name: 'admin-statistics', component: () => import('./views/AdminStatisticsRoute.vue'), meta: { requiresAuth: true, requiresRole: 'ADMIN' } },
     { path: '/forbidden', name: 'forbidden', component: ForbiddenView, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id/confirm', name: 'task-confirm', component: TaskConfirmView, meta: { requiresAuth: true } },
     { path: '/ai-tasks/:id', name: 'task-detail', component: TaskDetailView, meta: { requiresAuth: true } },

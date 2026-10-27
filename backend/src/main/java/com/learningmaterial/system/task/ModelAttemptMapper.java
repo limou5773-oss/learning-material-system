@@ -16,6 +16,9 @@ public interface ModelAttemptMapper {
     @Select("SELECT COUNT(*) FROM model_attempt WHERE task_id=#{taskId}")
     int countTask(long taskId);
 
+    @Select("SELECT COUNT(*) FROM model_attempt WHERE task_id=#{taskId} AND step_no=#{stepNo}")
+    int countStep(@Param("taskId") long taskId, @Param("stepNo") int stepNo);
+
     @Select("SELECT COUNT(*) FROM model_attempt WHERE task_id=#{taskId} AND purpose=#{purpose}")
     int countPurpose(@Param("taskId") long taskId, @Param("purpose") String purpose);
 
@@ -26,8 +29,8 @@ public interface ModelAttemptMapper {
 
     @Insert(
             """
-INSERT INTO model_attempt(task_id,execution_epoch,attempt_no,purpose,provider_key,requested_model,prompt_version,dispatched,status,started_at)
-VALUES(#{taskId},#{executionEpoch},#{attemptNo},#{purpose},#{providerKey},#{requestedModel},#{promptVersion},1,'RUNNING',#{startedAt})
+INSERT INTO model_attempt(task_id,execution_epoch,attempt_no,step_no,step_attempt_no,purpose,provider_key,requested_model,prompt_version,dispatched,status,started_at,currency)
+VALUES(#{taskId},#{executionEpoch},#{attemptNo},#{stepNo},#{stepAttemptNo},#{purpose},#{providerKey},#{requestedModel},#{promptVersion},1,'RUNNING',#{startedAt},#{currency})
 """)
     @Options(useGeneratedKeys = true, keyProperty = "id")
     int insert(ModelAttemptRow row);

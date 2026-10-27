@@ -3,6 +3,16 @@ package com.learningmaterial.system.task;
 import java.time.LocalDateTime;
 
 public class OcrAttemptRow {
+    private String currency;
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String value) {
+        currency = value;
+    }
+
     private Long id;
     private Long taskId;
     private Integer executionEpoch;

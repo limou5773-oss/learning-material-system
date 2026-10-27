@@ -5114,7 +5114,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "from包含to不包含，按Asia/Shanghai自然日分桶。完成率分母为SUCCEEDED加FAILED，零分母返回null；费用按币种分别汇总，未知尝试单列。"
+      "description": "仅ADMIN。from/to为显式UTC ISO8601 Z时刻，并对应Asia/Shanghai自然日00:00；from包含、to不包含，1至90个自然日。缺参或格式错误400，时区/日期边界/范围越界422。当前库存及学科不随日期变化，其他指标按各自创建或尝试开始时间筛选；同一只读事务快照。完成率只取SUCCEEDED/(SUCCEEDED+FAILED)，0分母null；尝试来自独立请求记录dispatched=1，含重试和UNKNOWN，不计本地工具/缓存。历史模型重试归属未知单列，费用按非负金额和明确币种汇总，缺失或无效值未知不补零。"
       "parameters":
         -
           "name": "from"
@@ -5124,7 +5124,7 @@
             "type": "string"
             "format": "date-time"
             "description": "UTC ISO 8601，带Z"
-          "description": ""
+          "description": "包含的上海自然日开始时刻，例2026-10-19T16:00:00Z对应10月20日00:00"
         -
           "name": "to"
           "in": "query"
@@ -5133,7 +5133,7 @@
             "type": "string"
             "format": "date-time"
             "description": "UTC ISO 8601，带Z"
-          "description": ""
+          "description": "不包含的上海自然日开始时刻，最大90天"
         -
           "name": "timezone"
           "in": "query"
@@ -5142,7 +5142,7 @@
             "type": "string"
             "enum":
               - "Asia/Shanghai"
-          "description": ""
+          "description": "固定Asia/Shanghai，Web显式提交最近7天而非依赖服务端默认"
   "/admin/reviews/{id}/file":
     "get":
       "summary": "受控读取待审资料文件"
@@ -6765,6 +6765,7 @@
       "properties":
         "currency":
           "type": "string"
+          "pattern": "^[A-Z]{3}$"
         "amount":
           "type": "string"
           "pattern": "^[0-9]+(\\.[0-9]{1,6})?$"
@@ -6778,6 +6779,7 @@
         - "knownAttempts"
     "Statistics":
       "type": "object"
+      "description": "当前库存与期间事件分开展示，所有数据为同一数据库快照。unknownRetryAttempts保留迁移前缺少模型步骤归属的已发送尝试，不能将其当作0重试。"
       "properties":
         "from":
           "type": "string"
@@ -6792,33 +6794,45 @@
           "enum":
             - "Asia/Shanghai"
         "activeMaterialCount":
+          "description": "当前未删除资料，包括归档；不受from/to影响"
           "type": "integer"
           "minimum": 0
           "format": "int64"
         "restrictedMaterialCount":
+          "description": "当前有效资料中RESTRICTED数量，不受from/to影响"
           "type": "integer"
           "minimum": 0
           "format": "int64"
         "subjects":
+          "description": "当前有效资料按trim学科统计，空归未分类，按count降序/key升序，不受日期影响"
           "type": "array"
           "items":
             "$ref": "#/components/schemas/CountBucket"
         "uploadTrend":
+          "description": "范围内创建资料事件，包含后来删除者，上海自然日完整补0"
           "type": "array"
           "items":
             "$ref": "#/components/schemas/DailyCount"
         "modelAttemptCount":
+          "description": "model_attempt.started_at在范围内且dispatched=1，包含规划/生成/重试/UNKNOWN，仅表示可能发送"
           "type": "integer"
           "minimum": 0
           "format": "int64"
         "ocrAttemptCount":
+          "description": "ocr_attempt.started_at在范围内且dispatched=1，缓存与未发送不计"
           "type": "integer"
           "minimum": 0
           "format": "int64"
         "retryAttemptCount":
+          "description": "明确的模型step_attempt_no>1及OCR同页attempt_no>1的已发送尝试，不使用模型任务全局序号"
           "type": "integer"
           "minimum": 0
           "format": "int64"
+        "unknownRetryAttempts":
+          "type": "integer"
+          "minimum": 0
+          "format": "int64"
+          "description": "范围内dispatched模型尝试中，历史逻辑步骤归属未知的数量"
         "taskStatuses":
           "type": "array"
           "items":
@@ -6829,6 +6843,7 @@
           "maximum": 1
           "nullable": true
         "candidateTaskCount":
+          "description": "范围内创建任务中曾有validation_json.valid=true候选的任务数，含MOCK及后来INVALIDATED，不等于模型质量"
           "type": "integer"
           "minimum": 0
         "knownCosts":
@@ -6836,6 +6851,7 @@
           "items":
             "$ref": "#/components/schemas/CostSummary"
         "unknownCostAttempts":
+          "description": "已发送外部尝试中金额缺失/负数或币种缺失/不为3位大写字母的数量，不能补0费用"
           "type": "integer"
           "minimum": 0
         "metricNotes":
@@ -6854,6 +6870,7 @@
         - "modelAttemptCount"
         - "ocrAttemptCount"
         - "retryAttemptCount"
+        - "unknownRetryAttempts"
         - "taskStatuses"
         - "taskCompletionRate"
         - "candidateTaskCount"

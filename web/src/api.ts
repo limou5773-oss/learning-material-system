@@ -34,7 +34,13 @@ export async function api<T>(path: string, method = 'GET', body?: object): Promi
   }
 
   if (response.status === 204) return undefined as T
-  const payload = (await response.json()) as ApiEnvelope<T> & ApiProblem
+  let payload: ApiEnvelope<T> & ApiProblem
+  try { payload = await response.json() }
+  catch (cause) {
+    const error = new ApiRequestError(response.status, '服务器响应格式错误，请确认后端服务可用后重试')
+    error.cause = cause
+    throw error
+  }
   if (!response.ok) {
     throw new ApiRequestError(response.status, payload.error?.message || '请求失败，请稍后重试',
       payload.error?.currentVersion, payload.error?.existingMaterialId)

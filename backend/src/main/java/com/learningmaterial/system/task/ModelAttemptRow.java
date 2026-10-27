@@ -3,6 +3,34 @@ package com.learningmaterial.system.task;
 import java.time.LocalDateTime;
 
 public class ModelAttemptRow {
+    private Integer stepNo;
+    private Integer stepAttemptNo;
+    private String currency;
+
+    public Integer getStepNo() {
+        return stepNo;
+    }
+
+    public void setStepNo(Integer value) {
+        stepNo = value;
+    }
+
+    public Integer getStepAttemptNo() {
+        return stepAttemptNo;
+    }
+
+    public void setStepAttemptNo(Integer value) {
+        stepAttemptNo = value;
+    }
+
+    public String getCurrency() {
+        return currency;
+    }
+
+    public void setCurrency(String value) {
+        currency = value;
+    }
+
     private String purpose = "GENERATION";
 
     public String getPurpose() {
