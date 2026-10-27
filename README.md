@@ -167,6 +167,18 @@ Windows上的图片和PDF文件默认保存在当前用户目录下的`.learning
 
 启动Web时另开一个PowerShell窗口，在项目根目录运行`cd web`、`npm ci`、`npm run dev`，然后访问`http://127.0.0.1:5173`。首次启动后端会自动执行V1至V17数据库迁移，不要手动导入整份拟议SQL。Windows上的微信开发者工具模拟器可导入同一个`miniprogram/`目录；后端也运行在这台Windows电脑时，默认本机地址可沿用。真机联调仍需HTTPS合法域名。
 
+## 自动验收与演示（D24）
+
+准备独立的`learning_material_auth_test`或带下划线后缀的MySQL测试库，在当前终端配置`DB_URL`、`DB_USERNAME`、`DB_PASSWORD`，然后执行：
+
+```powershell
+node scripts/verify.mjs
+```
+
+依次安装Web锁定依赖、运行Node测试、后端`clean verify`与Web生产构建；任一失败即停止，报告写到忽略目录`acceptance-output/`的本次子目录。不接受开发库名，不把集成测试跳过视为通过；子进程关闭真实厂商和管理员初始化。完整的隐藏输入配置、启动、jar/静态资源部署及模拟演示见[验收与演示指南](docs/验收与演示指南.md)。
+
+软件验证与最终验收分开：[验收矩阵](docs/验收矩阵.md)列出真实OCR/DeepSeek、原生微信、真实微信身份绑定、管理员脱敏任务监控等仍待完成部分。D24整体尚未验收完成，自动测试和MOCK材料不作为论文真实效果评价。
+
 ## 工程目录
 
 ```text
