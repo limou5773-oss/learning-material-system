@@ -1,38 +1,38 @@
 /* ============================================================
-   学材 · 设计系统 (清透薄荷青)
+   学材 · 设计系统 (清透天青蓝)
    全局 token + 共用类。保留历史类名，仅升级观感。
    ============================================================ */
 page {
-  /* 主色 — 清透薄荷青绿 */
-  --brand: #11b5a0;
-  --brand-press: #0a9c8a;
-  --brand-soft: #e4f7f3;
-  --brand-ink: #0a7a6c;
+  /* 主色 — 清透天青蓝 */
+  --brand: #2f7bf6;
+  --brand-press: #1f66db;
+  --brand-soft: #e8f1fe;
+  --brand-ink: #1a5bc4;
 
-  /* 薄荷渐变（顶栏 / 英雄区） */
-  --grad-header: linear-gradient(135deg, #d4f3ee 0%, #e9f8f0 55%, #f4faf6 100%);
-  --grad-brand: linear-gradient(135deg, #16c2ab 0%, #11b5a0 100%);
+  /* 蓝色渐变（顶栏 / 英雄区） */
+  --grad-header: linear-gradient(135deg, #d6e8ff 0%, #e8f1fe 55%, #f3f7fc 100%);
+  --grad-brand: linear-gradient(135deg, #4a93ff 0%, #2f7bf6 100%);
 
   /* 彩色强调色 — 分类图标 / 徽标 */
-  --c-blue: #3b86f7;
+  --c-blue: #2f7bf6;
   --c-amber: #f5a623;
   --c-coral: #fb7a68;
   --c-violet: #8b7cf0;
   --c-pink: #f473b3;
 
   /* 中性 — 冷白基调 */
-  --ink: #111f1d;
-  --ink-2: #5c6b68;
-  --ink-3: #93a09d;
-  --line: #e9efee;
-  --line-strong: #d6e0de;
+  --ink: #141b24;
+  --ink-2: #5b6675;
+  --ink-3: #94a0b0;
+  --line: #eceff4;
+  --line-strong: #dce1ea;
   --surface: #ffffff;
-  --surface-2: #f8fbfa;
-  --bg: #f3f8f7;
+  --surface-2: #f8fafd;
+  --bg: #f3f6fb;
 
   /* 语义 */
-  --ok-bg: #e4f7f3;
-  --ok-ink: #0a7a6c;
+  --ok-bg: #e8f1fe;
+  --ok-ink: #1a5bc4;
   --warn-bg: #fff4e6;
   --warn-ink: #9a5b12;
   --danger-bg: #fdeeea;
@@ -43,8 +43,8 @@ page {
   --r-md: 20rpx;
   --r-lg: 28rpx;
   --r-pill: 999rpx;
-  --shadow-sm: 0 6rpx 20rpx rgba(12, 70, 62, .05);
-  --shadow-md: 0 16rpx 44rpx rgba(12, 70, 62, .08);
+  --shadow-sm: 0 6rpx 20rpx rgba(26, 59, 110, .06);
+  --shadow-md: 0 16rpx 44rpx rgba(26, 59, 110, .09);
 
   min-height: 100%;
   background: var(--bg);
@@ -128,7 +128,7 @@ button::after { border: 0; }
   color: #fff;
   font-size: 30rpx;
   font-weight: 600;
-  box-shadow: 0 12rpx 28rpx rgba(17, 181, 160, .28);
+  box-shadow: 0 12rpx 28rpx rgba(47, 123, 246, .26);
   transition: opacity .15s, transform .1s;
 }
 .primary:active { background: var(--brand-press); transform: scale(.985); }

@@ -1,37 +1,50 @@
 .login-page {
+  display: flex;
+  flex-direction: column;
   min-height: 100vh;
   box-sizing: border-box;
-  background: linear-gradient(180deg, #d4f3ee 0%, #e9f8f0 38%, #f3f8f7 100%);
+  padding: 72rpx 44rpx 56rpx;
+  background: linear-gradient(180deg, #d6e8ff 0%, #e4effd 26%, #eef4fc 52%, #f3f6fb 100%);
 }
 
-.hero { padding: 24rpx 0 40rpx; }
+.hero { padding: 0 4rpx 44rpx; }
 .brand-badge {
   display: flex;
   align-items: center;
   justify-content: center;
-  width: 108rpx;
-  height: 108rpx;
-  margin-bottom: 36rpx;
-  border-radius: 30rpx;
+  width: 104rpx;
+  height: 104rpx;
+  margin-bottom: 40rpx;
+  border-radius: 28rpx;
   background: var(--grad-brand);
   color: #fff;
-  font-size: 56rpx;
+  font-size: 54rpx;
   font-weight: 800;
-  box-shadow: 0 16rpx 36rpx rgba(17, 181, 160, .34);
+  box-shadow: 0 18rpx 36rpx rgba(47, 123, 246, .32);
 }
+.hero .title { font-size: 56rpx; }
+.hero .lead { margin-bottom: 0; }
 
-.login-card { margin-top: 8rpx; padding: 44rpx 36rpx; box-shadow: var(--shadow-md); }
-.login-card .muted { margin-bottom: 20rpx; }
+.login-card {
+  margin: 0;
+  padding: 48rpx 40rpx;
+  border: 0;
+  border-radius: 32rpx;
+  box-shadow: 0 24rpx 60rpx rgba(26, 59, 110, .12);
+}
+.login-card .muted { margin-bottom: 28rpx; }
 .login-card .notice,
-.login-card .error { margin-top: 30rpx; margin-bottom: 0; }
+.login-card .error { margin-top: 28rpx; margin-bottom: 0; }
 .session-hint { margin-top: 24rpx; }
 
-.wechat-login { margin-top: 36rpx; }
+.wechat-login { margin-top: 32rpx; }
 .wechat-glyph { margin-right: 14rpx; font-size: 30rpx; }
 .login-alternative { margin-top: 20rpx; }
 
 .password-panel {
-  margin-top: 30rpx;
-  padding-top: 16rpx;
+  margin-top: 32rpx;
+  padding-top: 20rpx;
   border-top: 1rpx solid var(--line);
 }
+
+.footnote { margin-top: auto; padding-top: 56rpx; }
