@@ -1,8 +1,8 @@
 "openapi": "3.0.3"
 "info":
   "title": "个人学习资料智能整理系统开发接口"
-  "version": "1.0.0-draft"
-  "description": "依据开题报告的编码契约。账号密码登录、资料、任务、来源校验与人工确认、卡片管理/布局/关系图、站内通知、用户管理、主动送审、统计及F21脱敏监控已有实现；D24提供自动验收工具。腾讯OCR、DeepSeek MODEL/agent代码显式启用，真实厂商效果待凭证；MOCK不代表真实AI。真实微信身份登录/绑定路径仍为拟议，原生微信及最终验收未全部完成。实施范围见各接口描述、开发进度与验收矩阵。所有ID为字符串，时间为UTC。"
+  "version": "1.0.0"
+  "description": "按当前需求实现的双端接口；已补齐个人资料/密码修改、微信code登录/绑定/解绑及按版本删除卡片。接口实现与真实微信、OCR和模型验收分开记录。"
 "servers":
   -
     "url": "http://localhost:8080/api/v1"
@@ -272,7 +272,7 @@
                 "$ref": "#/components/schemas/ApiError"
   "/auth/wechat-sessions":
     "post":
-      "description": "拟议接口，截至D24尚未实现；当前小程序使用账号密码登录，不提供模拟微信身份。"
+      "description": "小程序用wx.login取得新的code，服务端调用code2Session；仅登录已绑定的有效账号，不创建或合并账号。未绑定409 WECHAT_BIND_REQUIRED，未配置503 WECHAT_NOT_CONFIGURED，code无效422。返回MINIPROGRAM会话，不返回微信openid/session_key。"
       "summary": "已绑定微信身份登录"
       "operationId": "post_auth_wechat_sessions"
       "responses":
@@ -526,7 +526,7 @@
             "application/json":
               "schema":
                 "$ref": "#/components/schemas/ApiError"
-      "description": "修改密码必须提供currentPassword，成功后撤销其他会话。不得提交角色或状态。"
+      "description": "至少修改displayName或newPassword之一；昵称先去除首尾空白后1—64字符。改密码需currentPassword，newPassword为8—64字符且UTF-8不超过72字节、不能全空白；原密码错误422 CURRENT_PASSWORD_INCORRECT；改密成功撤销全部会话，客户端重新登录。昵称修改不撤销会话，不允许角色或状态字段。"
       "requestBody":
         "required": true
         "content":
@@ -535,7 +535,7 @@
               "$ref": "#/components/schemas/UserPatch"
   "/users/me/wechat-binding":
     "post":
-      "description": "拟议接口，截至D24尚未实现，不能作为已实现微信绑定的验收依据。"
+      "description": "使用新的微信code绑定当前账号；服务端验证身份后在用户行锁内重查当前会话。同一绑定幂等返回；用户已绑定不同身份409 USER_WECHAT_ALREADY_BOUND，身份被他人占用409 WECHAT_BIND_CONFLICT，不隐式合并账号。"
       "summary": "绑定当前微信身份"
       "operationId": "post_users_me_wechat_binding"
       "responses":
@@ -626,7 +626,7 @@
     "delete":
       "summary": "验证密码后解绑"
       "operationId": "delete_users_me_wechat_binding"
-      "description": "拟议接口，截至D24尚未实现；解绑及密码核验需随真实绑定功能一并交付。"
+      "description": "验证currentPassword后解除当前账号绑定，返回204；原密码错误422。撤销该用户全部MINIPROGRAM会话，保留Web会话，不删除学习资料。"
       "responses":
         "204":
           "description": "验证密码后解绑"

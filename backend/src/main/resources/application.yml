@@ -1,12 +1,14 @@
+# 日常配置直接在本文件修改；修改后重启后端。
 spring:
   application:
     name: learning-material-system
   datasource:
-    url: ${DB_URL}
-    username: ${DB_USERNAME}
-    password: ${DB_PASSWORD}
+    # MySQL 地址、数据库名、账号和密码
+    url: jdbc:mysql://127.0.0.1:3306/learning_material_dev?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
+    username: root
+    password: ""
   flyway:
-    enabled: true
+    enabled: false # 合并 SQL 采用手动导入方式；首次使用前需先建好数据表
     baseline-on-migrate: false
     validate-on-migrate: true
   jackson:
@@ -36,23 +38,39 @@ server:
 
 lms:
   admin-bootstrap:
-    enabled: ${ADMIN_BOOTSTRAP_ENABLED:false}
-    username: ${ADMIN_BOOTSTRAP_USERNAME:}
-    password: ${ADMIN_BOOTSTRAP_PASSWORD:}
-    display-name: ${ADMIN_BOOTSTRAP_DISPLAY_NAME:}
+    # 仅首次创建管理员时开启，成功后关闭
+    enabled: false
+    username: ""
+    password: ""
+    display-name: ""
   model:
-    provider: ${MODEL_PROVIDER:disabled}
-    name: ${MODEL_NAME:deepseek-flash}
-    api-key: ${MODEL_API_KEY:}
+    # 接入 DeepSeek：provider 改为 deepseek，并填写 api-key
+    provider: "disabled"
+    name: deepseek-flash
+    api-key: ""
   ocr:
-    enabled: ${OCR_ENABLED:false}
-    provider: ${OCR_PROVIDER:disabled}
-    secret-id: ${OCR_SECRET_ID:}
-    secret-key: ${OCR_SECRET_KEY:}
+    # 接入腾讯云：enabled 改为 true，provider 改为 tencent，并填写两项密钥
+    enabled: false
+    provider: "disabled"
+    secret-id: ""
+    secret-key: ""
   task:
     processor:
-      mode: ${TASK_PROCESSOR_MODE:disabled}
+      # agent=智能体，model=固定生成，mock=模拟，disabled=关闭
+      mode: agent
     worker:
-      enabled: ${TASK_WORKER_ENABLED:false}
+      # 需要处理整理任务时开启；真实 AI/OCR 请求可能产生费用
+      enabled: false
       poll-ms: 1000
       heartbeat-ms: 10000
+  wechat:
+    # 真实微信登录需填写与小程序项目一致的 AppID 和 AppSecret，再开启
+    enabled: false
+    app-id: "wx9980e36f77a1784f"
+    app-secret: ""
+
+
+# 上传目录留空沿用当前用户目录下 .learning-material-system/files
+STORAGE_ROOT: ""
+FILE_MAX_IMAGE_BYTES: 10485760
+FILE_MAX_PDF_BYTES: 31457280

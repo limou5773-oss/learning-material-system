@@ -1,12 +1,20 @@
 package com.learningmaterial.system;
 
-import static org.assertj.core.api.Assertions.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learningmaterial.system.model.*;
-import com.learningmaterial.system.task.*;
-import com.learningmaterial.system.task.AiTaskDtos.*;
-
+import com.learningmaterial.system.dto.AiTaskDtos.*;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.integration.model.ModelClient;
+import com.learningmaterial.system.integration.model.ModelException;
+import com.learningmaterial.system.service.AiTaskService;
+import com.learningmaterial.system.service.AuthService;
+import com.learningmaterial.system.service.MaterialService;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskConfirmationService;
+import com.learningmaterial.system.service.TaskLeaseService;
+import com.learningmaterial.system.task.TaskProcessor;
+import com.learningmaterial.system.task.TaskWorker;
+import java.util.*;
+import java.util.function.BiFunction;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -19,8 +27,7 @@ import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.util.*;
-import java.util.function.BiFunction;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest(
         properties = {
@@ -46,7 +53,7 @@ class AgentIntegrationTest {
         }
     }
 
-    static class StubOcr implements com.learningmaterial.system.ocr.OcrClient {
+    static class StubOcr implements com.learningmaterial.system.integration.ocr.OcrClient {
         int calls;
         java.util.function.Supplier<Result> next;
 
@@ -116,11 +123,11 @@ class AgentIntegrationTest {
     }
 
     @Autowired StubOcr ocr;
-    @Autowired com.learningmaterial.system.material.FileStorage storage;
-    @Autowired com.learningmaterial.system.material.MaterialService materials;
+    @Autowired com.learningmaterial.system.integration.storage.FileStorage storage;
+    @Autowired com.learningmaterial.system.service.MaterialService materials;
     List<String> files = new ArrayList<>();
     @Autowired JdbcTemplate jdbc;
-    @Autowired com.learningmaterial.system.auth.AuthService auth;
+    @Autowired com.learningmaterial.system.service.AuthService auth;
     @Autowired AiTaskService tasks;
     @Autowired TaskLeaseService leases;
     @Autowired ObjectProvider<TaskProcessor> processor;
@@ -134,12 +141,12 @@ class AgentIntegrationTest {
         String name = "agent_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         var u =
                 auth.register(
-                        new com.learningmaterial.system.auth.AuthDtos.RegistrationInput(
+                        new com.learningmaterial.system.dto.AuthDtos.RegistrationInput(
                                 name, "Test-password-123", name));
         ocr.calls = 0;
         ocr.next =
                 () ->
-                        new com.learningmaterial.system.ocr.OcrClient.Result(
+                        new com.learningmaterial.system.integration.ocr.OcrClient.Result(
                                 "OCR accurate source", 0.9, "ocr-safe");
         assertThat(u.status()).isEqualTo("ENABLED");
         user = Long.parseLong(u.id());
@@ -338,7 +345,7 @@ class AgentIntegrationTest {
         long m = image();
         var lease = startMaterial(m, null, GoalType.REVIEW_CARDS, false);
         ocr.next =
-                () -> new com.learningmaterial.system.ocr.OcrClient.Result("", null, "ocr-empty");
+                () -> new com.learningmaterial.system.integration.ocr.OcrClient.Result("", null, "ocr-empty");
         model.next =
                 (s, p) ->
                         model.calls == 1
@@ -371,7 +378,7 @@ class AgentIntegrationTest {
         var lease = startMaterial(image(), null, GoalType.REVIEW_CARDS, false);
         ocr.next =
                 () -> {
-                    throw new com.learningmaterial.system.ocr.OcrException(
+                    throw new com.learningmaterial.system.integration.ocr.OcrException(
                             "OCR_AUTH_FAILED", false, true);
                 };
         model.next = (s, p) -> plan("recognize_image");
@@ -516,7 +523,7 @@ class AgentIntegrationTest {
         }
     }
 
-    void seedAttempt(TaskLeaseService.Lease l, int n, String purpose) {
+    void seedAttempt(TaskLease l, int n, String purpose) {
         jdbc.update(
                 "INSERT INTO"
                     + " model_attempt(task_id,execution_epoch,attempt_no,purpose,provider_key,requested_model,prompt_version,dispatched,status,started_at,finished_at)"
@@ -578,7 +585,7 @@ class AgentIntegrationTest {
                 "SELECT MAX(id) FROM material WHERE user_id=?", Long.class, user);
     }
 
-    TaskLeaseService.Lease startMaterial(long m, PageRange range, GoalType goal, boolean related) {
+    TaskLease startMaterial(long m, PageRange range, GoalType goal, boolean related) {
         var t =
                 tasks.submit(
                         user,
@@ -754,7 +761,7 @@ class AgentIntegrationTest {
     @Test
     void latePlannerFromOldEpochCannotExecuteActionsAndNewEpochRetainsLedger() {
         var old = start(GoalType.REVIEW_CARDS, false);
-        TaskLeaseService.Lease[] replacement = new TaskLeaseService.Lease[1];
+        TaskLease[] replacement = new TaskLease[1];
         model.next =
                 (s, p) -> {
                     jdbc.update(
@@ -948,7 +955,7 @@ class AgentIntegrationTest {
         }
     }
 
-    TaskLeaseService.Lease startExisting(long material) {
+    TaskLease startExisting(long material) {
         int version =
                 jdbc.queryForObject(
                         "SELECT version FROM material WHERE id=?", Integer.class, material);
@@ -969,7 +976,7 @@ class AgentIntegrationTest {
         return lease;
     }
 
-    ConfirmationInput confirmation(TaskLeaseService.Lease lease) {
+    ConfirmationInput confirmation(TaskLease lease) {
         var result = candidates.getResult(user, lease.taskId());
         return new ConfirmationInput(
                 result.resultVersion(),
@@ -981,17 +988,17 @@ class AgentIntegrationTest {
                 result.relations());
     }
 
-    void execute(TaskLeaseService.Lease l) {
+    void execute(TaskLease l) {
         assertThat(processor.getIfAvailable()).as("agent processor enabled").isNotNull();
         processor.getObject().execute(l);
     }
 
-    String status(TaskLeaseService.Lease l) {
+    String status(TaskLease l) {
         return jdbc.queryForObject(
                 "SELECT status FROM ai_task WHERE id=?", String.class, l.taskId());
     }
 
-    int count(String table, TaskLeaseService.Lease l) {
+    int count(String table, TaskLease l) {
         return table.equals("material_chunk")
                 ? jdbc.queryForObject(
                         "SELECT COUNT(*) FROM material_chunk WHERE material_id IN(SELECT"
@@ -1004,7 +1011,7 @@ class AgentIntegrationTest {
                         l.taskId());
     }
 
-    TaskLeaseService.Lease start(GoalType goal, boolean related) {
+    TaskLease start(GoalType goal, boolean related) {
         jdbc.update(
                 "INSERT INTO"
                     + " material(user_id,title,material_type,note_text,version,status,access_state,created_at,updated_at)"

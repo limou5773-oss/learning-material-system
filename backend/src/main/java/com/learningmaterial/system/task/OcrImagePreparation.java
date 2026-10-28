@@ -1,24 +1,21 @@
 package com.learningmaterial.system.task;
 
 import com.learningmaterial.system.common.ApiException;
-import com.learningmaterial.system.material.FileStorage;
-import com.learningmaterial.system.material.MaterialRow;
-
+import com.learningmaterial.system.entity.MaterialRow;
+import com.learningmaterial.system.integration.storage.FileStorage;
+import java.awt.*;
+import java.awt.image.BufferedImage;
+import java.io.*;
+import java.util.Iterator;
+import javax.imageio.*;
+import javax.imageio.stream.ImageInputStream;
+import javax.imageio.stream.MemoryCacheImageOutputStream;
 import org.apache.pdfbox.Loader;
 import org.apache.pdfbox.pdmodel.PDDocument;
 import org.apache.pdfbox.pdmodel.encryption.InvalidPasswordException;
 import org.apache.pdfbox.rendering.ImageType;
 import org.apache.pdfbox.rendering.PDFRenderer;
 import org.springframework.stereotype.Component;
-
-import java.awt.*;
-import java.awt.image.BufferedImage;
-import java.io.*;
-import java.util.Iterator;
-
-import javax.imageio.*;
-import javax.imageio.stream.ImageInputStream;
-import javax.imageio.stream.MemoryCacheImageOutputStream;
 
 /** Only accepts a server-owned material, never user URLs or filesystem paths. */
 @Component

@@ -5,12 +5,11 @@ import com.fasterxml.jackson.core.StreamReadFeature;
 import com.fasterxml.jackson.databind.DeserializationFeature;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-
 import java.util.*;
 
 /** The only model-authored inputs accepted by the agent dispatcher. */
-final class AgentPlanProtocol {
-    static final String SYSTEM =
+public final class AgentPlanProtocol {
+    public static final String SYSTEM =
             """
 You are a bounded planner. Return JSON only, exactly {"actions":[{"tool":string,"arguments":object}],"stopReason":null}.
 Choose 1-5 ordered actions from batchTools. allowedTools lists tools executable in the current state.
@@ -37,7 +36,7 @@ Do not return reasoning, extra keys, arbitrary tools, or a stop reason alongside
                                     .enable(StreamReadFeature.STRICT_DUPLICATE_DETECTION)
                                     .build())
                     .enable(DeserializationFeature.FAIL_ON_TRAILING_TOKENS);
-    static final Set<String> TOOLS =
+    public static final Set<String> TOOLS =
             Set.of(
                     "prepare_source",
                     "extract_pdf_text",
@@ -46,11 +45,11 @@ Do not return reasoning, extra keys, arbitrary tools, or a stop reason alongside
                     "generate_summary_cards",
                     "validate_candidate");
 
-    record Action(String tool, JsonNode arguments) {}
+    public record Action(String tool, JsonNode arguments) {}
 
-    record Plan(List<Action> actions, String stopReason) {}
+    public record Plan(List<Action> actions, String stopReason) {}
 
-    static Plan parse(String content) {
+    public static Plan parse(String content) {
         try {
             if (content == null || content.length() > 16000) invalid();
             JsonNode root = JSON.readTree(content);

@@ -1,5 +1,11 @@
 package com.learningmaterial.system.task;
 
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.mapper.AiTaskMapper;
+import com.learningmaterial.system.service.ModelGenerationService;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskLeaseService;
+import com.learningmaterial.system.service.TaskSourcePreparationService;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
 
@@ -8,7 +14,7 @@ import org.springframework.stereotype.Component;
 public class ModelTaskProcessor implements TaskProcessor {
     private final AiTaskMapper tasks;
     private final TaskLeaseService leases;
-    private final TaskSourcePreparation preparation;
+    private final TaskSourcePreparationService preparation;
     private final ModelGenerationService generation;
     private final TaskCandidateService candidates;
     private final com.fasterxml.jackson.databind.ObjectMapper json;
@@ -16,7 +22,7 @@ public class ModelTaskProcessor implements TaskProcessor {
     public ModelTaskProcessor(
             AiTaskMapper tasks,
             TaskLeaseService leases,
-            TaskSourcePreparation preparation,
+            TaskSourcePreparationService preparation,
             ModelGenerationService generation,
             TaskCandidateService candidates,
             com.fasterxml.jackson.databind.ObjectMapper json) {
@@ -28,7 +34,7 @@ public class ModelTaskProcessor implements TaskProcessor {
         this.json = json;
     }
 
-    public void execute(TaskLeaseService.Lease lease) {
+    public void execute(TaskLease lease) {
         var task = tasks.findById(lease.taskId());
         if (task == null || !generation.check(lease, task)) return;
         com.fasterxml.jackson.databind.JsonNode config;

@@ -2,6 +2,16 @@ package com.learningmaterial.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import java.net.URI;
+import java.net.http.HttpClient;
+import java.net.http.HttpRequest;
+import java.net.http.HttpResponse;
+import java.time.Duration;
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.AfterEach;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
@@ -14,17 +24,6 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
-import java.time.Duration;
-import java.util.ArrayList;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
-import java.util.concurrent.CompletableFuture;
-
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.mockito.ArgumentMatchers.any;
 import static org.mockito.ArgumentMatchers.eq;
@@ -36,7 +35,7 @@ import static org.mockito.Mockito.reset;
 class AdminTaskIntegrationTest {
     private static final String RANGE = "from=2090-01-01T00:00:00Z&to=2090-01-04T00:00:00Z";
     private static final String PRIVATE = "F21_PRIVATE_CANARY";
-    private static final String MAPPER = "com.learningmaterial.system.admin.AdminTaskMapper.";
+    private static final String MAPPER = "com.learningmaterial.system.mapper.AdminTaskMapper.";
     private static final List<String> STATUSES = List.of("QUEUED", "RUNNING", "WAIT_CONFIRM", "SUCCEEDED", "FAILED", "CANCELLED");
     @LocalServerPort int port;
     @Autowired JdbcTemplate jdbc;

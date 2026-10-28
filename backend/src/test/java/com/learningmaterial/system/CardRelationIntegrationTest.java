@@ -3,8 +3,10 @@ package com.learningmaterial.system;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
+import com.learningmaterial.system.service.TaskLeaseService;
 import com.learningmaterial.system.task.MockTaskProcessor;
-import com.learningmaterial.system.task.TaskLeaseService;
+import java.util.*;
+import java.util.concurrent.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -13,9 +15,6 @@ import org.springframework.boot.test.web.client.TestRestTemplate;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.util.*;
-import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.assertThat;
 

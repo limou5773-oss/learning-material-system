@@ -1,12 +1,15 @@
 package com.learningmaterial.system.task;
 
-import static org.assertj.core.api.Assertions.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-
+import com.learningmaterial.system.dto.AiTaskDtos;
+import com.learningmaterial.system.dto.PersonalMaterialMatch;
+import com.learningmaterial.system.dto.PreparedTaskSource;
+import com.learningmaterial.system.entity.AiTaskRow;
+import com.learningmaterial.system.entity.MaterialChunkRow;
+import java.util.List;
 import org.junit.jupiter.api.Test;
 
-import java.util.List;
+import static org.assertj.core.api.Assertions.*;
 
 class AgentModelOutputProtocolTest {
     final ObjectMapper json = new ObjectMapper();
@@ -27,8 +30,8 @@ class AgentModelOutputProtocolTest {
         chunk.setContent("自编测试原文😀");
     }
 
-    TaskSourcePreparation.Prepared prepared() {
-        return new TaskSourcePreparation.Prepared(List.of(chunk), null);
+    PreparedTaskSource prepared() {
+        return new PreparedTaskSource(List.of(chunk), null);
     }
 
     String body(String relations) {
@@ -37,8 +40,8 @@ class AgentModelOutputProtocolTest {
                 + "}";
     }
 
-    List<PersonalMaterialSearchService.Match> matches() {
-        return List.of(new PersonalMaterialSearchService.Match("41", 3, "已有卡片", "可见参考", false));
+    List<PersonalMaterialMatch> matches() {
+        return List.of(new PersonalMaterialMatch("41", 3, "已有卡片", "可见参考", false));
     }
 
     @Test

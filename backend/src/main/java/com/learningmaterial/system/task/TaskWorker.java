@@ -1,19 +1,20 @@
 package com.learningmaterial.system.task;
 
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.service.TaskLeaseService;
 import jakarta.annotation.PreDestroy;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
-import org.springframework.context.annotation.Bean;
-import org.springframework.context.annotation.Configuration;
-import org.springframework.scheduling.annotation.EnableScheduling;
-import org.springframework.scheduling.annotation.Scheduled;
-import org.springframework.stereotype.Component;
-
 import java.util.Set;
 import java.util.concurrent.ConcurrentHashMap;
 import java.util.concurrent.ExecutorService;
 import java.util.concurrent.Executors;
 import java.util.concurrent.Semaphore;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnMissingBean;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.context.annotation.Bean;
+import org.springframework.context.annotation.Configuration;
+import org.springframework.scheduling.annotation.EnableScheduling;
+import org.springframework.scheduling.annotation.Scheduled;
+import org.springframework.stereotype.Component;
 
 @Configuration
 @EnableScheduling
@@ -32,7 +33,7 @@ public class TaskWorker {
     private final TaskLeaseService leases;
     private final TaskProcessor processor;
     private final Semaphore slots = new Semaphore(2);
-    private final Set<TaskLeaseService.Lease> active = ConcurrentHashMap.newKeySet();
+    private final Set<TaskLease> active = ConcurrentHashMap.newKeySet();
     private final ExecutorService pool = Executors.newFixedThreadPool(2);
 
     public TaskWorker(TaskLeaseService leases, TaskProcessor processor) {
@@ -43,7 +44,7 @@ public class TaskWorker {
     @Scheduled(fixedDelayString = "${lms.task.worker.poll-ms:1000}")
     public void poll() {
         while (slots.tryAcquire()) {
-            TaskLeaseService.Lease lease;
+            TaskLease lease;
             try { lease = leases.claim(); }
             catch (RuntimeException ex) { slots.release(); throw ex; }
             if (lease == null) { slots.release(); break; }
@@ -55,13 +56,13 @@ public class TaskWorker {
 
     @Scheduled(fixedDelayString = "${lms.task.worker.heartbeat-ms:10000}")
     public void heartbeat() {
-        for (TaskLeaseService.Lease lease : active) {
+        for (TaskLease lease : active) {
             try { leases.heartbeat(lease); }
             catch (RuntimeException ignored) { /* The lease expires and another worker can recover it. */ }
         }
     }
 
-    private void run(TaskLeaseService.Lease lease) {
+    private void run(TaskLease lease) {
         try {
             if (!leases.isCurrent(lease)) return;
             processor.execute(lease);

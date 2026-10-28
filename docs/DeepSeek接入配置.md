@@ -1,35 +1,22 @@
 # DeepSeek本机接入配置
 
+直接修改原YAML。旧环境配置脚本已移除，功能边界和真实厂商验收要求如下。
+
 D15接入DeepSeek Chat Completions的JSON输出模式，以所选资料的文字生成摘要、标签及带引用的知识卡片。OCR仍由D14单独配置，模型不直接读取用户文件或执行数据库操作。默认处理器disabled，不会自行调用外部模型；mock继续提供本地模拟流程。
 
 ## 配置
 
-准备自己的DeepSeek API密钥，不要将密钥发到聊天、截图或GitHub。在项目根目录运行：
+直接编辑原 `backend/src/main/resources/application.yml`，无需设置环境变量或运行旧配置脚本：
 
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-model.ps1
-```
-
-脚本隐藏输入，将MODEL_API_KEY、MODEL_PROVIDER=deepseek、MODEL_NAME和TASK_PROCESSOR_MODE=model保存在Windows当前用户的环境变量，凭证不打印、不写项目文件。这些环境变量持久存在于本机；在Windows账户环境变量设置中可修改或删除。之后重新打开后端终端。脚本不会自动启动worker。
-
-如果只想临时配置当前PowerShell进程：
-
-```powershell
-. .\scripts\configure-model.ps1 -Scope Process
-# 在同一终端配置本机DB_URL、DB_USERNAME、DB_PASSWORD
-$env:TASK_WORKER_ENABLED = 'true'
-mvn -f backend/pom.xml spring-boot:run
-```
-
-| 环境变量 | 说明 |
+| YAML字段 | 填写方式 |
 | --- | --- |
-| TASK_PROCESSOR_MODE | model启用真实生成；mock保留模拟；默认disabled |
-| TASK_WORKER_ENABLED | true才领取排队任务，默认false |
-| MODEL_PROVIDER | deepseek |
-| MODEL_NAME | 默认deepseek-flash，可选deepseek-v4-pro；脚本支持-Model参数 |
-| MODEL_API_KEY | 本机密钥，不能放入前端或小程序 |
+| lms.model.provider | deepseek |
+| lms.model.name | deepseek-flash |
+| lms.model.api-key | 本机API Key，仅后端使用 |
+| lms.task.processor.mode | agent启用智能体；model使用固定生成；mock用于模拟 |
+| lms.task.worker.enabled | 准备处理任务时设true |
 
-不配置自定义API URL，固定调用DeepSeek官方HTTPS地址。用户输入不能替换端点、HTTP头或工具。截止2026年10月25日，官方文档当前模型标识为deepseek-flash和deepseek-v4-pro，后续名称变化以厂商文档为准；代码不将旧deepseek-chat作为默认值。
+修改后重启后端，详见[YAML配置](YAML本机配置.md)。API地址由适配器固定使用官方HTTPS端点，不接收用户自定义URL。GitHub中的密码/密钥为空占位，本机已填写的配置单独保留。
 
 ## 使用与核对
 
@@ -45,13 +32,7 @@ mvn -f backend/pom.xml spring-boot:run
 
 ## D16：受限智能体模式
 
-仍使用同一DeepSeek密钥，配置时指定agent即可：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-model.ps1 -ProcessorMode agent
-```
-
-脚本仍只保存配置，不自动开启worker。也可在后端终端显式设置`TASK_PROCESSOR_MODE=agent`，并在准备处理已同意任务时设置`TASK_WORKER_ENABLED=true`。D15的model模式保留固定提取/生成流程；agent模式让模型在白名单内提出下一批工具动作，读取工具反馈后再规划。不得把缺少密钥时的错误分支或本地桩测试当作真实智能体效果。
+仍使用同一DeepSeek密钥，将原YAML的 `lms.task.processor.mode` 设为 `agent` 并开启worker。model模式保留固定提取/生成流程；agent模式按工具反馈继续规划。不能把模拟响应或缺配置分支当成真实效果。
 
 每任务最多8步（包括规划）、4次规划请求、8次模型请求（规划与生成合计且跨epoch累计），生成部分仍最多2次。规划会额外调用模型，可能产生相应用量和费用；记录purpose区分规划与生成，未知费用仍为NULL。
 

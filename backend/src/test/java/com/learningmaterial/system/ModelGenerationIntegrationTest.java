@@ -1,13 +1,22 @@
 package com.learningmaterial.system;
 
-import static org.assertj.core.api.Assertions.*;
-
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learningmaterial.system.material.FileStorage;
-import com.learningmaterial.system.model.*;
-import com.learningmaterial.system.task.*;
-import com.learningmaterial.system.task.AiTaskDtos.*;
-
+import com.learningmaterial.system.dto.AiTaskDtos.*;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.integration.model.ModelClient;
+import com.learningmaterial.system.integration.model.ModelException;
+import com.learningmaterial.system.integration.storage.FileStorage;
+import com.learningmaterial.system.service.AiTaskService;
+import com.learningmaterial.system.service.AuthService;
+import com.learningmaterial.system.service.MaterialService;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskConfirmationService;
+import com.learningmaterial.system.service.TaskLeaseService;
+import com.learningmaterial.system.task.ModelTaskProcessor;
+import com.learningmaterial.system.task.TaskExecutionException;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
+import java.util.function.Function;
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.font.*;
 import org.junit.jupiter.api.*;
@@ -21,9 +30,7 @@ import org.springframework.context.annotation.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.io.ByteArrayOutputStream;
-import java.util.*;
-import java.util.function.Function;
+import static org.assertj.core.api.Assertions.*;
 
 /** Deterministic provider stub tests business guards; no real DeepSeek request is made. */
 @SpringBootTest(
@@ -114,13 +121,13 @@ class ModelGenerationIntegrationTest {
     }
 
     @Autowired JdbcTemplate jdbc;
-    @Autowired com.learningmaterial.system.auth.AuthService auth;
+    @Autowired com.learningmaterial.system.service.AuthService auth;
     @Autowired AiTaskService tasks;
     @Autowired TaskLeaseService leases;
     @Autowired ModelTaskProcessor processor;
     @Autowired TaskCandidateService candidates;
     @Autowired TaskConfirmationService confirmations;
-    @Autowired com.learningmaterial.system.material.MaterialService materials;
+    @Autowired com.learningmaterial.system.service.MaterialService materials;
     @Autowired StubModel model;
     @Autowired FileStorage storage;
     List<String> files = new ArrayList<>();
@@ -131,7 +138,7 @@ class ModelGenerationIntegrationTest {
         String name = "model_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         var registered =
                 auth.register(
-                        new com.learningmaterial.system.auth.AuthDtos.RegistrationInput(
+                        new com.learningmaterial.system.dto.AuthDtos.RegistrationInput(
                                 name, "Test-password-123", name));
         assertThat(registered.status()).isEqualTo("ENABLED");
         user = Long.parseLong(registered.id());
@@ -572,19 +579,19 @@ class ModelGenerationIntegrationTest {
                                 String.class,
                                 old.taskId()))
                 .isEqualTo("RUNNING");
-        var current = new TaskLeaseService.Lease(old.taskId(), old.epoch() + 1);
+        var current = new TaskLease(old.taskId(), old.epoch() + 1);
         assertThatThrownBy(() -> processor.execute(current)).hasMessage("MODEL_ATTEMPT_LIMIT");
         assertThat(model.calls).isEqualTo(1);
     }
 
-    private int count(String table, TaskLeaseService.Lease lease) {
+    private int count(String table, TaskLease lease) {
         return jdbc.queryForObject(
                 "SELECT COUNT(*) FROM " + table + " WHERE task_id=?",
                 Integer.class,
                 lease.taskId());
     }
 
-    private TaskLeaseService.Lease start(String note) {
+    private TaskLease start(String note) {
         jdbc.update(
                 "INSERT INTO"
                     + " material(user_id,title,material_type,note_text,version,status,access_state,created_at,updated_at)"
@@ -597,7 +604,7 @@ class ModelGenerationIntegrationTest {
         return startMaterial(material, null);
     }
 
-    private TaskLeaseService.Lease startMaterial(long material, PageRange range) {
+    private TaskLease startMaterial(long material, PageRange range) {
         var task =
                 tasks.submit(
                         user,

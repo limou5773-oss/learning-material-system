@@ -1,10 +1,11 @@
 package com.learningmaterial.system.task;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.learningmaterial.system.entity.AiTaskRow;
 import org.junit.jupiter.api.Test;
 
-import static org.assertj.core.api.Assertions.assertThatThrownBy;
 import static org.assertj.core.api.Assertions.assertThatCode;
+import static org.assertj.core.api.Assertions.assertThatThrownBy;
 
 class MockToolProtocolTest {
     private final ObjectMapper json = new ObjectMapper();

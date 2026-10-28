@@ -1,5 +1,13 @@
 # 个人学习资料智能整理系统
 
+## 账号与卡片功能补齐（2026-10-28）
+
+已补齐昵称/密码修改、真实微信code登录/绑定/解绑和卡片删除的后端与双端入口。**已有数据库先执行 `database/updates/20261028_wechat_binding.sql`，再重启后端。**微信功能仍需在原 `application.yml` 填写真实小程序AppID/AppSecret并开启 `lms.wechat.enabled`，小程序项目AppID保持一致；尚未完成真实微信验收。操作与限制见[配置说明](docs/账号与微信登录配置.md)。
+
+## 后端代码分层
+
+后端已按 `controller`、`service`、`service/impl`、`mapper`、`entity`、`dto`、`util` 分包；配置、安全和外部 API 分别放在 `config`、`security`、`integration`。23 个业务接口分别有对应实现类，Controller 只依赖接口。目录、调用关系与验证范围见[后端分层说明](docs/后端分层与接口整理方案.md)。
+
 毕业设计题目：**面向Web与微信小程序的个人学习资料智能整理系统设计与实现**。
 
 微信小程序用于拍照上传和碎片笔记，Web用于集中管理、知识卡片、关系展示与平台管理。后端通过受限工具调用的学习资料整理智能体，组织文本提取、OCR、摘要及卡片生成，结果经用户确认后保存。
@@ -12,7 +20,7 @@
 
 - [开题报告](docs/开题报告.md)
 - [需求与开发说明书](docs/需求与开发说明书.md)与[Word阅读稿](docs/需求与开发说明书.docx)
-- [数据库设计](docs/数据库设计.md)与[拟议建表SQL](docs/拟议建表.sql)
+- [数据库设计](docs/数据库设计.md)与[最新数据库SQL](backend/src/main/resources/db/migration/learning_material_system.sql)
 - [OpenAPI接口契约](docs/接口契约.yaml)
 - [开发计划](tasks/plan.md)与[任务清单](tasks/todo.md)
 - [开发进度与下一步](docs/开发进度.md)
@@ -50,7 +58,7 @@ Web主导航和小程序“我的信息”均可进入通知中心。任务进�
 
 ## 管理员用户管理（D21）
 
-首个管理员只通过显式初始化配置创建，没有默认用户名/密码，也没有公开的提权接口。Windows可运行 `powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\start-first-admin.ps1`，交互输入隐藏密码；先按下文配置DB环境并将Maven加入PATH。已有管理员或用户名已占用时拒绝初始化，不重设密码、不升级普通用户。成功后清除初始化开关及密码，正常启动。详见[初始化说明](docs/管理员初始化与用户管理.md)。
+首个管理员只通过显式初始化配置创建，没有默认用户名/密码，也没有公开的提权接口。直接在原 `application.yml` 的 `lms.admin-bootstrap` 填写账号、密码和显示名称，仅首次初始化时启用。已有管理员或用户名已占用时拒绝初始化，不重设密码、不升级普通用户。成功后清除初始化开关及密码，正常启动。详见[初始化说明](docs/管理员初始化与用户管理.md)。
 
 ADMIN登录后导航显示“用户管理”，支持必要账号字段、关键词/状态筛选及分页；启停需填写原因并确认，状态、撤销会话和审计同事务保存。普通账号调用管理API返回403。停用后Web和小程序旧token失效，重新启用也须新登录；不能停用当前账号或最后一位启用管理员。后台只能经用户送审授权和原因审计查看该版本资料，不提供任意查看私人资料或修改角色的能力。
 
@@ -68,19 +76,13 @@ ADMIN登录Web后进入“统计大屏”，默认最近7个上海自然日，�
 
 ## 后端本地启动（D01）
 
-需要JDK 21、Maven 3.9+及独立的MySQL 8开发库。先创建空库`learning_material_dev`，不要将[拟议建表SQL](docs/拟议建表.sql)整份导入。复制[.env.example](.env.example)为`.env`并填写本地账号与密码，再把三个`DB_`变量导出到运行后端的终端环境。缺少或留空任一变量时后端会拒绝启动。
+需要JDK 21、Maven 3.9+及MySQL 8。首次可导入[完整初始化SQL](backend/src/main/resources/db/migration/learning_material_system.sql)；已有库本次只执行`database/updates/20261028_wechat_binding.sql`；操作见[数据库说明](database/README.md)。不要导入旧拟议SQL。修改`backend/src/main/resources/application.yml`中的数据库账号、密码，按需填写AI密钥与开关。直接编辑原文件即可。
 
-```bash
-set -a
-source .env
-set +a
+```powershell
 mvn -f backend/pom.xml spring-boot:run
-curl -i http://localhost:8080/actuator/health
 ```
 
-正常运行时健康接口只返回状态；Flyway启动时执行V1至V17迁移并记录到`flyway_schema_history`。D01已在独立MySQL上完成首次启动、迁移、重复启动和空库重放验证；V3资料与标签迁移见[D04验证记录](tasks/evidence/D04.md)，V4收藏迁移见[D08验证记录](tasks/evidence/D08.md)，V5任务迁移见[D09验证记录](tasks/evidence/D09.md)，V6候选与来源迁移见[D11验证记录](tasks/evidence/D11.md)，V7正式卡片迁移见[D12验证记录](tasks/evidence/D12.md)，V8 PDF页缓存见[D13验证记录](tasks/evidence/D13.md)。V12开放人工卡片与卡片收藏，V13增加画布布局与组织互斥行，V14增加站内通知与任务/所有者关联约束，V15增加用户状态审计与管理操作单行锁，V16增加按资料版本的审核队列、访问审计及审核决定通知，不改写已发布迁移。
-
-本项目当前使用的Mac已配置`lms-mysql-start`和`lms-mysql-stop`命令。重启电脑后先在终端运行`lms-mysql-start`，再执行上述后端启动命令。微信开发者工具已安装在“应用程序”中；小程序联调时仍需使用本人微信账号登录并导入项目。
+健康检查：`curl.exe -i http://localhost:8080/actuator/health`。当前使用单文件SQL手动建表，Flyway关闭。详情见[YAML本机配置](docs/YAML本机配置.md)。
 
 ## Web 本地启动（D02）
 
@@ -106,7 +108,7 @@ D11起提供本地确定性模拟处理器：严格校验`prepare_source`、`gen
 
 D13对PDF调用本地`extract_pdf_text`，只提取用户所选连续页段（最多20页）的文字层。来源保留实际页码，按资料、版本和页码缓存；同版本重叠页段复用来源。没有文字层的页标记需要OCR或可能为空白，混合PDF只对有文字的页生成模拟候选并列出未识别页；全范围无文字时明确失败，不使用标题假装正文。每片段最多2000个UTF-16代码单元，每任务最多30个片段，超过上限提示缩小页段，不静默截断PDF文字。此步骤不调用外部OCR或模型。
 
-默认`TASK_WORKER_ENABLED=false`，任务仍排队；仅开启worker但未选择处理器时会安全失败并返回`PROCESSOR_NOT_CONFIGURED`。本地联调模拟流程时，在启动后端前设置`TASK_WORKER_ENABLED=true`和`TASK_PROCESSOR_MODE=mock`。保持默认`OCR_ENABLED=false`时不调用外部模型或OCR。D14显式开启OCR并配置腾讯云后，图片及所选扫描页会发送给腾讯云，可能产生OCR费用；在mock模式中摘要和卡片仍为模拟生成。配置步骤见[OCR接入配置](docs/OCR接入配置.md)。
+默认`lms.task.worker.enabled: false`，任务仍排队；仅开启worker但未选择处理器时会安全失败并返回`PROCESSOR_NOT_CONFIGURED`。本地联调模拟流程时，在启动后端前设置`lms.task.worker.enabled: true`和`lms.task.processor.mode: mock`。保持默认`lms.ocr.enabled: false`时不调用外部模型或OCR。D14显式开启OCR并配置腾讯云后，图片及所选扫描页会发送给腾讯云，可能产生OCR费用；在mock模式中摘要和卡片仍为模拟生成。配置步骤见[OCR接入配置](docs/OCR接入配置.md)。
 
 D12在待确认任务提供“编辑并确认”入口，可修改摘要、标签和卡片文字，选择部分卡片并逐条勾选关联。确认后，卡片、固定版本来源、所选关系与资料摘要和标签整体保存；重复确认返回同一回执。来源版本变化返回409并保留编辑草稿；保存失败整体回滚。Web“知识卡片”和小程序“我的信息 → 知识卡片”可查阅正式卡片及来源，显示对应的模拟生成或模型生成标识及人工确认状态。来源删除或受限时隐藏引用和片段正文并说明原因。
 
@@ -116,15 +118,26 @@ D18在Web卡片列表提供“组织卡片”入口，可按当前范围拖动�
 
 D19在Web提供“知识关系图”入口，支持学科精确筛选与中心卡片直接邻域（入边、出边），最多200节点、600条边；有截取时提示部分结果及缩小范围。相关关系无方向，前置知识与示例有方向；点击卡片或关联可核对说明及两端历史来源。人工新建关系需明确读取两端当前版本并填写说明，旧版本409保留输入，重新读取核对后才可确认；重复关系不覆盖原说明。删除只移除关系，保留卡片。小程序在卡片详情提供“已确认关联”，支持分页、类型方向、两端卡片和来源查阅；来源已删或受限继续隐藏原文。
 
+## 本机配置：直接修改 YAML
+
+数据库、DeepSeek、腾讯OCR、任务处理和管理员初始化统一修改原文件`backend/src/main/resources/application.yml`，不用设置环境变量，也不需要复制其他配置文件。
+
+```powershell
+# 编辑 application.yml，填写数据库密码/API密钥，按需打开OCR及worker后启动：
+mvn -f backend/pom.xml spring-boot:run
+```
+
+字段和启动步骤见[YAML本机配置](docs/YAML本机配置.md)。旧环境配置脚本已停用。自动验收仍使用专用测试库，测试配置不作为日常启动入口。上传代码时应移除真实密码和密钥。
+
 ## DeepSeek模型生成（D15）
 
-显式选择`TASK_PROCESSOR_MODE=model`、`MODEL_PROVIDER=deepseek`并在后端配置`MODEL_API_KEY`后，已同意处理的所选文字才会发送给DeepSeek。默认`MODEL_NAME=deepseek-flash`；配置步骤见[DeepSeek接入配置](docs/DeepSeek接入配置.md)。缺配置明确失败，不回退假生成。模型输出只允许摘要、标签、卡片和原文引用，服务端校验结构、来源归属和精确引用后进入待确认状态；用户确认前不写正式卡片。
+显式选择`lms.task.processor.mode: model`、`lms.model.provider: deepseek`并在后端配置`lms.model.api-key`后，已同意处理的所选文字才会发送给DeepSeek。默认`lms.model.name: deepseek-flash`；配置步骤见[DeepSeek接入配置](docs/DeepSeek接入配置.md)。缺配置明确失败，不回退假生成。模型输出只允许摘要、标签、卡片和原文引用，服务端校验结构、来源归属和精确引用后进入待确认状态；用户确认前不写正式卡片。
 
 每任务最多两次模型请求尝试（跨租约接管累计），包括一次重试或格式修复。请求记录保留模型、提示版本、token数和未知费用NULL；取消、删除、失租或来源变化不接收迟到结果。未经过OCR的图片不能以标题冒充正文；真实模式笔记超限明确失败。JSON和引用校验不能证明整张卡片事实正确，仍须人工核对。当前真实模型与OCR验收都待本机配置凭证。
 
 ## 受限智能体（D16）
 
-显式设置`TASK_PROCESSOR_MODE=agent`可启用DeepSeek规划循环，密钥及配置脚本沿用D15，详见[DeepSeek接入配置](docs/DeepSeek接入配置.md#d16受限智能体模式)。模型提出受限JSON动作，服务端校验白名单、参数、当前来源与预算后执行，将结果反馈下一次规划。文字PDF无文字页可转OCR；无可用正文或达限明确结束，不使用标题假装已识别。
+显式设置`lms.task.processor.mode: agent`可启用DeepSeek规划循环，密钥及配置脚本沿用D15，详见[DeepSeek接入配置](docs/DeepSeek接入配置.md#d16受限智能体模式)。模型提出受限JSON动作，服务端校验白名单、参数、当前来源与预算后执行，将结果反馈下一次规划。文字PDF无文字页可转OCR；无可用正文或达限明确结束，不使用标题假装已识别。
 
 用户允许关联检索后，按关键词召回本人可访问已有卡片的标题、正文或标签，最多10条有限片段并保留版本。它是关键词检索，不是向量数据库；关联建议只能指向本轮召回卡片，并由用户逐条勾选确认保存。生成阶段不写正式卡片或关系，必须经过validate_candidate及人工确认。D19关系图直接读取这些已确认关系。
 
@@ -152,20 +165,15 @@ cd learning-material-system
 mysql -u root -p -e "CREATE DATABASE IF NOT EXISTS learning_material_dev CHARACTER SET utf8mb4 COLLATE utf8mb4_0900_ai_ci;"
 ```
 
-接着在同一个PowerShell窗口设置Windows本机数据库连接并启动后端：
+修改`backend/src/main/resources/application.yml`的数据库账号、密码后启动，不需要设置环境变量：
 
 ```powershell
-$env:DB_URL = 'jdbc:mysql://127.0.0.1:3306/learning_material_dev?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true'
-$env:DB_USERNAME = 'root'
-$env:DB_PASSWORD = '你的本地数据库密码'
 mvn -f backend/pom.xml spring-boot:run
 ```
 
-如需在Windows上本地体验模拟候选，在启动后端的PowerShell窗口额外设置`$env:TASK_WORKER_ENABLED = 'true'`和`$env:TASK_PROCESSOR_MODE = 'mock'`，然后启动后端。打开另一个PowerShell窗口，运行`curl.exe -i http://localhost:8080/actuator/health`，应看到HTTP 200和`{"status":"UP"}`。三个`DB_`变量只对启动后端的PowerShell窗口生效。换电脑时只需在新机器配置本地环境，不需要修改Java源码或数据库迁移；Mac上的数据库内容不会随Git代码自动同步。
+模拟流程将YAML的`lms.task.processor.mode`设为`mock`、`lms.task.worker.enabled`设为`true`；真实AI填写密钥后选择`model`或`agent`，OCR按需开启。文件目录通过同一YAML顶层`STORAGE_ROOT`修改，留空沿用当前用户目录。修改后重启后端，资料数据库和文件仍需自行备份。
 
-Windows上的图片和PDF文件默认保存在当前用户目录下的`.learning-material-system\files`，不会随Git同步。若想改位置，在启动后端的PowerShell窗口额外设置`$env:STORAGE_ROOT = 'D:\LearningMaterialFiles'`；请选项目目录外的文件夹，并自行备份该目录。
-
-启动Web时另开一个PowerShell窗口，在项目根目录运行`cd web`、`npm ci`、`npm run dev`，然后访问`http://127.0.0.1:5173`。首次启动后端会自动执行V1至V17数据库迁移，不要手动导入整份拟议SQL。Windows上的微信开发者工具模拟器可导入同一个`miniprogram/`目录；后端也运行在这台Windows电脑时，默认本机地址可沿用。真机联调仍需HTTPS合法域名。
+启动Web时另开一个PowerShell窗口，在项目根目录运行`cd web`、`npm ci`、`npm run dev`，然后访问`http://127.0.0.1:5173`。首次启动前导入完整初始化SQL，已有库本次只执行微信绑定表增量SQL；不要重导已有业务表。Windows上的微信开发者工具模拟器可导入同一个`miniprogram/`目录；后端也运行在这台Windows电脑时，默认本机地址可沿用。真机联调仍需HTTPS合法域名。
 
 ## 管理员任务监控（F21）
 

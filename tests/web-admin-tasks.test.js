@@ -197,7 +197,7 @@ test('任务及步骤显示白名单错误码和说明，未知错误只显示�
 
 test('前端错误展示完整覆盖后端安全错误码枚举，任意自由字符串不穿透', () => {
   const { adminErrorLabel } = loadModule(path.join(__dirname, '../web/src/admin-tasks.ts'))
-  const backend = fs.readFileSync(path.join(__dirname, '../backend/src/main/java/com/learningmaterial/system/admin/AdminTaskService.java'), 'utf8')
+  const backend = fs.readFileSync(path.join(__dirname, '../backend/src/main/java/com/learningmaterial/system/service/impl/AdminTaskServiceImpl.java'), 'utf8')
   const allowed = backend.match(/ERROR_CODES = Set\.of\(([\s\S]*?)\);/)[1].match(/"[A-Z_]+"/g).map(value => JSON.parse(value))
   assert.ok(allowed.length > 80)
   for (const code of allowed) assert.ok(adminErrorLabel(code).startsWith(`${code} · `), code)
@@ -207,7 +207,7 @@ test('前端错误展示完整覆盖后端安全错误码枚举，任意自由�
 
 test('管理员阶段标签覆盖后端现有阶段，受限来源明确展示而非未知', () => {
   const { adminStageLabel } = loadModule(path.join(__dirname, '../web/src/admin-tasks.ts'))
-  const backend = fs.readFileSync(path.join(__dirname, '../backend/src/main/java/com/learningmaterial/system/admin/AdminTaskService.java'), 'utf8')
+  const backend = fs.readFileSync(path.join(__dirname, '../backend/src/main/java/com/learningmaterial/system/service/impl/AdminTaskServiceImpl.java'), 'utf8')
   const stages = backend.match(/STAGES = Set\.of\(([\s\S]*?)\);/)[1].match(/"[A-Z_]+"/g).map(value => JSON.parse(value))
   assert.equal(adminStageLabel('SOURCE_RESTRICTED'), '原资料受限')
   for (const stage of stages) assert.notEqual(adminStageLabel(stage), '未知', stage)

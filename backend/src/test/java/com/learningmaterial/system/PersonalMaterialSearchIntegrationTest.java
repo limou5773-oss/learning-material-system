@@ -1,18 +1,19 @@
 package com.learningmaterial.system;
 
-import static org.assertj.core.api.Assertions.*;
-
-import com.learningmaterial.system.auth.AuthDtos.RegistrationInput;
-import com.learningmaterial.system.auth.AuthService;
-import com.learningmaterial.system.task.PersonalMaterialSearchService;
-
+import com.learningmaterial.system.dto.AuthDtos.RegistrationInput;
+import com.learningmaterial.system.dto.PersonalMaterialMatch;
+import com.learningmaterial.system.service.AiTaskService;
+import com.learningmaterial.system.service.AuthService;
+import com.learningmaterial.system.service.MaterialService;
+import com.learningmaterial.system.service.PersonalMaterialSearchService;
+import java.util.*;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 
-import java.util.*;
+import static org.assertj.core.api.Assertions.*;
 
 @SpringBootTest
 @EnabledIfEnvironmentVariable(named = "DB_URL", matches = ".*learning_material_auth_test.*")
@@ -20,8 +21,8 @@ class PersonalMaterialSearchIntegrationTest {
     @Autowired JdbcTemplate jdbc;
     @Autowired AuthService auth;
     @Autowired PersonalMaterialSearchService search;
-    @Autowired com.learningmaterial.system.material.MaterialService materials;
-    @Autowired com.learningmaterial.system.task.AiTaskService tasks;
+    @Autowired com.learningmaterial.system.service.MaterialService materials;
+    @Autowired com.learningmaterial.system.service.AiTaskService tasks;
     @Autowired org.springframework.transaction.PlatformTransactionManager transactionManager;
     long user, other;
 
@@ -59,8 +60,8 @@ class PersonalMaterialSearchIntegrationTest {
         var material =
                 materials.createNote(
                         owner,
-                        new com.learningmaterial.system.material.MaterialDtos.NoteInput(
-                                com.learningmaterial.system.material.MaterialDtos.NoteType.NOTE,
+                        new com.learningmaterial.system.dto.MaterialDtos.NoteInput(
+                                com.learningmaterial.system.dto.MaterialDtos.NoteType.NOTE,
                                 title,
                                 subject,
                                 List.of(),
@@ -68,11 +69,11 @@ class PersonalMaterialSearchIntegrationTest {
         var task =
                 tasks.submit(
                         owner,
-                        new com.learningmaterial.system.task.AiTaskDtos.TaskInput(
+                        new com.learningmaterial.system.dto.AiTaskDtos.TaskInput(
                                 material.id(),
                                 material.version(),
                                 UUID.randomUUID().toString(),
-                                com.learningmaterial.system.task.AiTaskDtos.GoalType.REVIEW_CARDS,
+                                com.learningmaterial.system.dto.AiTaskDtos.GoalType.REVIEW_CARDS,
                                 null,
                                 null,
                                 false,
@@ -161,7 +162,7 @@ class PersonalMaterialSearchIntegrationTest {
         long foreign = card(other, "他人关键词", null, "不能外发");
         var invented =
                 List.of(
-                        new PersonalMaterialSearchService.Match(
+                        new PersonalMaterialMatch(
                                 Long.toString(foreign), 1, "伪标题", "伪片段", false));
         assertThatThrownBy(() -> search.checkAvailable(user, invented))
                 .hasMessage("AGENT_RELATED_CHANGED");

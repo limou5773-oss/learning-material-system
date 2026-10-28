@@ -1,0 +1,6 @@
+# 仅用于自动测试，不是日常开发配置。保留专用测试库守卫所用的 DB_* 输入。
+spring:
+  datasource:
+    url: ${DB_URL}
+    username: ${DB_USERNAME}
+    password: ${DB_PASSWORD}

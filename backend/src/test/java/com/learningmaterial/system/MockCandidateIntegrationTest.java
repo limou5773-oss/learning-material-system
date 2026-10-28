@@ -1,15 +1,20 @@
 package com.learningmaterial.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.learningmaterial.system.task.AiTaskDtos.CandidateCard;
-import com.learningmaterial.system.task.AiTaskDtos.CandidateResult;
-import com.learningmaterial.system.task.AiTaskDtos.SourceRef;
+import com.learningmaterial.system.dto.AiTaskDtos.CandidateCard;
+import com.learningmaterial.system.dto.AiTaskDtos.CandidateResult;
+import com.learningmaterial.system.dto.AiTaskDtos.SourceRef;
+import com.learningmaterial.system.dto.SourceDraft;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskLeaseService;
 import com.learningmaterial.system.task.MockTaskProcessor;
-import com.learningmaterial.system.task.TaskCandidateService;
-import com.learningmaterial.system.task.TaskCandidateService.SourceDraft;
 import com.learningmaterial.system.task.TaskExecutionException;
-import com.learningmaterial.system.task.TaskLeaseService;
-import com.learningmaterial.system.task.TaskLeaseService.Lease;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.List;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -21,12 +26,6 @@ import org.springframework.http.HttpHeaders;
 import org.springframework.http.HttpMethod;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.List;
-import java.util.Map;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -59,7 +58,7 @@ class MockCandidateIntegrationTest {
             assertThat(exchange("/ai-tasks/" + taskId + "/result", HttpMethod.GET, null, owner)
                 .getStatusCode().value()).isEqualTo(404);
 
-            Lease lease = leases.claim();
+            TaskLease lease = leases.claim();
             assertThat(lease.taskId()).isEqualTo(Long.parseLong(taskId));
             processor.execute(lease);
             JsonNode task = exchange("/ai-tasks/" + taskId, HttpMethod.GET, null, owner)
@@ -103,7 +102,7 @@ class MockCandidateIntegrationTest {
                 Map.of("type", "NOTE", "title", "验证", "noteText", "实际原文"), token)
                 .getBody().path("data").path("id").asText();
             String taskId = submit(materialId, "stale-candidate", token);
-            Lease first = leases.claim();
+            TaskLease first = leases.claim();
             var sources = candidates.saveSources(first,
                 List.of(new SourceDraft(1, "实际原文", "TEXT", "测试来源")));
             CandidateResult wrong = new CandidateResult(taskId, 1, 1, "MOCK", "模拟摘要", List.of("模拟结果"),
@@ -117,8 +116,8 @@ class MockCandidateIntegrationTest {
 
             jdbc.update("UPDATE ai_task SET lease_until = ? WHERE id = ?",
                 LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1), first.taskId());
-            Lease recovered = leases.claim();
-            assertThat(recovered).isEqualTo(new Lease(first.taskId(), first.epoch() + 1));
+            TaskLease recovered = leases.claim();
+            assertThat(recovered).isEqualTo(new TaskLease(first.taskId(), first.epoch() + 1));
             processor.execute(first);
             assertThat(candidates.finish(first, wrong)).isFalse();
             assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM ai_result WHERE task_id = ?",
@@ -148,7 +147,7 @@ class MockCandidateIntegrationTest {
                 "SELECT id FROM material WHERE user_id = ?", String.class, userId);
             String taskId = submit(materialId, "image-metadata", token);
 
-            Lease lease = leases.claim();
+            TaskLease lease = leases.claim();
             assertThat(lease.taskId()).isEqualTo(Long.parseLong(taskId));
             processor.execute(lease);
 

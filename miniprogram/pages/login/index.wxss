@@ -1,2 +1,37 @@
-.card .muted { margin-bottom: 20rpx; }
-.card .notice, .card .error { margin-top: 30rpx; }
+.login-page {
+  min-height: 100vh;
+  box-sizing: border-box;
+  background: linear-gradient(180deg, #d4f3ee 0%, #e9f8f0 38%, #f3f8f7 100%);
+}
+
+.hero { padding: 24rpx 0 40rpx; }
+.brand-badge {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 108rpx;
+  height: 108rpx;
+  margin-bottom: 36rpx;
+  border-radius: 30rpx;
+  background: var(--grad-brand);
+  color: #fff;
+  font-size: 56rpx;
+  font-weight: 800;
+  box-shadow: 0 16rpx 36rpx rgba(17, 181, 160, .34);
+}
+
+.login-card { margin-top: 8rpx; padding: 44rpx 36rpx; box-shadow: var(--shadow-md); }
+.login-card .muted { margin-bottom: 20rpx; }
+.login-card .notice,
+.login-card .error { margin-top: 30rpx; margin-bottom: 0; }
+.session-hint { margin-top: 24rpx; }
+
+.wechat-login { margin-top: 36rpx; }
+.wechat-glyph { margin-right: 14rpx; font-size: 30rpx; }
+.login-alternative { margin-top: 20rpx; }
+
+.password-panel {
+  margin-top: 30rpx;
+  padding-top: 16rpx;
+  border-top: 1rpx solid var(--line);
+}

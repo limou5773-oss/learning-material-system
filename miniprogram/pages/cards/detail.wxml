@@ -1,7 +1,8 @@
 <view class="page"><text class="eyebrow">KNOWLEDGE CARD</text><view class="title">知识卡片</view>
   <view wx:if="{{loading}}" class="state">正在读取…</view><view wx:if="{{error}}" class="error">{{error}}</view><button wx:if="{{error}}" class="outline" bindtap="load">重试</button>
   <view wx:if="{{card}}" class="card"><view class="notice">{{card.generationLabel}}</view><view class="card-title">{{card.title}}</view><view class="muted">卡片 #{{card.id}} · 版本 {{card.version}} {{card.isEdited ? '· 已人工修改' : ''}}</view>
-    <view wx:if="{{actionError}}" class="error">{{actionError}}</view><button class="outline" bindtap="edit">编辑卡片</button><button class="outline" bindtap="toggleFavorite" loading="{{favoriteBusy}}" disabled="{{favoriteBusy}}">{{card.favorite ? '取消收藏' : '收藏卡片'}}</button>
+    <view wx:if="{{actionError}}" class="error">{{actionError}}</view><button wx:if="{{deleteConflict}}" class="outline" bindtap="load" loading="{{loading}}" disabled="{{loading}}">重新读取卡片</button><button class="outline" bindtap="edit">编辑卡片</button><button class="outline" bindtap="toggleFavorite" loading="{{favoriteBusy}}" disabled="{{favoriteBusy || deleteBusy}}">{{card.favorite ? '取消收藏' : '收藏卡片'}}</button>
+    <button class="outline delete-action" bindtap="deleteCard" loading="{{deleteBusy}}" disabled="{{deleteBusy || favoriteBusy || loading || deleteConflict}}">删除卡片</button>
     <button class="outline" bindtap="openRelations">已确认关联</button><view class="notice">{{card.generationWarning}}</view>
     <view wx:if="{{card.subject}}" class="muted">学科 {{card.subject}}</view><text wx:for="{{card.tags}}" wx:key="*this" class="tag-pill">{{item}}</text>
     <view wx:if="{{card.summary}}" class="card-copy">{{card.summary}}</view><text class="card-copy" selectable="true">{{card.content}}</text>

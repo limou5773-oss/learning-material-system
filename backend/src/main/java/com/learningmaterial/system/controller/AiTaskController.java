@@ -1,0 +1,110 @@
+package com.learningmaterial.system.controller;
+
+import com.learningmaterial.system.common.ApiResponse;
+import com.learningmaterial.system.dto.AiTaskDtos;
+import com.learningmaterial.system.dto.AiTaskDtos.CandidateResult;
+import com.learningmaterial.system.dto.AiTaskDtos.RetryInput;
+import com.learningmaterial.system.dto.AiTaskDtos.SourceView;
+import com.learningmaterial.system.dto.AiTaskDtos.TaskInput;
+import com.learningmaterial.system.dto.AiTaskDtos.TaskStepView;
+import com.learningmaterial.system.dto.AiTaskDtos.TaskView;
+import com.learningmaterial.system.dto.MaterialDtos.PageView;
+import com.learningmaterial.system.security.AuthPrincipal;
+import com.learningmaterial.system.service.AiTaskService;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskConfirmationService;
+import jakarta.servlet.http.HttpServletRequest;
+import jakarta.validation.Valid;
+import java.util.List;
+import org.springframework.http.HttpStatus;
+import org.springframework.http.ResponseEntity;
+import org.springframework.security.core.annotation.AuthenticationPrincipal;
+import org.springframework.web.bind.annotation.GetMapping;
+import org.springframework.web.bind.annotation.PathVariable;
+import org.springframework.web.bind.annotation.PostMapping;
+import org.springframework.web.bind.annotation.PutMapping;
+import org.springframework.web.bind.annotation.RequestBody;
+import org.springframework.web.bind.annotation.RequestMapping;
+import org.springframework.web.bind.annotation.RequestParam;
+import org.springframework.web.bind.annotation.RestController;
+
+@RestController
+@RequestMapping("/api/v1/ai-tasks")
+public class AiTaskController {
+    private final AiTaskService tasks;
+    private final TaskCandidateService candidates;
+    private final TaskConfirmationService confirmations;
+
+    public AiTaskController(AiTaskService tasks, TaskCandidateService candidates, TaskConfirmationService confirmations) {
+        this.tasks = tasks;
+        this.candidates = candidates;
+        this.confirmations = confirmations;
+    }
+
+    @PutMapping("/{id}/confirmation")
+    public ApiResponse<AiTaskDtos.ConfirmationResult> confirm(@AuthenticationPrincipal AuthPrincipal principal,
+        @PathVariable String id, @Valid @RequestBody AiTaskDtos.ConfirmationInput input,
+        HttpServletRequest request) {
+        return ApiResponse.of(confirmations.confirm(principal.userId(), id, input), request);
+    }
+
+    @PostMapping
+    public ResponseEntity<ApiResponse<TaskView>> submit(@AuthenticationPrincipal AuthPrincipal principal,
+                                                         @Valid @RequestBody TaskInput input,
+                                                         HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+            .body(ApiResponse.of(tasks.submit(principal.userId(), input), request));
+    }
+
+    @GetMapping
+    public ApiResponse<PageView<TaskView>> list(@AuthenticationPrincipal AuthPrincipal principal,
+                                                 @RequestParam(required = false) String status,
+                                                 @RequestParam(defaultValue = "1") int page,
+                                                 @RequestParam(defaultValue = "20") int pageSize,
+                                                 HttpServletRequest request) {
+        return ApiResponse.of(tasks.list(principal.userId(), status, page, pageSize), request);
+    }
+
+    @GetMapping("/{id}")
+    public ApiResponse<TaskView> get(@AuthenticationPrincipal AuthPrincipal principal,
+                                     @PathVariable String id, HttpServletRequest request) {
+        return ApiResponse.of(tasks.get(principal.userId(), id), request);
+    }
+
+    @GetMapping("/{id}/result")
+    public ApiResponse<CandidateResult> result(@AuthenticationPrincipal AuthPrincipal principal,
+                                                @PathVariable String id, HttpServletRequest request) {
+        long taskId = Long.parseLong(tasks.get(principal.userId(), id).id());
+        return ApiResponse.of(candidates.getResult(principal.userId(), taskId), request);
+    }
+
+    @GetMapping("/{id}/sources")
+    public ApiResponse<List<SourceView>> sources(@AuthenticationPrincipal AuthPrincipal principal,
+                                                  @PathVariable String id, HttpServletRequest request) {
+        long taskId = Long.parseLong(tasks.get(principal.userId(), id).id());
+        return ApiResponse.of(candidates.getSources(principal.userId(), taskId), request);
+    }
+
+    @GetMapping("/{id}/steps")
+    public ApiResponse<PageView<TaskStepView>> steps(@AuthenticationPrincipal AuthPrincipal principal,
+                                                      @PathVariable String id,
+                                                      @RequestParam(defaultValue = "1") int page,
+                                                      @RequestParam(defaultValue = "20") int pageSize,
+                                                      HttpServletRequest request) {
+        return ApiResponse.of(tasks.steps(principal.userId(), id, page, pageSize), request);
+    }
+
+    @PostMapping("/{id}/cancellations")
+    public ApiResponse<TaskView> cancel(@AuthenticationPrincipal AuthPrincipal principal,
+                                        @PathVariable String id, HttpServletRequest request) {
+        return ApiResponse.of(tasks.cancel(principal.userId(), id), request);
+    }
+
+    @PostMapping("/{id}/retries")
+    public ResponseEntity<ApiResponse<TaskView>> retry(@AuthenticationPrincipal AuthPrincipal principal,
+                                                        @PathVariable String id, @Valid @RequestBody RetryInput input,
+                                                        HttpServletRequest request) {
+        return ResponseEntity.status(HttpStatus.ACCEPTED)
+            .body(ApiResponse.of(tasks.retry(principal.userId(), id, input), request));
+    }
+}
