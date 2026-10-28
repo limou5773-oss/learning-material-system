@@ -1,14 +1,26 @@
 package com.learningmaterial.system;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.ArgumentMatchers.anyString;
-import static org.mockito.Mockito.*;
-
-import com.learningmaterial.system.material.FileStorage;
-import com.learningmaterial.system.ocr.*;
-import com.learningmaterial.system.task.*;
-import com.learningmaterial.system.task.AiTaskDtos.*;
-
+import com.learningmaterial.system.dto.AiTaskDtos.*;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.entity.MaterialChunkRow;
+import com.learningmaterial.system.integration.ocr.OcrClient;
+import com.learningmaterial.system.integration.ocr.OcrException;
+import com.learningmaterial.system.integration.storage.FileStorage;
+import com.learningmaterial.system.mapper.MaterialChunkMapper;
+import com.learningmaterial.system.service.AiTaskService;
+import com.learningmaterial.system.service.AuthService;
+import com.learningmaterial.system.service.CardService;
+import com.learningmaterial.system.service.MaterialService;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskConfirmationService;
+import com.learningmaterial.system.service.TaskLeaseService;
+import com.learningmaterial.system.task.MockTaskProcessor;
+import com.learningmaterial.system.task.TaskExecutionException;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.util.*;
+import java.util.function.Supplier;
+import javax.imageio.ImageIO;
 import org.apache.pdfbox.pdmodel.*;
 import org.apache.pdfbox.pdmodel.font.*;
 import org.junit.jupiter.api.*;
@@ -23,12 +35,9 @@ import org.springframework.context.annotation.Primary;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 
-import java.awt.image.BufferedImage;
-import java.io.ByteArrayOutputStream;
-import java.util.*;
-import java.util.function.Supplier;
-
-import javax.imageio.ImageIO;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.ArgumentMatchers.anyString;
+import static org.mockito.Mockito.*;
 
 /**
  * Provider is an explicit deterministic test stub; these tests do not measure real OCR accuracy.
@@ -70,10 +79,10 @@ class OcrExtractionIntegrationTest {
     }
 
     @Autowired JdbcTemplate jdbc;
-    @Autowired com.learningmaterial.system.auth.AuthService auth;
-    @Autowired com.learningmaterial.system.card.CardService cards;
+    @Autowired com.learningmaterial.system.service.AuthService auth;
+    @Autowired com.learningmaterial.system.service.CardService cards;
     @Autowired TaskConfirmationService confirmation;
-    @Autowired com.learningmaterial.system.material.MaterialService materials;
+    @Autowired com.learningmaterial.system.service.MaterialService materials;
     @Autowired com.fasterxml.jackson.databind.ObjectMapper json;
     @Autowired AiTaskService tasks;
     @Autowired TaskLeaseService leases;
@@ -92,11 +101,11 @@ class OcrExtractionIntegrationTest {
         String name = "ocr_" + UUID.randomUUID().toString().replace("-", "").substring(0, 12);
         var registered =
                 auth.register(
-                        new com.learningmaterial.system.auth.AuthDtos.RegistrationInput(
+                        new com.learningmaterial.system.dto.AuthDtos.RegistrationInput(
                                 name, "Test-password-123", name));
         var otherRegistered =
                 auth.register(
-                        new com.learningmaterial.system.auth.AuthDtos.RegistrationInput(
+                        new com.learningmaterial.system.dto.AuthDtos.RegistrationInput(
                                 name + "x", "Test-password-123", name + "x"));
         assertThat(registered.status()).isEqualTo("ENABLED");
         user = Long.parseLong(registered.id());
@@ -693,7 +702,7 @@ class OcrExtractionIntegrationTest {
         assertThat(count("ocr_page_cache", m)).isZero();
     }
 
-    private int attempts(TaskLeaseService.Lease l) {
+    private int attempts(TaskLease l) {
         return jdbc.queryForObject(
                 "SELECT COUNT(*) FROM ocr_attempt WHERE task_id=?", Integer.class, l.taskId());
     }
@@ -744,7 +753,7 @@ class OcrExtractionIntegrationTest {
                 "SELECT MAX(id) FROM material WHERE user_id=?", Long.class, user);
     }
 
-    private TaskLeaseService.Lease start(long m, PageRange range) {
+    private TaskLease start(long m, PageRange range) {
         int version =
                 jdbc.queryForObject("SELECT version FROM material WHERE id=?", Integer.class, m);
         var t =

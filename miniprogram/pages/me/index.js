@@ -1,51 +1,142 @@
-const { ApiError, getToken, clearToken, getMe, logout } = require('../../utils/api')
+const { ApiError, getToken, clearToken, getMe, updateMe, bindWechat, unbindWechat, logout } = require('../../utils/api')
+
+function newPasswordError(value) {
+  if (!value.trim() || value.length < 8 || value.length > 64) return '新密码须为 8–64 个字符'
+  let bytes = 0
+  for (const character of value) {
+    const code = character.codePointAt(0)
+    bytes += code <= 0x7f ? 1 : code <= 0x7ff ? 2 : code <= 0xffff ? 3 : 4
+  }
+  return bytes > 72 ? '新密码的 UTF-8 编码不能超过 72 字节，请减少汉字或表情' : ''
+}
 
 Page({
-  data: { user: null, loading: false, loggingOut: false, error: '' },
+  data: {
+    user: null, loading: false, pending: '', error: '', errorAction: '', notice: '', displayName: '',
+    currentPassword: '', newPassword: '', unbindPassword: '',
+    nameError: '', currentPasswordError: '', newPasswordError: '', unbindPasswordError: '',
+  },
 
-  onShow() { this.refresh() },
+  onShow() { return this.refresh() },
+  onHide() { this.clearPasswords() },
+  onUnload() { this._closed = true },
 
+  clearPasswords() { this.setData({ currentPassword: '', newPassword: '', unbindPassword: '' }) },
+  isCurrentSession(token) { return !this._closed && getToken() === token },
   openMaterials() { wx.navigateTo({ url: '/pages/materials/index' }) },
   openTasks() { wx.navigateTo({ url: '/pages/tasks/index' }) },
   openNotifications() { wx.navigateTo({ url: '/pages/notifications/index' }) },
   openCards() { wx.navigateTo({ url: '/pages/cards/index' }) },
   newNote() { wx.navigateTo({ url: '/pages/note/new' }) },
+  onNameInput(event) { this.setData({ displayName: event.detail.value, nameError: '' }) },
+  onCurrentPasswordInput(event) { this.setData({ currentPassword: event.detail.value, currentPasswordError: '' }) },
+  onNewPasswordInput(event) { this.setData({ newPassword: event.detail.value, newPasswordError: '' }) },
+  onUnbindPasswordInput(event) { this.setData({ unbindPassword: event.detail.value, unbindPasswordError: '' }) },
 
-  async refresh() {
-    if (!getToken()) {
+  handleError(error, token) {
+    if (this._closed || (getToken() && getToken() !== token)) return
+    if (error instanceof ApiError && error.status === 401) {
+      this.setData({ user: null })
+      this.clearPasswords()
       wx.reLaunch({ url: '/pages/login/index?reason=expired' })
-      return
-    }
-    this.setData({ loading: true, error: '' })
-    try {
-      const user = await getMe()
-      this.setData({ user })
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        wx.reLaunch({ url: '/pages/login/index?reason=expired' })
-      } else {
-        this.setData({ error: error.message || '资料加载失败' })
-      }
-    } finally {
-      this.setData({ loading: false })
+    } else if (this.isCurrentSession(token)) {
+      const message = error.code === 'WECHAT_NOT_CONFIGURED'
+        ? '微信绑定暂未开放，你可以继续使用账号密码登录。'
+        : error.code === 'WECHAT_BIND_CONFLICT'
+          ? '此微信已绑定其他账号，请先在原账号解绑。当前账号的绑定状态未改变。'
+          : error.code === 'USER_WECHAT_ALREADY_BOUND'
+            ? '此账号已绑定其他微信，请先解绑后再操作。当前绑定状态未改变。'
+            : error.message
+      this.setData({ error: message, errorAction: this.data.pending })
     }
   },
 
-  async submitLogout() {
-    if (this.data.loggingOut) return
-    this.setData({ loggingOut: true, error: '' })
-    try {
-      await logout()
-      clearToken()
-      wx.reLaunch({ url: '/pages/login/index' })
-    } catch (error) {
-      if (error instanceof ApiError && error.status === 401) {
-        wx.reLaunch({ url: '/pages/login/index?reason=expired' })
-      } else {
-        this.setData({ error: error.message || '退出失败，请稍后重试' })
-      }
-    } finally {
-      this.setData({ loggingOut: false })
+  async refresh() {
+    const token = getToken()
+    if (!token) {
+      wx.reLaunch({ url: '/pages/login/index?reason=expired' })
+      return
     }
+    if (this.data.loading || this.data.pending) return
+    this.setData({ loading: true, error: '', errorAction: '' })
+    try {
+      const user = await getMe()
+      if (this.isCurrentSession(token)) this.setData({ user, displayName: user.displayName })
+    } catch (error) {
+      this.handleError(error, token)
+    } finally {
+      if (this.isCurrentSession(token)) this.setData({ loading: false })
+    }
+  },
+
+  async runAction(action, execute, onSuccess) {
+    if (this.data.loading || this.data.pending) return
+    const token = getToken()
+    if (!token) {
+      wx.reLaunch({ url: '/pages/login/index?reason=expired' })
+      return
+    }
+    this.setData({ pending: action, error: '', errorAction: '', notice: '' })
+    try {
+      const result = await execute()
+      if (this.isCurrentSession(token)) onSuccess(result)
+    } catch (error) {
+      this.handleError(error, token)
+    } finally {
+      if (!this._closed && (getToken() === token || !getToken())) {
+        this.setData({ pending: '' })
+        if (action === 'password') this.setData({ currentPassword: '', newPassword: '' })
+        if (action === 'unbind') this.setData({ unbindPassword: '' })
+      }
+    }
+  },
+
+  submitName() {
+    const displayName = this.data.displayName.trim()
+    const nameError = displayName.length < 1 || displayName.length > 64 ? '昵称须为 1–64 个字符' : ''
+    this.setData({ nameError })
+    if (nameError) return
+    return this.runAction('name', () => updateMe({ displayName }), user => {
+      this.setData({ user, displayName: user.displayName, notice: '昵称已更新' })
+    })
+  },
+
+  submitPassword() {
+    const currentPasswordError = this.data.currentPassword ? '' : '请输入当前密码'
+    const passwordError = newPasswordError(this.data.newPassword)
+    this.setData({ currentPasswordError, newPasswordError: passwordError })
+    if (currentPasswordError || passwordError) return
+    const { currentPassword, newPassword } = this.data
+    return this.runAction('password', () => updateMe({ currentPassword, newPassword }), () => {
+      clearToken()
+      this.setData({ user: null })
+      wx.reLaunch({ url: '/pages/login/index?reason=password-changed' })
+    })
+  },
+
+  submitBinding() {
+    return this.runAction('bind', bindWechat, user => {
+      this.setData({ user, notice: '微信绑定成功，下次可直接使用微信登录' })
+    })
+  },
+
+  submitUnbind() {
+    const currentPassword = this.data.unbindPassword
+    const unbindPasswordError = currentPassword ? '' : '请输入当前密码以确认解绑'
+    this.setData({ unbindPasswordError })
+    if (unbindPasswordError) return
+    return this.runAction('unbind', () => unbindWechat(currentPassword), () => {
+      clearToken()
+      this.setData({ user: null })
+      wx.reLaunch({ url: '/pages/login/index?reason=wechat-unbound' })
+    })
+  },
+
+  submitLogout() {
+    return this.runAction('logout', logout, () => {
+      clearToken()
+      this.setData({ user: null })
+      wx.reLaunch({ url: '/pages/login/index' })
+    })
   },
 })

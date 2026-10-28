@@ -79,6 +79,16 @@ test('child environment disables vendors, processors, workers and admin across r
   assert.equal(env.MODEL_PROVIDER, 'deepseek')
 })
 
+test('acceptance children pin the test profile and reject inherited configuration imports', async () => {
+  const { childEnvironment } = await runner()
+  const child = childEnvironment({ ...validEnv, SPRING_CONFIG_IMPORT: 'file:personal.yml', 'spring.config.import': 'file:other.yml', SPRING_PROFILES_ACTIVE: 'local', 'spring.profiles.include': 'personal' })
+  assert.equal(child.SPRING_CONFIG_IMPORT, '')
+  assert.equal(child['spring.config.import'], undefined)
+  assert.equal(child.SPRING_PROFILES_ACTIVE, 'acceptance')
+  assert.equal(child.SPRING_PROFILES_INCLUDE, '')
+  assert.equal(child['spring.profiles.include'], undefined)
+})
+
 test('Surefire requires complete fresh reports with positive tests', async t => {
   const { readSurefireReports } = await runner()
   const rootDir = await workspace(t)

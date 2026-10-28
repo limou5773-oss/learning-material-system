@@ -19,9 +19,9 @@
   ],
   "window": {
     "navigationBarTitleText": "学材",
-    "navigationBarBackgroundColor": "#f5f7f4",
+    "navigationBarBackgroundColor": "#f4f8f5",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f5f7f4"
+    "backgroundColor": "#f4f8f5"
   },
   "style": "v2"
 }

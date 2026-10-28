@@ -2,30 +2,34 @@ package com.learningmaterial.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.integration.storage.FileStorage;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskLeaseService;
+import com.learningmaterial.system.task.MockTaskProcessor;
+import java.awt.image.BufferedImage;
+import java.io.ByteArrayOutputStream;
+import java.net.URI;
+import java.net.http.*;
+import java.sql.Connection;
+import java.time.Clock;
+import java.time.Duration;
+import java.time.Instant;
+import java.util.*;
+import java.util.concurrent.*;
+import java.util.concurrent.locks.LockSupport;
+import javax.imageio.ImageIO;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.boot.test.web.server.LocalServerPort;
 import org.springframework.jdbc.core.JdbcTemplate;
-import javax.sql.DataSource;
-import java.net.URI;
-import java.net.http.*;
-import java.time.Duration;
-import java.util.*;
-import com.learningmaterial.system.material.FileStorage;
-import com.learningmaterial.system.task.*;
-import java.io.ByteArrayOutputStream;
-import java.awt.image.BufferedImage;
-import javax.imageio.ImageIO;
-import java.sql.Connection;
-import java.time.Clock;
-import java.time.Instant;
-import java.util.concurrent.*;
-import java.util.concurrent.locks.LockSupport;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-import static org.mockito.Mockito.*;
+
 import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT, properties="lms.task.processor.mode=mock")
 @EnabledIfEnvironmentVariable(named="DB_URL", matches=".*learning_material_auth_test.*")
@@ -174,7 +178,7 @@ class ContentReviewIntegrationTest {
             assertThat(request("PUT",path+"/decision",body,admin.token()).status()).isEqualTo(422);
     }
     @Test void auditAndNotificationFailuresRollbackRestrictionDecisionAndTasks() throws Exception {
-        String task=task();TaskLeaseService.Lease lease=leases.claim();assertThat(lease.taskId()).isEqualTo(Long.parseLong(task));
+        String task=task();TaskLease lease=leases.claim();assertThat(lease.taskId()).isEqualTo(Long.parseLong(task));
         leases.startStep(lease,"generate_summary_cards","MODEL");
         String review=submit(1).data().path("id").asText();view(review,admin.token());
         for(String part:List.of("audit","notification","cancel")) {
@@ -369,7 +373,7 @@ class ContentReviewIntegrationTest {
     @FunctionalInterface interface RequestCall{Reply call()throws Exception;}
     @Test void rejectionCancelsEveryUnfinishedStateAndMarksActiveCallsUnknown() throws Exception {
         String waiting=task();jdbc.update("UPDATE ai_task SET status='WAIT_CONFIRM' WHERE id=?",waiting);
-        String running=task();TaskLeaseService.Lease lease=leases.claim();assertThat(lease.taskId()).isEqualTo(Long.parseLong(running));
+        String running=task();TaskLease lease=leases.claim();assertThat(lease.taskId()).isEqualTo(Long.parseLong(running));
         Long call=leases.startStep(lease,"generate_summary_cards","MODEL");assertThat(call).isNotNull();
         jdbc.update("INSERT INTO ocr_attempt(task_id,execution_epoch,page_no,attempt_no,provider_key,dispatched,status,started_at) VALUES(?,1,0,1,'MOCK',1,'RUNNING',UTC_TIMESTAMP(6))",running);
         jdbc.update("INSERT INTO model_attempt(task_id,execution_epoch,attempt_no,provider_key,requested_model,prompt_version,dispatched,status,started_at) VALUES(?,1,1,'MOCK','mock','test',1,'RUNNING',UTC_TIMESTAMP(6))",running);

@@ -2,11 +2,13 @@ package com.learningmaterial.system.task;
 
 import com.fasterxml.jackson.core.JsonParser;
 import com.fasterxml.jackson.databind.*;
-import com.learningmaterial.system.task.AiTaskDtos.*;
-
-import org.springframework.stereotype.Component;
-
+import com.learningmaterial.system.dto.AiTaskDtos.*;
+import com.learningmaterial.system.dto.PersonalMaterialMatch;
+import com.learningmaterial.system.dto.PreparedTaskSource;
+import com.learningmaterial.system.entity.AiTaskRow;
+import com.learningmaterial.system.entity.MaterialChunkRow;
 import java.util.*;
+import org.springframework.stereotype.Component;
 
 /**
  * The provider supplies only content and exact quotations. All identities and offsets are server
@@ -26,7 +28,7 @@ public class ModelOutputProtocol {
     public CandidateResult parse(
             String content,
             AiTaskRow task,
-            TaskSourcePreparation.Prepared prepared,
+            PreparedTaskSource prepared,
             GenerationInfo info) {
         return parseInternal(content, task, prepared, info, false, List.of());
     }
@@ -34,19 +36,19 @@ public class ModelOutputProtocol {
     public CandidateResult parseAgent(
             String content,
             AiTaskRow task,
-            TaskSourcePreparation.Prepared prepared,
+            PreparedTaskSource prepared,
             GenerationInfo info,
-            List<PersonalMaterialSearchService.Match> matches) {
+            List<PersonalMaterialMatch> matches) {
         return parseInternal(content, task, prepared, info, true, matches);
     }
 
     private CandidateResult parseInternal(
             String content,
             AiTaskRow task,
-            TaskSourcePreparation.Prepared prepared,
+            PreparedTaskSource prepared,
             GenerationInfo info,
             boolean agent,
-            List<PersonalMaterialSearchService.Match> matches) {
+            List<PersonalMaterialMatch> matches) {
         try {
             if (content == null || content.length() > 200_000) invalid();
             JsonNode root = reader.readTree(content);
@@ -119,9 +121,9 @@ public class ModelOutputProtocol {
     private static List<CandidateRelation> relations(
             JsonNode node,
             List<CandidateCard> cards,
-            List<PersonalMaterialSearchService.Match> matches) {
+            List<PersonalMaterialMatch> matches) {
         if (node == null || !node.isArray() || node.size() > 10) invalid();
-        Map<String, PersonalMaterialSearchService.Match> allowed = new HashMap<>();
+        Map<String, PersonalMaterialMatch> allowed = new HashMap<>();
         matches.forEach(match -> allowed.put(match.cardId(), match));
         List<CandidateRelation> result = new ArrayList<>();
         Set<String> edges = new HashSet<>();

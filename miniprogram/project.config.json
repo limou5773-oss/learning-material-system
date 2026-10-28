@@ -1,12 +1,37 @@
 {
-  "description": "学材原生微信小程序；本地联调使用测试号，发布前替换为本人 AppID。",
-  "compileType": "miniprogram",
-  "appid": "touristappid",
-  "miniprogramRoot": "./",
-  "projectname": "learning-material-system",
-  "setting": {
-    "es6": true,
-    "enhance": true,
-    "minified": false
-  }
+    "description": "学材原生微信小程序；本地联调使用测试号，发布前替换为本人 AppID。",
+    "compileType": "miniprogram",
+    "appid": "wx9980e36f77a1784f",
+    "miniprogramRoot": "./",
+    "projectname": "learning-material-system",
+    "setting": {
+        "es6": true,
+        "enhance": true,
+        "minified": false,
+        "postcss": false,
+        "compileWorklet": false,
+        "uglifyFileName": false,
+        "uploadWithSourceMap": true,
+        "packNpmManually": false,
+        "packNpmRelationList": [],
+        "minifyWXSS": true,
+        "minifyWXML": true,
+        "localPlugins": false,
+        "disableUseStrict": false,
+        "useCompilerPlugins": false,
+        "condition": true,
+        "swc": false,
+        "disableSWC": true,
+        "babelSetting": {
+            "ignore": [],
+            "disablePlugins": [],
+            "outputPath": ""
+        }
+    },
+    "simulatorPluginLibVersion": {},
+    "packOptions": {
+        "ignore": [],
+        "include": []
+    },
+    "editorSetting": {}
 }

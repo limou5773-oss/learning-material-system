@@ -1,17 +1,17 @@
 package com.learningmaterial.system.task;
 
+import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.fasterxml.jackson.core.JsonProcessingException;
-
+import com.learningmaterial.system.entity.AiTaskRow;
 import java.util.HashSet;
 import java.util.Set;
 
 /** The mock adapter accepts only server-built calls with the exact documented arguments. */
-final class MockToolProtocol {
+public final class MockToolProtocol {
     private MockToolProtocol() { }
 
-    static void validate(String name, JsonNode args, AiTaskRow task) {
+    public static void validate(String name, JsonNode args, AiTaskRow task) {
         if (task == null || args == null || !args.isObject()) invalid();
         switch (name) {
             case "prepare_source", "recognize_image" -> {

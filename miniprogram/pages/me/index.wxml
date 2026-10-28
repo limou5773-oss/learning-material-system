@@ -1,26 +1,67 @@
 <view class="page">
   <text class="eyebrow">PERSONAL SPACE</text>
   <view class="title">我的信息</view>
-  <view class="lead">你在 Web 与小程序中使用的是同一个账号。</view>
+  <view class="lead">管理个人资料、账号密码与微信绑定。</view>
+  <view wx:if="{{loading}}" class="muted">正在读取本人信息…</view>
+  <view wx:if="{{notice}}" class="notice">{{notice}}</view>
+  <view wx:if="{{error && !errorAction}}" class="error" role="alert">{{error}}</view>
+  <button wx:if="{{error && !errorAction}}" class="outline" bindtap="refresh" disabled="{{loading || pending}}">重试</button>
 
-  <view class="card">
-    <view wx:if="{{loading}}" class="muted">正在读取本人信息…</view>
-    <view wx:if="{{error}}" class="error">{{error}}</view>
-    <button wx:if="{{error}}" class="outline" bindtap="refresh">重试</button>
-    <view wx:if="{{user}}">
+  <block wx:if="{{user}}">
+    <view class="card">
       <view class="card-title">{{user.displayName}}</view>
       <view class="muted">@{{user.username}}</view>
       <view class="field-row"><text>用户 ID</text><text selectable="true">{{user.id}}</text></view>
       <view class="field-row"><text>账号类型</text><text>{{user.role === 'ADMIN' ? '管理员' : '普通用户'}}</text></view>
       <view class="field-row"><text>账号状态</text><text>{{user.status === 'ENABLED' ? '正常' : '已停用'}}</text></view>
-      <view class="field-row"><text>微信绑定</text><text>{{user.hasWechatBinding ? '已绑定' : '尚未接入'}}</text></view>
       <button class="primary" bindtap="openMaterials">查看我的资料</button>
       <button class="outline" bindtap="openTasks">查看整理任务</button>
       <button class="outline" bindtap="openNotifications">查看站内通知</button>
       <button class="outline" bindtap="openCards">查看知识卡片</button>
       <button class="outline" bindtap="newNote">快速记笔记</button>
-      <button class="outline" bindtap="submitLogout" loading="{{loggingOut}}" disabled="{{loggingOut}}">退出登录</button>
     </view>
-  </view>
-  <view class="footnote">账号密码登录联调阶段 · 未使用微信身份模拟</view>
+
+    <view class="card account-card">
+      <view class="card-title">个人资料</view>
+      <text class="field-label">昵称</text>
+      <input class="field-input" value="{{displayName}}" bindinput="onNameInput" maxlength="64" disabled="{{loading || pending}}" aria-label="昵称" />
+      <view wx:if="{{nameError}}" class="field-error">{{nameError}}</view>
+      <view wx:if="{{error && errorAction === 'name'}}" class="error" role="alert">{{error}}</view>
+      <button class="primary" bindtap="submitName" loading="{{pending === 'name'}}" disabled="{{loading || pending}}">保存昵称</button>
+    </view>
+
+    <view class="card account-card">
+      <view class="card-title">修改密码</view>
+      <view class="muted">修改后，Web 和小程序中的所有登录会话都会失效。</view>
+      <text class="field-label">当前密码</text>
+      <input class="field-input" value="{{currentPassword}}" bindinput="onCurrentPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="请输入当前密码" aria-label="当前密码" />
+      <view wx:if="{{currentPasswordError}}" class="field-error">{{currentPasswordError}}</view>
+      <text class="field-label">新密码</text>
+      <input class="field-input" value="{{newPassword}}" bindinput="onNewPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="请输入 8–64 个字符的新密码" aria-label="新密码" />
+      <view class="input-help">UTF-8 编码不超过 72 字节，汉字和表情会占用多个字节。</view>
+      <view wx:if="{{newPasswordError}}" class="field-error">{{newPasswordError}}</view>
+      <view wx:if="{{error && errorAction === 'password'}}" class="error" role="alert">{{error}}</view>
+      <button class="primary" bindtap="submitPassword" loading="{{pending === 'password'}}" disabled="{{loading || pending}}">修改密码并重新登录</button>
+    </view>
+
+    <view class="card account-card">
+      <view class="card-title">微信绑定</view>
+      <view class="field-row binding-status"><text>绑定状态</text><text>{{user.hasWechatBinding ? '已绑定' : '未绑定'}}</text></view>
+      <block wx:if="{{user.hasWechatBinding}}">
+        <view class="muted">解绑后，小程序需重新使用账号密码登录，Web 登录会保留。</view>
+        <text class="field-label">当前密码</text>
+        <input class="field-input" value="{{unbindPassword}}" bindinput="onUnbindPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="输入当前密码确认解绑" aria-label="解绑验证密码" />
+        <view wx:if="{{unbindPasswordError}}" class="field-error">{{unbindPasswordError}}</view>
+        <button class="outline" bindtap="submitUnbind" loading="{{pending === 'unbind'}}" disabled="{{loading || pending}}">确认解绑微信并重新登录</button>
+      </block>
+      <block wx:else>
+        <view class="muted">将当前微信绑定到此账号，下次可直接微信登录。绑定不会合并其他账号。</view>
+        <button class="primary" bindtap="submitBinding" loading="{{pending === 'bind'}}" disabled="{{loading || pending}}">绑定当前微信</button>
+      </block>
+      <view wx:if="{{error && (errorAction === 'bind' || errorAction === 'unbind')}}" class="error" role="alert">{{error}}</view>
+    </view>
+
+    <view wx:if="{{error && errorAction === 'logout'}}" class="error" role="alert">{{error}}</view>
+    <button class="outline logout-action" bindtap="submitLogout" loading="{{pending === 'logout'}}" disabled="{{loading || pending}}">退出登录</button>
+  </block>
 </view>

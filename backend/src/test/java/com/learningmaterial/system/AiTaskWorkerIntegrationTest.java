@@ -1,8 +1,12 @@
 package com.learningmaterial.system;
 
 import com.fasterxml.jackson.databind.JsonNode;
-import com.learningmaterial.system.task.TaskLeaseService;
-import com.learningmaterial.system.task.TaskLeaseService.Lease;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.service.TaskLeaseService;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.Map;
+import java.util.UUID;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -15,11 +19,6 @@ import org.springframework.http.HttpMethod;
 import org.springframework.http.HttpStatus;
 import org.springframework.http.ResponseEntity;
 import org.springframework.jdbc.core.JdbcTemplate;
-
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.Map;
-import java.util.UUID;
 
 import static org.assertj.core.api.Assertions.assertThat;
 import static org.assertj.core.api.Assertions.assertThatThrownBy;
@@ -54,8 +53,8 @@ class AiTaskWorkerIntegrationTest {
                 .isEqualTo(HttpStatus.NOT_FOUND);
             assertThat(exchange("/ai-tasks/" + taskId + "/cancellations", HttpMethod.POST, null, stranger)
                 .getStatusCode()).isEqualTo(HttpStatus.NOT_FOUND);
-            Lease first = leases.claim();
-            assertThat(first).isEqualTo(new Lease(id, 1));
+            TaskLease first = leases.claim();
+            assertThat(first).isEqualTo(new TaskLease(id, 1));
             assertThat(leases.heartbeat(first)).isTrue();
             assertThatThrownBy(() -> leases.startStep(first, "delete_all_data", "LOCAL"))
                 .isInstanceOf(IllegalArgumentException.class);
@@ -66,8 +65,8 @@ class AiTaskWorkerIntegrationTest {
                 .getBody().path("data").path("total").asLong()).isEqualTo(1);
 
             jdbc.update("UPDATE ai_task SET lease_until = ? WHERE id = ?", LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1), id);
-            Lease second = leases.claim();
-            assertThat(second).isEqualTo(new Lease(id, 2));
+            TaskLease second = leases.claim();
+            assertThat(second).isEqualTo(new TaskLease(id, 2));
             assertThat(leases.heartbeat(first)).isFalse();
             assertThat(leases.saveProgress(first, "GENERATING", "{\"candidate\":\"late\"}")).isFalse();
             assertThat(leases.startStep(first, "generate_summary_cards", "MODEL")).isNull();
@@ -129,7 +128,7 @@ class AiTaskWorkerIntegrationTest {
                 Map.of("materialId", materialId, "materialVersion", 1, "requestKey", "timeout-first",
                     "goalType", "REVIEW_CARDS", "externalProcessingConsent", true), token)
                 .getBody().path("data").path("id").asText();
-            Lease lease = leases.claim();
+            TaskLease lease = leases.claim();
             assertThat(lease.taskId()).isEqualTo(Long.parseLong(taskId));
             jdbc.update("UPDATE ai_task SET started_at = ?, lease_until = ? WHERE id = ?",
                 LocalDateTime.now(ZoneOffset.UTC).minusSeconds(301),

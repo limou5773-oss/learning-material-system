@@ -4,14 +4,21 @@ import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.JsonNodeFactory;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.learningmaterial.system.task.AiTaskDtos.CandidateCard;
-import com.learningmaterial.system.task.AiTaskDtos.CandidateResult;
-import com.learningmaterial.system.task.AiTaskDtos.SourceRef;
+import com.learningmaterial.system.dto.AiTaskDtos.CandidateCard;
+import com.learningmaterial.system.dto.AiTaskDtos.CandidateResult;
+import com.learningmaterial.system.dto.AiTaskDtos.SourceRef;
+import com.learningmaterial.system.dto.SourceDraft;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.service.NotificationService;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskLeaseService;
 import com.learningmaterial.system.task.MockTaskProcessor;
-import com.learningmaterial.system.task.TaskCandidateService;
-import com.learningmaterial.system.task.TaskLeaseService;
-import com.learningmaterial.system.task.TaskLeaseService.Lease;
-import com.learningmaterial.system.notification.NotificationService;
+import java.sql.Connection;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
+import java.util.concurrent.*;
+import javax.sql.DataSource;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -24,13 +31,6 @@ import org.springframework.http.*;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.transaction.PlatformTransactionManager;
 import org.springframework.transaction.support.TransactionTemplate;
-
-import javax.sql.DataSource;
-import java.sql.Connection;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
-import java.util.concurrent.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.assertj.core.api.SoftAssertions.assertSoftly;
@@ -93,7 +93,7 @@ class NotificationIntegrationTest {
             for (String operation : List.of("submit", "retry")) {
                     try (Fixture f = new Fixture(); ExecutorService pool = Executors.newFixedThreadPool(2)) {
                         String parent = f.submit(); assertThat(leases.fail(f.claim(parent), "PARENT_FAILED")).isTrue();
-                        String task = f.submit(); Lease lease = f.claim(task);
+                        String task = f.submit(); TaskLease lease = f.claim(task);
                         CandidateResult candidate = f.candidate(lease, "MOCK");
                         String gate = "d20_gate_" + f.userId, trigger = "d20_gate_" + f.userId;
                         CompletableFuture<Boolean> publishing = null;
@@ -230,11 +230,11 @@ class NotificationIntegrationTest {
     @Test
     void everyFailedTransitionCreatesOnlyItsOwnEventAndStaleSourceCommitsExplicitly() {
         try (Fixture f = new Fixture()) {
-            String failed = f.submit(); Lease lease = f.claim(failed);
+            String failed = f.submit(); TaskLease lease = f.claim(failed);
             assertThat(leases.fail(lease, "PROVIDER_SECRET_FAILURE")).isTrue();
             assertThat(leases.fail(lease, "PROVIDER_SECRET_FAILURE")).isFalse();
             assertThat(f.event(failed, "TASK_FAILED").path("content").asText()).doesNotContain("PROVIDER_SECRET_FAILURE");
-            String timeout = f.submit(); Lease timed = f.claim(timeout);
+            String timeout = f.submit(); TaskLease timed = f.claim(timeout);
             jdbc.update("UPDATE ai_task SET started_at=?,lease_until=? WHERE id=?", LocalDateTime.now(ZoneOffset.UTC).minusSeconds(400), LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1), timeout);
             assertThat(leases.claim()).isNull();
             assertThat(f.event(timeout, "TASK_FAILED").path("type").asText()).isEqualTo("TASK_FAILED");
@@ -255,10 +255,10 @@ class NotificationIntegrationTest {
     @Test
     void oldEpochCancelledAndDuplicatePublicationDoNotInventNotifications() {
         try (Fixture f = new Fixture()) {
-            String task = f.submit(); Lease old = f.claim(task);
+            String task = f.submit(); TaskLease old = f.claim(task);
             CandidateResult result = f.candidate(old, "MOCK");
             jdbc.update("UPDATE ai_task SET lease_until=? WHERE id=?", LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1), task);
-            Lease fresh = f.claim(task);
+            TaskLease fresh = f.claim(task);
             assertThat(candidates.finish(old, result)).isFalse();
             assertThat(leases.fail(old, "OLD_EPOCH")).isFalse();
             assertThat(f.list(1, 20, false).path("total").asInt()).isZero();
@@ -267,7 +267,7 @@ class NotificationIntegrationTest {
             assertThat(candidates.finish(fresh, result)).isFalse();
             assertThat(leases.fail(fresh, "ALREADY_FINISHED")).isFalse();
             assertThat(f.event(task, "RESULT_READY").path("isRead").asBoolean()).isTrue();
-            String cancelled = f.submit(); Lease cancelledLease = f.claim(cancelled);
+            String cancelled = f.submit(); TaskLease cancelledLease = f.claim(cancelled);
             CandidateResult unused = f.candidate(cancelledLease, "MOCK");
             assertThat(exchange("/ai-tasks/" + cancelled + "/cancellations", HttpMethod.POST, null, f.token).getStatusCode()).isEqualTo(HttpStatus.OK);
             assertThat(candidates.finish(cancelledLease, unused)).isFalse();
@@ -275,7 +275,7 @@ class NotificationIntegrationTest {
             assertThat(leases.claim()).isNull();
             assertThat(f.list(1, 20, false).path("total").asInt()).isEqualTo(1);
             // MODEL and agent publication use the same checked finish entry point.
-            String model = f.submit(); Lease modelLease = f.claim(model);
+            String model = f.submit(); TaskLease modelLease = f.claim(model);
             assertThat(candidates.finish(modelLease, f.candidate(modelLease, "MODEL"))).isTrue();
             assertThat(f.event(model, "RESULT_READY").path("type").asText()).isEqualTo("RESULT_READY");
         }
@@ -284,7 +284,7 @@ class NotificationIntegrationTest {
     @Test
     void notificationInsertFailureRollsBackCandidateAndEveryFailedTransition() {
         try (Fixture f = new Fixture()) {
-            String task = f.submit(); Lease lease = f.claim(task); CandidateResult candidate = f.candidate(lease, "MOCK");
+            String task = f.submit(); TaskLease lease = f.claim(task); CandidateResult candidate = f.candidate(lease, "MOCK");
             String trigger = "d20_failure_" + f.userId;
             jdbc.execute("CREATE TRIGGER " + trigger + " BEFORE INSERT ON notification FOR EACH ROW BEGIN IF NEW.user_id=" + f.userId + " THEN SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='induced notification write failure'; END IF; END");
             try {
@@ -327,13 +327,13 @@ class NotificationIntegrationTest {
         }
         ResponseEntity<JsonNode> submitResponse() { return exchange("/ai-tasks", HttpMethod.POST, Map.of("materialId", materialId, "materialVersion", 1, "requestKey", UUID.randomUUID().toString(), "goalType", "REVIEW_CARDS", "externalProcessingConsent", true), token); }
         String submit() { return data(submitResponse()).path("id").asText(); }
-        Lease claim(String task) { Lease lease = leases.claim(); assertThat(lease).isNotNull(); assertThat(lease.taskId()).isEqualTo(Long.parseLong(task)); return lease; }
+        TaskLease claim(String task) { TaskLease lease = leases.claim(); assertThat(lease).isNotNull(); assertThat(lease.taskId()).isEqualTo(Long.parseLong(task)); return lease; }
         void ready(String task) { processor.execute(claim(task)); assertThat(status(task)).isEqualTo("WAIT_CONFIRM"); }
-        CandidateResult candidate(Lease lease, String mode) {
-            var source = candidates.saveSources(lease, List.of(new TaskCandidateService.SourceDraft(1, "原文秘密", "TEXT", "验证"))).get(0);
+        CandidateResult candidate(TaskLease lease, String mode) {
+            var source = candidates.saveSources(lease, List.of(new SourceDraft(1, "原文秘密", "TEXT", "验证"))).get(0);
             return new CandidateResult(Long.toString(lease.taskId()), 1, 1, mode, "摘要", List.of(),
                 List.of(new CandidateCard("mock-1", "标题", "正文", null, null, List.of(), List.of(new SourceRef(source.getId().toString(), "原文秘密", 0, 4)), null)),
-                List.of(), null, List.of(), List.of("验证来源"), "MODEL".equals(mode) ? new com.learningmaterial.system.task.AiTaskDtos.GenerationInfo("test", "test", "v1") : null);
+                List.of(), null, List.of(), List.of("验证来源"), "MODEL".equals(mode) ? new com.learningmaterial.system.dto.AiTaskDtos.GenerationInfo("test", "test", "v1") : null);
         }
         ObjectNode confirmation(String task) {
             JsonNode candidate = data(exchange("/ai-tasks/" + task + "/result", HttpMethod.GET, null, token));

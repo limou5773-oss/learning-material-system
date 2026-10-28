@@ -1,4 +1,9 @@
 .field-row { display: flex; justify-content: space-between; gap: 20rpx; padding: 28rpx 0; border-bottom: 1rpx solid #edf1ec; color: #6b7b70; font-size: 27rpx; }
 .field-row text:last-child { color: #233b2c; font-weight: 600; text-align: right; }
 .card-title { margin-top: 10rpx; }
-.card .error { margin-top: 20rpx; }
+.card .error { margin-top: 20rpx; margin-bottom: 0; }
+.account-card { margin-top: 28rpx; }
+.binding-status { margin-bottom: 24rpx; }
+.field-error { margin-top: 12rpx; color: #9f3e30; font-size: 25rpx; line-height: 1.5; }
+.input-help { margin-top: 12rpx; color: #718076; font-size: 23rpx; line-height: 1.6; }
+.logout-action { margin-top: 36rpx; }

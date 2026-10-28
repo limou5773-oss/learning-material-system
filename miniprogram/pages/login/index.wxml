@@ -1,19 +1,29 @@
-<view class="page">
-  <text class="eyebrow">YOUR LEARNING, IN ONE PLACE</text>
-  <view class="title"><view>让学习的每一步</view><view>都有归处。</view></view>
-  <view class="lead">用与 Web 相同的账号登录，学习资料会保存在同一个空间。</view>
-
-  <view class="card">
-    <view class="card-title">欢迎回来</view>
-    <view class="muted">账号密码登录 · 本地联调阶段</view>
-    <view wx:if="{{notice}}" class="notice">{{notice}}</view>
-    <view wx:if="{{error}}" class="error">{{error}}</view>
-    <text class="field-label">用户名</text>
-    <input class="field-input" value="{{username}}" bindinput="onUsernameInput" placeholder="请输入用户名" maxlength="32" />
-    <text class="field-label">密码</text>
-    <input class="field-input" value="{{password}}" bindinput="onPasswordInput" placeholder="请输入密码" password="true" placeholder-style="color:#a0aba3" />
-    <button class="primary" bindtap="submit" loading="{{loading}}" disabled="{{loading}}">登录</button>
+<view class="page login-page">
+  <view class="hero">
+    <view class="brand-badge">学</view>
+    <text class="eyebrow">YOUR LEARNING, IN ONE PLACE</text>
+    <view class="title"><view>让学习的每一步</view><view>都有归处。</view></view>
+    <view class="lead">已绑定的微信可直接登录，与 Web 共用同一份学习资料。</view>
   </view>
 
-  <view class="footnote">账号请先在 Web 端注册。当前使用账号密码登录，微信身份绑定尚未接入。</view>
+  <view class="card login-card">
+    <view class="card-title">欢迎回来</view>
+    <view class="muted">已绑定账号无需再输入用户名和密码</view>
+    <view wx:if="{{notice}}" class="notice">{{notice}}</view>
+    <view wx:if="{{error}}" class="error" role="alert">{{error}}</view>
+    <view wx:if="{{checkingSession}}" class="muted session-hint">正在验证登录状态…</view>
+    <button class="primary wechat-login" bindtap="submitWechat" loading="{{loading && loginMethod === 'wechat'}}" disabled="{{loading || checkingSession}}">
+      <text class="wechat-glyph">✸</text>微信一键登录
+    </button>
+    <button class="outline login-alternative" bindtap="togglePasswordLogin" disabled="{{loading || checkingSession}}" aria-expanded="{{showPasswordLogin}}">{{showPasswordLogin ? '收起账号密码登录' : '使用账号密码登录'}}</button>
+    <view wx:if="{{showPasswordLogin}}" class="password-panel">
+      <text class="field-label">用户名</text>
+      <input class="field-input" value="{{username}}" bindinput="onUsernameInput" placeholder="请输入用户名" maxlength="32" disabled="{{loading || checkingSession}}" aria-label="用户名" placeholder-style="color:#a0aba3" />
+      <text class="field-label">密码</text>
+      <input class="field-input" value="{{password}}" bindinput="onPasswordInput" placeholder="请输入密码" password="true" maxlength="64" disabled="{{loading || checkingSession}}" aria-label="密码" placeholder-style="color:#a0aba3" />
+      <button class="primary" bindtap="submit" loading="{{loading && loginMethod === 'password'}}" disabled="{{loading || checkingSession}}">账号密码登录</button>
+    </view>
+  </view>
+
+  <view class="footnote">仅首次绑定需要先用已有账号登录，绑定后直接点击微信登录。新账号请先在 Web 端注册。</view>
 </view>

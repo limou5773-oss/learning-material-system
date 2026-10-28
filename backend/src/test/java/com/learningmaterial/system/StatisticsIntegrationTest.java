@@ -1,12 +1,13 @@
 package com.learningmaterial.system;
 
-import static org.assertj.core.api.Assertions.*;
-import static org.mockito.Mockito.*;
-
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learningmaterial.system.statistics.StatisticsRepository;
-
+import com.learningmaterial.system.mapper.StatisticsRepository;
+import java.net.URI;
+import java.net.http.*;
+import java.time.Duration;
+import java.util.*;
+import java.util.concurrent.CompletableFuture;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.springframework.beans.factory.annotation.Autowired;
@@ -16,11 +17,8 @@ import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
 import org.springframework.transaction.support.TransactionSynchronizationManager;
 
-import java.net.URI;
-import java.net.http.*;
-import java.time.Duration;
-import java.util.*;
-import java.util.concurrent.CompletableFuture;
+import static org.assertj.core.api.Assertions.*;
+import static org.mockito.Mockito.*;
 
 @SpringBootTest(webEnvironment = SpringBootTest.WebEnvironment.RANDOM_PORT)
 @EnabledIfEnvironmentVariable(named = "DB_URL", matches = ".*learning_material_auth_test.*")

@@ -1,29 +1,182 @@
+/* ============================================================
+   学材 · 设计系统 (清透薄荷青)
+   全局 token + 共用类。保留历史类名，仅升级观感。
+   ============================================================ */
 page {
+  /* 主色 — 清透薄荷青绿 */
+  --brand: #11b5a0;
+  --brand-press: #0a9c8a;
+  --brand-soft: #e4f7f3;
+  --brand-ink: #0a7a6c;
+
+  /* 薄荷渐变（顶栏 / 英雄区） */
+  --grad-header: linear-gradient(135deg, #d4f3ee 0%, #e9f8f0 55%, #f4faf6 100%);
+  --grad-brand: linear-gradient(135deg, #16c2ab 0%, #11b5a0 100%);
+
+  /* 彩色强调色 — 分类图标 / 徽标 */
+  --c-blue: #3b86f7;
+  --c-amber: #f5a623;
+  --c-coral: #fb7a68;
+  --c-violet: #8b7cf0;
+  --c-pink: #f473b3;
+
+  /* 中性 — 冷白基调 */
+  --ink: #111f1d;
+  --ink-2: #5c6b68;
+  --ink-3: #93a09d;
+  --line: #e9efee;
+  --line-strong: #d6e0de;
+  --surface: #ffffff;
+  --surface-2: #f8fbfa;
+  --bg: #f3f8f7;
+
+  /* 语义 */
+  --ok-bg: #e4f7f3;
+  --ok-ink: #0a7a6c;
+  --warn-bg: #fff4e6;
+  --warn-ink: #9a5b12;
+  --danger-bg: #fdeeea;
+  --danger-ink: #b23b2a;
+
+  /* 形状 / 阴影 */
+  --r-sm: 14rpx;
+  --r-md: 20rpx;
+  --r-lg: 28rpx;
+  --r-pill: 999rpx;
+  --shadow-sm: 0 6rpx 20rpx rgba(12, 70, 62, .05);
+  --shadow-md: 0 16rpx 44rpx rgba(12, 70, 62, .08);
+
   min-height: 100%;
-  background: #f5f7f4;
-  color: #192c25;
-  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", sans-serif;
+  background: var(--bg);
+  color: var(--ink);
+  font-family: -apple-system, BlinkMacSystemFont, "PingFang SC", "Segoe UI", sans-serif;
+  -webkit-font-smoothing: antialiased;
 }
 
 button::after { border: 0; }
 
-.page { padding: 52rpx 38rpx 80rpx; }
-.eyebrow { color: #537460; font-size: 22rpx; font-weight: 700; letter-spacing: 4rpx; }
-.title { margin: 20rpx 0 0; font-size: 64rpx; font-weight: 700; line-height: 1.2; }
-.lead { margin: 22rpx 0 52rpx; color: #64736a; font-size: 28rpx; line-height: 1.65; }
-.card { padding: 42rpx 36rpx; border: 1rpx solid #e2e9df; border-radius: 30rpx; background: #fff; box-shadow: 0 18rpx 52rpx rgba(24, 57, 37, .06); }
-.card-title { margin: 0 0 10rpx; font-size: 38rpx; font-weight: 700; }
-.muted { color: #718076; font-size: 25rpx; line-height: 1.6; }
-.notice { margin: 0 0 28rpx; padding: 20rpx 24rpx; border-radius: 16rpx; background: #eaf3eb; color: #295d3e; font-size: 25rpx; line-height: 1.5; }
-.error { margin: 0 0 28rpx; padding: 20rpx 24rpx; border-radius: 16rpx; background: #fff1ed; color: #9f3e30; font-size: 25rpx; line-height: 1.5; }
-.field-label { display: block; margin: 32rpx 0 14rpx; color: #344d3e; font-size: 26rpx; font-weight: 600; }
-.field-input { box-sizing: border-box; width: 100%; height: 92rpx; padding: 0 24rpx; border: 1rpx solid #d9e4d9; border-radius: 16rpx; background: #fafcf9; font-size: 29rpx; }
-.primary { display: flex; align-items: center; justify-content: center; width: 100%; margin: 42rpx 0 0; height: 94rpx; border-radius: 17rpx; background: #276c47; color: #fff; font-size: 29rpx; font-weight: 600; }
-.primary[disabled] { opacity: .6; }
-.outline { display: flex; align-items: center; justify-content: center; width: 100%; margin: 34rpx 0 0; height: 90rpx; border: 1rpx solid #cad9ce; border-radius: 17rpx; background: #fff; color: #2b6142; font-size: 28rpx; }
-.footnote { margin-top: 36rpx; color: #829087; font-size: 24rpx; line-height: 1.6; text-align: center; }
+/* ---------- 布局 ---------- */
+.page { padding: 48rpx 36rpx 120rpx; }
+
+.eyebrow {
+  display: inline-block;
+  color: var(--brand-ink);
+  font-size: 22rpx;
+  font-weight: 700;
+  letter-spacing: 4rpx;
+  text-transform: uppercase;
+}
+.title { margin: 20rpx 0 0; font-size: 60rpx; font-weight: 800; line-height: 1.22; letter-spacing: -1rpx; }
+.lead { margin: 22rpx 0 48rpx; color: var(--ink-2); font-size: 28rpx; line-height: 1.66; }
+
+/* ---------- 卡片 ---------- */
+.card {
+  margin-bottom: 24rpx;
+  padding: 40rpx 34rpx;
+  border: 1rpx solid var(--line);
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.card-title { margin: 0 0 10rpx; font-size: 36rpx; font-weight: 700; color: var(--ink); }
+.muted { color: var(--ink-3); font-size: 25rpx; line-height: 1.6; }
+
+/* ---------- 提示条 ---------- */
+.notice {
+  margin: 0 0 24rpx;
+  padding: 22rpx 26rpx;
+  border-radius: var(--r-md);
+  background: var(--ok-bg);
+  color: var(--ok-ink);
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+.error {
+  margin: 0 0 24rpx;
+  padding: 22rpx 26rpx;
+  border-radius: var(--r-md);
+  background: var(--danger-bg);
+  color: var(--danger-ink);
+  font-size: 25rpx;
+  line-height: 1.55;
+}
+
+/* ---------- 表单 ---------- */
+.field-label { display: block; margin: 32rpx 0 14rpx; color: var(--ink); font-size: 26rpx; font-weight: 600; }
+.field-input {
+  box-sizing: border-box;
+  width: 100%;
+  height: 92rpx;
+  padding: 0 26rpx;
+  border: 1rpx solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface-2);
+  color: var(--ink);
+  font-size: 29rpx;
+}
+
+/* ---------- 按钮 ---------- */
+.primary {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 40rpx 0 0;
+  height: 96rpx;
+  border-radius: var(--r-md);
+  background: var(--grad-brand);
+  color: #fff;
+  font-size: 30rpx;
+  font-weight: 600;
+  box-shadow: 0 12rpx 28rpx rgba(17, 181, 160, .28);
+  transition: opacity .15s, transform .1s;
+}
+.primary:active { background: var(--brand-press); transform: scale(.985); }
+.primary[disabled] { opacity: .5; box-shadow: none; }
+.outline {
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 100%;
+  margin: 24rpx 0 0;
+  height: 92rpx;
+  border: 1rpx solid var(--line-strong);
+  border-radius: var(--r-md);
+  background: var(--surface);
+  color: var(--brand-ink);
+  font-size: 29rpx;
+  font-weight: 500;
+  transition: background .15s, transform .1s;
+}
+.outline:active { background: var(--surface-2); transform: scale(.985); }
+.outline[disabled] { opacity: .5; }
+
+/* ---------- 其它共用 ---------- */
+.footnote { margin-top: 40rpx; color: var(--ink-3); font-size: 24rpx; line-height: 1.66; text-align: center; }
 .toolbar { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; margin-bottom: 32rpx; }
-.toolbar-title { font-size: 44rpx; font-weight: 700; }
-.small-action { padding: 17rpx 24rpx; border-radius: 13rpx; background: #276c47; color: #fff; font-size: 25rpx; }
-.state { padding: 70rpx 15rpx; color: #718076; font-size: 27rpx; text-align: center; }
-.tag-pill { display: inline-block; margin: 6rpx 10rpx 0 0; padding: 7rpx 15rpx; border-radius: 9rpx; background: #eaf3eb; color: #34664a; font-size: 23rpx; }
+.toolbar-title { font-size: 44rpx; font-weight: 800; letter-spacing: -.5rpx; }
+.small-action {
+  padding: 18rpx 26rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand);
+  color: #fff;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+.state {
+  padding: 96rpx 24rpx;
+  color: var(--ink-3);
+  font-size: 27rpx;
+  line-height: 1.6;
+  text-align: center;
+}
+.tag-pill {
+  display: inline-block;
+  margin: 10rpx 10rpx 0 0;
+  padding: 8rpx 18rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand-soft);
+  color: var(--brand-ink);
+  font-size: 23rpx;
+  font-weight: 500;
+}

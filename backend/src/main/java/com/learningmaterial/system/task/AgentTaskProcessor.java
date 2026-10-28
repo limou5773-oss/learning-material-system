@@ -2,12 +2,20 @@ package com.learningmaterial.system.task;
 
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.learningmaterial.system.task.AiTaskDtos.CandidateResult;
-
+import com.learningmaterial.system.dto.AiTaskDtos.CandidateResult;
+import com.learningmaterial.system.dto.PersonalMaterialMatch;
+import com.learningmaterial.system.dto.PreparedTaskSource;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.entity.AiTaskRow;
+import com.learningmaterial.system.mapper.AiTaskMapper;
+import com.learningmaterial.system.service.ModelGenerationService;
+import com.learningmaterial.system.service.PersonalMaterialSearchService;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskLeaseService;
+import com.learningmaterial.system.service.TaskSourcePreparationService;
+import java.util.*;
 import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
 import org.springframework.stereotype.Component;
-
-import java.util.*;
 
 @Component
 @ConditionalOnProperty(name = "lms.task.processor.mode", havingValue = "agent")
@@ -25,7 +33,7 @@ public class AgentTaskProcessor implements TaskProcessor {
                     "OCR_PROVIDER_UNAVAILABLE");
     private final AiTaskMapper tasks;
     private final TaskLeaseService leases;
-    private final TaskSourcePreparation preparation;
+    private final TaskSourcePreparationService preparation;
     private final ModelGenerationService models;
     private final TaskCandidateService candidates;
     private final PersonalMaterialSearchService search;
@@ -34,7 +42,7 @@ public class AgentTaskProcessor implements TaskProcessor {
     public AgentTaskProcessor(
             AiTaskMapper tasks,
             TaskLeaseService leases,
-            TaskSourcePreparation preparation,
+            TaskSourcePreparationService preparation,
             ModelGenerationService models,
             TaskCandidateService candidates,
             PersonalMaterialSearchService search,
@@ -49,15 +57,15 @@ public class AgentTaskProcessor implements TaskProcessor {
     }
 
     private static class State {
-        TaskSourcePreparation.Prepared prepared;
+        PreparedTaskSource prepared;
         CandidateResult candidate;
-        List<PersonalMaterialSearchService.Match> matches = List.of();
+        List<PersonalMaterialMatch> matches = List.of();
         final List<Map<String, Object>> feedback = new ArrayList<>();
         boolean extracted, recognized, searched, generated;
     }
 
     @Override
-    public void execute(TaskLeaseService.Lease lease) {
+    public void execute(TaskLease lease) {
         AiTaskRow task = tasks.findById(lease.taskId());
         if (task == null || !models.check(lease, task)) return;
         JsonNode config;
@@ -244,7 +252,7 @@ public class AgentTaskProcessor implements TaskProcessor {
         return input.toString();
     }
 
-    private static String sourceSummary(TaskSourcePreparation.Prepared prepared) {
+    private static String sourceSummary(PreparedTaskSource prepared) {
         var extraction = prepared.extraction();
         return "主资料来源片段"
                 + prepared.sources().size()

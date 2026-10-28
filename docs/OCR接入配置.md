@@ -1,37 +1,22 @@
 # 腾讯云OCR本机配置
 
+直接修改原YAML；旧环境配置脚本已移除。
+
 本次D14使用腾讯云文字识别的**通用印刷体识别 GeneralBasicOCR**，API版本2018-11-19，中英文混合。暂不接表格行列结构、英语专项或阿里云适配器。厂商调用与业务通过OcrClient隔离，之后可以另加适配器。
 
-## 开通与密钥
+## 配置
 
-在腾讯云控制台开通文字识别服务，准备可调用OCR的SecretId和SecretKey。不要把密钥发到聊天、截图或GitHub。当前代码只从后端进程环境读取凭证，默认OCR_ENABLED=false，不会自行发起OCR请求。
+准备具有OCR调用权限的腾讯云SecretId/SecretKey，在原 `backend/src/main/resources/application.yml` 中填写：
 
-Windows在项目根目录运行：
-
-```powershell
-powershell -NoProfile -ExecutionPolicy Bypass -File .\scripts\configure-ocr.ps1
-```
-
-脚本会隐藏输入，只将OCR_SECRET_ID、OCR_SECRET_KEY、OCR_PROVIDER=tencent及OCR_ENABLED=true写到**Windows当前用户的环境变量**；不写项目文件，不打印密钥。当前用户的环境变量会持久保存在本机，之后可在Windows“编辑账户的环境变量”中修改或删除。新启动的后端终端会读取这些配置，原有终端需要重新打开。
-
-若只希望在当前PowerShell进程中临时配置，可使用：
-
-```powershell
-. .\scripts\configure-ocr.ps1 -Scope Process
-# 在同一个终端中设置本机DB_URL、DB_USERNAME、DB_PASSWORD后启动后端
-$env:TASK_WORKER_ENABLED = 'true'
-$env:TASK_PROCESSOR_MODE = 'mock'
-mvn -f backend/pom.xml spring-boot:run
-```
-
-不使用Windows脚本时，直接在后端的运行环境配置以下四个变量即可：
-
-| 变量 | 含义 |
+| YAML字段 | 填写方式 |
 | --- | --- |
-| OCR_ENABLED | true才开启OCR；false保持D13行为 |
-| OCR_PROVIDER | tencent |
-| OCR_SECRET_ID | 本机SecretId |
-| OCR_SECRET_KEY | 本机SecretKey |
+| lms.ocr.enabled | true |
+| lms.ocr.provider | tencent |
+| lms.ocr.secret-id | 本机SecretId |
+| lms.ocr.secret-key | 本机SecretKey |
+| lms.task.worker.enabled | 准备处理任务时设true |
+
+真实摘要/卡片生成还需配置DeepSeek并选择agent/model模式。修改后重启后端。密钥只在本机后端填写，不放前端、不上传GitHub。完整说明见[YAML配置](YAML本机配置.md)。
 
 ## 联调范围
 

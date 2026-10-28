@@ -4,15 +4,21 @@ import com.fasterxml.jackson.core.JsonProcessingException;
 import com.fasterxml.jackson.databind.JsonNode;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.fasterxml.jackson.databind.node.ObjectNode;
-import com.learningmaterial.system.task.AiTaskDtos.CandidateCard;
-import com.learningmaterial.system.task.AiTaskDtos.CandidateResult;
-import com.learningmaterial.system.task.AiTaskDtos.SourceRef;
-import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
-import com.learningmaterial.system.ocr.OcrSettings;
-import org.springframework.stereotype.Component;
-
+import com.learningmaterial.system.dto.AiTaskDtos.CandidateCard;
+import com.learningmaterial.system.dto.AiTaskDtos.CandidateResult;
+import com.learningmaterial.system.dto.AiTaskDtos.SourceRef;
+import com.learningmaterial.system.dto.PdfExtraction;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.entity.AiTaskRow;
+import com.learningmaterial.system.entity.MaterialChunkRow;
+import com.learningmaterial.system.mapper.AiTaskMapper;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskLeaseService;
+import com.learningmaterial.system.service.TaskSourcePreparationService;
 import java.util.ArrayList;
 import java.util.List;
+import org.springframework.boot.autoconfigure.condition.ConditionalOnProperty;
+import org.springframework.stereotype.Component;
 
 @Component
 @ConditionalOnProperty(name = "lms.task.processor.mode", havingValue = "mock")
@@ -21,19 +27,19 @@ public class MockTaskProcessor implements TaskProcessor {
     private final TaskLeaseService leases;
     private final TaskCandidateService candidates;
     private final ObjectMapper json;
-    private final TaskSourcePreparation preparation;
+    private final TaskSourcePreparationService preparation;
 
     public MockTaskProcessor(AiTaskMapper tasks, TaskLeaseService leases,
-                             TaskCandidateService candidates, ObjectMapper json, PdfTextExtractionService pdfText, OcrExtractionService ocr, OcrSettings ocrSettings) {
+                             TaskCandidateService candidates, ObjectMapper json, TaskSourcePreparationService preparation) {
         this.tasks = tasks;
         this.leases = leases;
         this.candidates = candidates;
         this.json = json;
-        this.preparation = new TaskSourcePreparation(leases,candidates,json,pdfText,ocr,ocrSettings);
+        this.preparation = preparation;
     }
 
     @Override
-    public void execute(TaskLeaseService.Lease lease) {
+    public void execute(TaskLease lease) {
         AiTaskRow task = tasks.findById(lease.taskId());
         if (task == null || !leases.isCurrent(lease)) return;
         JsonNode config;
@@ -71,7 +77,7 @@ public class MockTaskProcessor implements TaskProcessor {
 
     private CandidateResult generate(AiTaskRow task, JsonNode snapshot,
                                      List<MaterialChunkRow> sources, JsonNode pageRange,
-                                     PdfTextExtractionService.Extraction extraction) {
+                                     PdfExtraction extraction) {
         boolean metadataOnly = "METADATA".equals(sources.getFirst().getExtractionMethod());
         String first = sources.stream().map(MaterialChunkRow::getContent).filter(content -> !content.isBlank())
             .findFirst().orElseThrow(() -> new TaskExecutionException("SOURCE_TEXT_NOT_AVAILABLE")).stripLeading();

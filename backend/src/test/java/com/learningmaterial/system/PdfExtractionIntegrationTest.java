@@ -1,14 +1,25 @@
 package com.learningmaterial.system;
 
-import com.learningmaterial.system.card.CardService;
-import com.learningmaterial.system.material.FileStorage;
-import com.learningmaterial.system.task.*;
-import com.learningmaterial.system.task.AiTaskDtos.*;
+import com.learningmaterial.system.dto.AiTaskDtos.*;
+import com.learningmaterial.system.dto.TaskLease;
+import com.learningmaterial.system.integration.storage.FileStorage;
+import com.learningmaterial.system.service.AiTaskService;
+import com.learningmaterial.system.service.CardService;
+import com.learningmaterial.system.service.TaskCandidateService;
+import com.learningmaterial.system.service.TaskConfirmationService;
+import com.learningmaterial.system.service.TaskLeaseService;
+import com.learningmaterial.system.task.MockTaskProcessor;
+import com.learningmaterial.system.task.TaskExecutionException;
+import java.io.ByteArrayOutputStream;
+import java.nio.file.Files;
+import java.time.LocalDateTime;
+import java.time.ZoneOffset;
+import java.util.*;
 import org.apache.pdfbox.pdmodel.*;
-import org.apache.pdfbox.pdmodel.font.PDType1Font;
-import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.apache.pdfbox.pdmodel.encryption.AccessPermission;
 import org.apache.pdfbox.pdmodel.encryption.StandardProtectionPolicy;
+import org.apache.pdfbox.pdmodel.font.PDType1Font;
+import org.apache.pdfbox.pdmodel.font.Standard14Fonts;
 import org.junit.jupiter.api.*;
 import org.junit.jupiter.api.condition.EnabledIfEnvironmentVariable;
 import org.junit.jupiter.params.ParameterizedTest;
@@ -17,12 +28,6 @@ import org.springframework.beans.factory.annotation.Autowired;
 import org.springframework.boot.test.context.SpringBootTest;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.test.context.bean.override.mockito.MockitoSpyBean;
-
-import java.io.ByteArrayOutputStream;
-import java.nio.file.Files;
-import java.time.LocalDateTime;
-import java.time.ZoneOffset;
-import java.util.*;
 
 import static org.assertj.core.api.Assertions.*;
 import static org.mockito.ArgumentMatchers.anyString;
@@ -259,7 +264,7 @@ class PdfExtractionIntegrationTest {
         return jdbc.queryForObject("SELECT MAX(id) FROM material WHERE user_id=?", Long.class, user);
     }
 
-    private TaskLeaseService.Lease start(long material, int version, int from, int to) {
+    private TaskLease start(long material, int version, int from, int to) {
         var task = tasks.submit(user, new TaskInput(Long.toString(material), version, UUID.randomUUID().toString(),
             GoalType.REVIEW_CARDS, null, new PageRange(from, to), false, true));
         var lease = leases.claim();

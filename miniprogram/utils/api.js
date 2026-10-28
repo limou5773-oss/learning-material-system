@@ -80,7 +80,7 @@ function uploadImage(filePath, formData) {
         try { payload = JSON.parse(response.data) }
         catch { reject(new ApiError(response.statusCode, '服务端响应格式错误')); return }
         if (response.statusCode < 200 || response.statusCode >= 300) {
-          if (response.statusCode === 401) clearToken()
+          if (response.statusCode === 401 && getToken() === token) clearToken()
           const problem = payload && payload.error
           reject(new ApiError(response.statusCode, problem && problem.message || '图片上传失败',
             problem && problem.code, problem && problem.existingMaterialId))
@@ -125,9 +125,46 @@ function getMe() {
   return request('/users/me')
 }
 
+function updateMe(data) {
+  return request('/users/me', { method: 'PATCH', data })
+}
+
+function getWechatCode() {
+  return new Promise((resolve, reject) => {
+    wx.login({
+      timeout: 10000,
+      success(result) {
+        if (!result.code) {
+          reject(new ApiError(0, '未能取得微信登录凭证，请重试'))
+          return
+        }
+        resolve(result.code)
+      },
+      fail() { reject(new ApiError(0, '无法获取微信登录凭证，请稍后重试')) },
+    })
+  })
+}
+
+async function loginWithWechat() {
+  const code = await getWechatCode()
+  return request('/auth/wechat-sessions', { method: 'POST', auth: false, data: { code } })
+}
+
+async function bindWechat() {
+  const token = getToken()
+  const code = await getWechatCode()
+  if (getToken() !== token) throw new ApiError(409, '登录状态已变化，请重新操作', 'SESSION_CHANGED')
+  return request('/users/me/wechat-binding', { method: 'POST', data: { code } })
+}
+
+function unbindWechat(currentPassword) {
+  return request('/users/me/wechat-binding', { method: 'DELETE', data: { currentPassword } })
+}
+
 function logout() {
   return request('/auth/sessions/current', { method: 'DELETE' })
 }
 
-module.exports = { ApiError, getToken, saveToken, clearToken, request, login, getMe, logout,
+module.exports = { ApiError, getToken, saveToken, clearToken, request, login, loginWithWechat,
+  getMe, updateMe, bindWechat, unbindWechat, logout,
   uploadImage, downloadMaterialFile, downloadMaterialImage: downloadMaterialFile }
