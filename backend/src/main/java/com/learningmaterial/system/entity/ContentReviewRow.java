@@ -18,6 +18,9 @@ public class ContentReviewRow {
     private LocalDateTime createdAt;
     private Integer currentMaterialVersion;
     private String materialStatus;
+    private LocalDateTime supersededAt;
+    public LocalDateTime getSupersededAt() { return supersededAt; }
+    public void setSupersededAt(LocalDateTime value) { supersededAt=value; }
     public Long getId() { return id; }
     public void setId(Long value) { id=value; }
     public Long getMaterialId() { return materialId; }

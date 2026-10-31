@@ -52,8 +52,14 @@ public class ModelOutputProtocol {
         try {
             if (content == null || content.length() > 200_000) invalid();
             JsonNode root = reader.readTree(content);
-            if (agent) fields(root, "summary", "tags", "cards", "relations");
-            else fields(root, "summary", "tags", "cards");
+            if (agent) {
+                // 没有可关联目标时，容忍模型省略空关联；有检索结果仍须遵守完整协议。
+                if (matches.isEmpty() && root.isObject()
+                        && (!root.has("relations") || root.get("relations").isNull())) {
+                    ((com.fasterxml.jackson.databind.node.ObjectNode) root).putArray("relations");
+                }
+                fields(root, "summary", "tags", "cards", "relations");
+            } else fields(root, "summary", "tags", "cards");
             String summary = text(root.get("summary"), 4000, false);
             List<String> tags = tags(root.get("tags"));
             var cards = root.get("cards");

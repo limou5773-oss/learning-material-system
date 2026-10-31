@@ -246,6 +246,7 @@ CREATE TABLE `content_review` (
   `decision_reason` varchar(1000) DEFAULT NULL,
   `created_at` datetime(6) NOT NULL,
   `decided_at` datetime(6) DEFAULT NULL,
+  `superseded_at` datetime(6) DEFAULT NULL,
   PRIMARY KEY (`id`),
   UNIQUE KEY `uk_content_review_version` (`material_id`,`material_version`),
   UNIQUE KEY `uk_content_review_owner` (`id`,`user_id`),
@@ -254,7 +255,7 @@ CREATE TABLE `content_review` (
   KEY `fk_content_review_material_owner` (`material_id`,`user_id`),
   CONSTRAINT `fk_content_review_material_owner` FOREIGN KEY (`material_id`, `user_id`) REFERENCES `material` (`id`, `user_id`),
   CONSTRAINT `chk_content_review_scope` CHECK (((`trigger_type` = _utf8mb4'USER_SUBMITTED') and (`access_scope` = _utf8mb4'MATERIAL_CONTENT'))),
-  CONSTRAINT `chk_content_review_status` CHECK ((`status` in (_utf8mb4'PENDING',_utf8mb4'APPROVED',_utf8mb4'REJECTED'))),
+  CONSTRAINT `chk_content_review_status` CHECK ((`status` in (_utf8mb4'PENDING',_utf8mb4'APPROVED',_utf8mb4'REJECTED',_utf8mb4'SUPERSEDED'))),
   CONSTRAINT `chk_content_review_version` CHECK (((`version` > 0) and (`material_version` > 0)))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
@@ -470,7 +471,7 @@ CREATE TABLE `notification` (
   CONSTRAINT `fk_notification_review_owner` FOREIGN KEY (`review_id`, `user_id`) REFERENCES `content_review` (`id`, `user_id`) ON DELETE CASCADE,
   CONSTRAINT `fk_notification_task_owner` FOREIGN KEY (`task_id`, `user_id`) REFERENCES `ai_task` (`id`, `user_id`) ON DELETE CASCADE,
   CONSTRAINT `chk_notification_channel` CHECK ((`channel_status` = _utf8mb4'NOT_REQUESTED')),
-  CONSTRAINT `chk_notification_target` CHECK ((((`type` in (_utf8mb4'RESULT_READY',_utf8mb4'TASK_FAILED')) and (`task_id` is not null) and (`review_id` is null)) or ((`type` = _utf8mb4'REVIEW_DECIDED') and (`task_id` is null) and (`review_id` is not null))))
+  CONSTRAINT `chk_notification_target` CHECK ((((`type` in (_utf8mb4'RESULT_READY',_utf8mb4'TASK_FAILED')) and (`task_id` is not null) and (`review_id` is null)) or ((`type` in (_utf8mb4'REVIEW_DECIDED',_utf8mb4'REVIEW_SUPERSEDED')) and (`task_id` is null) and (`review_id` is not null))))
 ) ENGINE=InnoDB DEFAULT CHARSET=utf8mb4 COLLATE=utf8mb4_0900_ai_ci;
 /*!40101 SET character_set_client = @saved_cs_client */;
 

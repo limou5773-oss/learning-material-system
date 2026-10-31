@@ -62,7 +62,10 @@ class PdfExtractionIntegrationTest {
         jdbc.update("DELETE FROM knowledge_card WHERE user_id=?", user);
         jdbc.update("DELETE FROM ai_result WHERE task_id IN (SELECT id FROM ai_task WHERE user_id=?)", user);
         jdbc.update("DELETE FROM ai_tool_call WHERE task_id IN (SELECT id FROM ai_task WHERE user_id=?)", user);
+        jdbc.update("DELETE FROM ocr_attempt WHERE task_id IN (SELECT id FROM ai_task WHERE user_id=?)", user);
+        jdbc.update("DELETE FROM model_attempt WHERE task_id IN (SELECT id FROM ai_task WHERE user_id=?)", user);
         jdbc.update("DELETE FROM ai_task WHERE user_id=?", user);
+        jdbc.update("DELETE FROM ocr_page_cache WHERE material_id IN (SELECT id FROM material WHERE user_id=?)", user);
         jdbc.update("DELETE FROM material_chunk WHERE material_id IN (SELECT id FROM material WHERE user_id=?)", user);
         // The initial RED run has no V8 table yet.
         if (jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name='pdf_page_cache'", Integer.class) > 0)

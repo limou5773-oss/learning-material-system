@@ -98,6 +98,19 @@ class AgentModelOutputProtocolTest {
     }
 
     @Test
+    void absentOrNullRelationsAreAllowedOnlyWithoutRecalledCards() {
+        for (String input : List.of(body("[]").replace(",\"relations\":[]", ""), body("null"))) {
+            assertThat(protocol.parseAgent(input, task, prepared(), info, List.of()).relations()).isEmpty();
+            assertThatThrownBy(() -> protocol.parseAgent(input, task, prepared(), info, matches()))
+                    .hasMessage("MODEL_OUTPUT_INVALID");
+        }
+        for (String invalid : List.of("\"none\"", "{}", "false")) {
+            assertThatThrownBy(() -> protocol.parseAgent(body(invalid), task, prepared(), info, List.of()))
+                    .hasMessage("MODEL_OUTPUT_INVALID");
+        }
+    }
+
+    @Test
     void duplicateRelationsAndTamperedPrimaryQuotesAreRejected() {
         String relation = "{\"sourceIndex\":0,\"targetCardId\":\"41\",\"evidenceText\":\"建议\"}";
         assertThatThrownBy(

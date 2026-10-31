@@ -1,20 +1,25 @@
-<view class="page">
-  <text class="eyebrow">EDIT NOTE</text>
-  <view class="title">编辑笔记</view>
+<view class="page form-page note-editor-page {{conflict ? 'is-conflict' : ''}}">
+  <view class="form-header"><view class="form-header-mark"><view class="form-header-icon note-icon"></view></view><view class="form-header-copy"><view class="form-title">编辑笔记</view><view class="form-description">补充理解，让每一份记录更完整。</view></view></view>
   <view wx:if="{{loading}}" class="state">正在加载笔记…</view>
-  <view wx:if="{{material}}" class="card">
+  <view wx:if="{{error}}" class="error" role="alert">{{error}}</view>
+  <button wx:if="{{!material && !loading}}" class="form-secondary" bindtap="load">重新加载笔记</button>
+  <block wx:if="{{material}}">
     <view wx:if="{{restored}}" class="notice">已恢复本机保存的编辑草稿。</view>
-    <view wx:if="{{error}}" class="error">{{error}}</view>
-    <view wx:if="{{conflict && serverCopy}}" class="server-copy">
-      <text>服务器版本 {{serverCopy.version}}：{{serverCopy.title}}</text>
-      <text class="server-content" selectable="true">{{serverCopy.noteText}}</text>
-      <button class="outline" bindtap="discardDraft">放弃草稿，使用服务器版本</button>
+    <view wx:if="{{conflict && serverCopy}}" class="note-server-copy"><view>服务器版本 {{serverCopy.version}}：{{serverCopy.title}}</view><text class="server-content" selectable="true">{{serverCopy.noteText}}</text><button class="form-secondary" bindtap="discardDraft">放弃草稿，使用服务器版本</button></view>
+    <view class="form-panel note-form">
+      <view class="form-field first-field">
+        <label for="note-title" class="form-label"><text>笔记标题<text class="form-required">*</text></text><text class="form-optional">版本 {{material.version}}</text></label>
+        <input id="note-title" class="form-input" value="{{title}}" bindinput="onTitleInput" maxlength="255" disabled="{{saving}}" placeholder="例如：线性代数第三章要点" placeholder-class="form-placeholder" aria-label="笔记标题" />
+      </view>
+      <view class="note-meta">
+        <view class="form-field"><label for="note-subject" class="form-label"><text>学科</text><text class="form-optional">选填</text></label><input id="note-subject" class="form-input" value="{{subject}}" bindinput="onSubjectInput" maxlength="64" disabled="{{saving}}" placeholder="例如：数学" placeholder-class="form-placeholder" aria-label="学科" /></view>
+        <view class="form-field"><label for="note-tags" class="form-label"><text>标签</text><text class="form-optional">选填</text></label><input id="note-tags" class="form-input" value="{{tagsText}}" bindinput="onTagsInput" disabled="{{saving}}" placeholder="用逗号分隔多个标签" placeholder-class="form-placeholder" aria-label="标签，多个标签用逗号隔开" /></view>
+      </view>
+      <view class="form-field note-body">
+        <label for="note-content" class="form-label"><text>笔记正文<text class="form-required">*</text></text><text class="form-optional">{{noteText.length}} / 20000 字</text></label>
+        <textarea id="note-content" class="form-textarea note-textarea" value="{{noteText}}" bindinput="onNoteInput" maxlength="20000" disabled="{{saving}}" placeholder="记录课堂要点、自己的理解，或值得记住的灵感…" placeholder-class="form-placeholder" aria-label="笔记正文" />
+      </view>
     </view>
-    <text class="field-label">标题</text><input class="field-input" value="{{title}}" bindinput="onTitleInput" maxlength="255" />
-    <text class="field-label">学科</text><input class="field-input" value="{{subject}}" bindinput="onSubjectInput" maxlength="64" />
-    <text class="field-label">标签</text><input class="field-input" value="{{tagsText}}" bindinput="onTagsInput" placeholder="多个标签用逗号隔开" />
-    <text class="field-label">正文</text><textarea class="note-textarea" value="{{noteText}}" bindinput="onNoteInput" maxlength="20000" />
-    <view class="character-count">{{noteText.length}} / 20000 字</view>
-    <button class="primary" bindtap="submit" loading="{{saving}}" disabled="{{saving || conflict}}">保存修改</button>
-  </view>
+    <view class="form-action-bar"><button class="form-primary" bindtap="submit" loading="{{saving}}" disabled="{{saving || conflict}}">保存修改</button><view class="form-action-note">{{conflict ? '请先对照服务器版本，当前草稿仍保留' : changed ? '有未保存的修改' : '修改完成后请保存'}}</view></view>
+  </block>
 </view>

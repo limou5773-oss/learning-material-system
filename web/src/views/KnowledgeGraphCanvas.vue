@@ -28,7 +28,7 @@ const layout = computed(() => graphLayout(props.graph))
 </template>
 
 <style scoped>
-.graph-scroll { overflow: auto; max-height: 540px; border: 1px solid #dce5f2; border-radius: 10px; background: #f6f8fd; }
+.graph-scroll { overflow: auto; max-height: 540px; border: 1px solid #dce5f2; border-radius: 14px; background: #f6f8fd; }
 .graph-stage { position: relative; }
 svg { position: absolute; inset: 0; }
 svg > path { fill: none; stroke: #6886ac; stroke-width: 3; cursor: pointer; }
@@ -37,10 +37,10 @@ svg > path.related { stroke: #7f8f9d; }
 svg > path.selected { stroke: #214eb8; stroke-width: 5; }
 svg > path.disabled { cursor: default; }
 .arrow { fill: #536b89; }
-.graph-node { position: absolute; display: flex; flex-direction: column; justify-content: center; gap: 8px; width: 190px; height: 80px; padding: 12px; text-align: left; border: 1px solid #b9cce7; border-radius: 8px; color: #34435a; background: white; font: inherit; cursor: pointer; }
+.graph-node { position: absolute; display: flex; flex-direction: column; justify-content: center; gap: 8px; width: 190px; height: 80px; padding: 12px; text-align: left; border: 1px solid #b9cce7; border-radius: 12px; color: #34435a; background: white; font: inherit; cursor: pointer; }
 .graph-node span { font-size: 11px; color: #64748b; }
 .graph-node strong { overflow: hidden; white-space: nowrap; text-overflow: ellipsis; font-size: 14px; }
-.graph-node[aria-pressed="true"] { border-color: #315bc2; background: #edf3ff; }
+.graph-node[aria-pressed="true"] { border-color: var(--brand-hover); background: #edf3ff; }
 .graph-node:disabled { opacity: .55; cursor: default; }
-.graph-node:focus-visible { outline: 2px solid #315bc2; outline-offset: 3px; }
+.graph-node:focus-visible { outline: 2px solid var(--brand-hover); outline-offset: 3px; }
 </style>

@@ -206,24 +206,27 @@ async function saveParent() {
 
 <style scoped>
 .organization-layout { width: min(100%, 1200px); }
-.organization-panel { padding: 26px; }
-.organization-hint, .organization-status { color: #64748b; font-size: 13px; line-height: 1.75; }
-.organization-status { font-weight: 600; }
-.organization-success { padding: 12px; border-radius: 8px; background: #edf7f0; color: #2e6549; }
-.organization-toolbar { display: flex; flex-wrap: wrap; gap: 10px; margin: 20px 0 12px; }
-.organization-panel button { padding: 10px 14px; border: 1px solid #dce5f2; border-radius: 8px; background: white; color: #315bc2; font: inherit; font-size: 13px; cursor: pointer; }
-.organization-toolbar button[aria-pressed="true"] { border-color: #315bc2; background: #eef3ff; }
-.organization-panel .save-layout, .organization-panel .search-row button { background: #315bc2; color: white; }
+.organization-panel { padding: 24px 26px; }
+.organization-hint, .organization-status { max-width: 86ch; margin: 8px 0; color: #74869e; font-size: 12px; line-height: 1.8; }
+.organization-status { font-weight: 600; color: #4d637f; }
+.organization-success { padding: 11px 14px; border-radius: var(--r-md); background: #eef8f2; color: #226e4c; font-size: 12.5px; }
+.organization-toolbar { display: flex; flex-wrap: wrap; gap: 8px; margin: 16px 0 12px; }
+.organization-panel button { min-height: 36px; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: #fff; color: #47617f; font: inherit; font-size: 12.5px; font-weight: 500; cursor: pointer; transition: background .16s, border-color .16s, color .16s; }
+.organization-panel button:hover:not(:disabled) { border-color: #bcd3f1; background: #f4f8ff; color: var(--brand-hover); }
+.organization-toolbar button[aria-pressed="true"] { border-color: #bcd3f1; background: var(--brand-soft); color: var(--brand-hover); }
+.organization-panel .save-layout, .organization-panel .search-row button { border-color: var(--brand); background: var(--brand); color: #fff; box-shadow: 0 1px 2px rgba(35, 101, 207, .2); }
+.organization-toolbar .save-layout { margin-left: auto; padding-inline: 18px; }
+.organization-panel .save-layout:hover:not(:disabled) { border-color: var(--brand-hover); background: var(--brand-hover); color: #fff; }
 .organization-panel button:disabled, .organization-panel input:disabled, .organization-panel select:disabled { opacity: .55; cursor: default; }
-.organization-inspector { margin-top: 26px; padding-top: 24px; border-top: 1px solid #eef1f6; }
-.organization-inspector h2 { margin: 0 0 18px; font-size: 19px; }
-.organization-inspector label { display: block; color: #43516a; font-size: 13px; margin: 12px 0 8px; }
-.organization-inspector input, .organization-inspector select { min-width: 0; max-width: 100%; width: 100%; padding: 10px 12px; border: 1px solid #dfe6f0; border-radius: 8px; background: white; color: #34435a; font: inherit; }
+.organization-inspector { margin-top: 24px; padding-top: 22px; border-top: 1px solid var(--line); }
+.organization-inspector h2 { margin: 0 0 14px; color: var(--ink); font-size: 16px; font-weight: 600; }
+.organization-inspector label { display: block; color: #4d637f; font-size: 12px; font-weight: 500; margin: 12px 0 7px; }
+.organization-inspector input, .organization-inspector select { min-width: 0; max-width: 100%; width: 100%; padding: 9px 12px; border: 1px solid #e1e9f3; border-radius: var(--r-md); background: #fff; color: #33445e; font: inherit; font-size: 13px; }
 .position-fields { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 16px; }
-.position-fields input { margin-top: 8px; }
-.parent-fields { display: flex; gap: 12px; }
+.position-fields input { margin-top: 6px; }
+.parent-fields { display: flex; gap: 10px; }
 .parent-fields select { flex: 1; }
 .parent-fields button { flex-shrink: 0; }
-.organization-panel :is(button, input, select):focus-visible { outline: 2px solid #315bc2; outline-offset: 2px; }
-@media (max-width: 700px) { .organization-panel { padding: 20px; } .position-fields { grid-template-columns: 1fr; gap: 0; } .parent-fields { flex-wrap: wrap; } }
+.organization-panel :is(button, input, select):focus-visible { outline: 2px solid var(--brand-hover); outline-offset: 2px; }
+@media (max-width: 700px) { .organization-panel { padding: 20px; } .position-fields { grid-template-columns: 1fr; gap: 0; } .parent-fields { flex-wrap: wrap; } .organization-toolbar .save-layout { margin-left: 0; } }
 </style>

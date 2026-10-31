@@ -1,4 +1,1 @@
-.note-textarea { box-sizing: border-box; width: 100%; min-height: 390rpx; padding: 22rpx 24rpx; border: 1rpx solid #d9e4d9; border-radius: 16rpx; background: #fafcf9; font-size: 28rpx; line-height: 1.6; }
-.character-count { margin-top: 12rpx; color: #9aa9a0; font-size: 22rpx; text-align: right; }
-.server-copy { padding: 22rpx; background: #f5f7f4; border-radius: 16rpx; font-size: 27rpx; }
-.server-content { display: block; max-height: 300rpx; margin-top: 16rpx; overflow: auto; white-space: pre-wrap; }
+@import "../../styles/note-editor.wxss";

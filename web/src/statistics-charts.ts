@@ -6,7 +6,7 @@ export type ChartKind = 'subjects' | 'uploads' | 'statuses'
 export interface ChartDatum { label: string; count: number }
 type ChartOption = ComposeOption<BarSeriesOption | LineSeriesOption | PieSeriesOption | AriaComponentOption | GridComponentOption | TooltipComponentOption>
 
-export function statisticsChartOption(kind: ChartKind, data: ChartDatum[], title: string): ChartOption {
+export function statisticsChartOption(kind: ChartKind, data: ChartDatum[], title: string, compact = false): ChartOption {
   const common: ChartOption = {
     animation: false,
     color: ['#4777de', '#60a5b9', '#d8a35c', '#5c9c79', '#c76e68', '#8b92a5'],
@@ -14,8 +14,10 @@ export function statisticsChartOption(kind: ChartKind, data: ChartDatum[], title
     tooltip: { renderMode: 'richText', confine: true },
     aria: { enabled: true, label: { description: `${title}。完整数据可通过下方数据表阅读。` }, decal: { show: true } },
   }
-  if (kind === 'statuses') return { ...common, series: [{ type: 'pie', radius: ['42%', '65%'], center: ['50%', '46%'],
-    avoidLabelOverlap: true, label: { formatter: '{b}：{c}', fontSize: 12 },
+  if (kind === 'statuses') return { ...common, series: [{ type: 'pie', radius: compact ? ['36%', '54%'] : ['42%', '65%'], center: ['50%', '46%'],
+    avoidLabelOverlap: true, label: { formatter: compact ? '{b}\n{c}' : '{b}：{c}', fontSize: compact ? 11 : 12,
+      ...(compact ? { alignTo: 'edge' as const, edgeDistance: 4, distanceToLabelLine: 2 } : {}) },
+    ...(compact ? { labelLine: { length: 6, length2: 4 } } : {}),
     data: data.map(item => ({ name: item.label, value: item.count })) }] }
   const horizontal = kind === 'subjects'
   return { ...common,

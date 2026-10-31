@@ -6,6 +6,7 @@ import com.learningmaterial.system.service.AuthService;
 import java.time.Clock;
 import java.util.List;
 import org.springframework.context.annotation.Bean;
+import org.springframework.boot.context.properties.EnableConfigurationProperties;
 import org.springframework.context.annotation.Configuration;
 import org.springframework.http.HttpMethod;
 import org.springframework.security.config.annotation.web.builders.HttpSecurity;
@@ -20,6 +21,7 @@ import org.springframework.web.cors.CorsConfigurationSource;
 import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
 
 @Configuration
+@EnableConfigurationProperties(JwtProperties.class)
 public class SecurityConfig {
     @Bean
     Clock clock() { return Clock.systemUTC(); }

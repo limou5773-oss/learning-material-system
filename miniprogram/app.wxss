@@ -124,11 +124,10 @@ button::after { border: 0; }
   margin: 40rpx 0 0;
   height: 96rpx;
   border-radius: var(--r-md);
-  background: var(--grad-brand);
+  background: var(--brand);
   color: #fff;
   font-size: 30rpx;
   font-weight: 600;
-  box-shadow: 0 12rpx 28rpx rgba(47, 123, 246, .26);
   transition: opacity .15s, transform .1s;
 }
 .primary:active { background: var(--brand-press); transform: scale(.985); }
@@ -180,3 +179,95 @@ button::after { border: 0; }
   font-size: 23rpx;
   font-weight: 500;
 }
+
+/* ============================================================
+   列表页共用：顶部操作 / 搜索 / 筛选 / 骨架 / 空态 / 分页
+   materials · cards · tasks 复用
+   ============================================================ */
+.toolbar-actions { display: flex; gap: 14rpx; }
+.chip-action {
+  display: flex;
+  align-items: center;
+  gap: 4rpx;
+  padding: 14rpx 28rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand);
+  color: #fff;
+  font-size: 25rpx;
+  font-weight: 600;
+}
+.chip-action .plus { font-size: 28rpx; }
+.chip-action.ghost { background: var(--brand-soft); color: var(--brand-ink); }
+
+.search-bar {
+  display: flex;
+  align-items: center;
+  gap: 16rpx;
+  height: 84rpx;
+  padding: 0 16rpx 0 28rpx;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.search-ico {
+  flex-shrink: 0;
+  width: 34rpx;
+  height: 34rpx;
+  background: no-repeat center/contain url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjOTRhMGIwIiBzdHJva2Utd2lkdGg9IjIiIHN0cm9rZS1saW5lY2FwPSJyb3VuZCIgc3Ryb2tlLWxpbmVqb2luPSJyb3VuZCI+PGNpcmNsZSBjeD0iMTEiIGN5PSIxMSIgcj0iNyIvPjxwYXRoIGQ9Im0yMSAyMS00LjQtNC40Ii8+PC9zdmc+");
+}
+.search-input { flex: 1; font-size: 28rpx; color: var(--ink); }
+.search-btn {
+  flex-shrink: 0;
+  padding: 0 32rpx;
+  height: 64rpx;
+  line-height: 64rpx;
+  border-radius: var(--r-pill);
+  background: var(--brand);
+  color: #fff;
+  font-size: 26rpx;
+  font-weight: 600;
+}
+
+.filter-row { display: flex; flex-wrap: wrap; gap: 14rpx; margin-top: 20rpx; }
+.filter-input,
+.filter-pick,
+.fav-toggle {
+  height: 64rpx;
+  line-height: 64rpx;
+  padding: 0 24rpx;
+  border-radius: var(--r-pill);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  color: var(--ink-2);
+  font-size: 25rpx;
+}
+.filter-input { flex: 1; min-width: 150rpx; box-sizing: border-box; }
+.fav-toggle.on { background: var(--brand); color: #fff; }
+
+.skeleton-item {
+  margin-bottom: 20rpx;
+  padding: 32rpx;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.sk { border-radius: 8rpx; background: linear-gradient(90deg, #eef2f6 25%, #f6f9fb 50%, #eef2f6 75%); background-size: 400% 100%; animation: sk 1.4s ease infinite; }
+.sk-line { height: 28rpx; margin-bottom: 18rpx; }
+.sk-line:last-child { margin-bottom: 0; }
+.w40 { width: 40%; } .w60 { width: 60%; } .w80 { width: 80%; }
+@keyframes sk { 0% { background-position: 100% 0; } 100% { background-position: -100% 0; } }
+
+.empty { padding: 120rpx 24rpx; text-align: center; }
+.empty-ico {
+  width: 120rpx;
+  height: 120rpx;
+  margin: 0 auto 28rpx;
+  background: no-repeat center/contain url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjYzNjZGRhIiBzdHJva2Utd2lkdGg9IjEuNSIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNNiAyaDhsNCA0djE2SDZ6Ii8+PHBhdGggZD0iTTE0IDJ2NGg0Ii8+PHBhdGggZD0iTTkgMTNoNiIvPjxwYXRoIGQ9Ik05IDE3aDQiLz48L3N2Zz4=");
+}
+.empty-text { color: var(--ink-2); font-size: 28rpx; font-weight: 600; }
+.empty-sub { margin-top: 12rpx; color: var(--ink-3); font-size: 24rpx; }
+
+.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 28rpx; color: var(--ink-3); font-size: 23rpx; }
+.pagination button { margin: 0; padding: 0 24rpx; height: 64rpx; line-height: 64rpx; border-radius: var(--r-pill); background: var(--surface); box-shadow: var(--shadow-sm); color: var(--brand-ink); font-size: 24rpx; }
+.pagination button[disabled] { opacity: .4; }
+.retry { margin-top: 10rpx; text-decoration: underline; }

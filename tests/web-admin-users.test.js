@@ -2,6 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
+const withinMain = node => Boolean(node && (node.tag === 'main' || withinMain(node.parent)))
 
 const user = (id = '2', status = 'ENABLED', role = 'USER') => ({ id, username: `account_${id}`,
   displayName: `用户 ${id}`, role, status, hasWechatBinding: false, createdAt: '2026-10-26T01:00:00Z' })
@@ -28,17 +29,18 @@ async function mount(t, request, options = {}) {
       const descriptor = parse(source).descriptor, script = compileScript(descriptor, { id: filename })
       source = script.content
       template = compileTemplate({ source: descriptor.template.content, filename, id: filename,
-        compilerOptions: { bindingMetadata: script.bindings } }).code
+        compilerOptions: { bindingMetadata: script.bindings, hoistStatic: false } }).code
     }
     const compile = value => ts.transpileModule(value, { compilerOptions: { module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText
     const module = { exports: {} }
     new Function('require', 'module', 'exports', compile(source))(specifier => {
       if (specifier === 'vue') return vue
+      if (specifier === 'element-plus') return require('./helpers/element-plus')(vue)
       if (specifier === 'vue-router') return { ...vueRouter, createWebHistory: vueRouter.createMemoryHistory }
       if (specifier.endsWith('/auth')) return { session, clearSession() { session.value = null } }
       if (specifier.endsWith('/api')) return { api: request, ApiRequestError: RequestError }
-      if (specifier.endsWith('.vue') && !/AdminUsers|ForbiddenView|MaterialsView|App.vue/.test(specifier)) return { render: () => vue.h('div') }
+      if (specifier.endsWith('.vue') && !/AdminUsers|ForbiddenView|MaterialsView|App.vue|Layout|UiIcon/.test(specifier)) return { render: () => vue.h('div') }
       if (specifier.startsWith('.')) {
         const target = path.resolve(path.dirname(filename), specifier)
         return load(target.endsWith('.vue') ? target : `${target}.ts`)
@@ -194,10 +196,10 @@ test('写入在途锁定控件、切换和路由，拒绝重复提交', async t 
   const h = await mount(t, async (url, method = 'GET') => { if (method === 'PATCH') { writes++; return pending.promise }; reads++; return page([user(), user('3')], 1, 41) })
   const view = h.state(); await view.selectUser(view.results.items[0]); view.reason = '原因'
   const saving = view.submit(); await h.flush()
-  const controls = h.all().filter(node => ['button', 'select', 'input', 'textarea'].includes(node.tag))
+  const controls = h.all().filter(node => ['button', 'select', 'input', 'textarea'].includes(node.tag) && withinMain(node))
   assert.ok(controls.length >= 8); assert.ok(controls.every(node => node.props.disabled === true))
   await view.submit(); await view.selectUser(view.results.items[1]); await view.cancelEdit(); await view.applyFilters(); await view.changePage(2); await view.load()
-  await h.router.push('/cards'); await h.flush()
+  await h.router.push('/admin/reviews'); await h.flush()
   assert.equal(h.router.currentRoute.value.path, '/admin/users'); assert.equal(writes, 1); assert.equal(reads, 1)
   assert.equal(view.selected.id, '2'); assert.equal(view.reason, '原因')
   pending.resolve(user('2', 'DISABLED')); await saving; await h.flush(); assert.equal(reads, 2)
@@ -209,14 +211,14 @@ test('脏原因切换对象、筛选、取消、离页或同路径查询变化�
   h.consent(false)
   await view.selectUser(view.results.items[1]); await view.cancelEdit(); await view.applyFilters(); await view.changePage(2)
   assert.equal(view.selected.id, '2'); assert.equal(view.reason, '尚未保存'); assert.equal(view.page, 1)
-  await h.router.push('/cards'); await h.router.push('/admin/users?source=menu'); await h.flush()
+  await h.router.push('/admin/reviews'); await h.router.push('/admin/users?source=menu'); await h.flush()
   assert.equal(h.router.currentRoute.value.fullPath, '/admin/users'); assert.equal(view.reason, '尚未保存')
   let blocked = false; const unload = { preventDefault() { blocked = true }, returnValue: undefined }
   h.events.get('beforeunload')(unload); assert.equal(blocked, true); assert.equal(unload.returnValue, '')
   h.consent(true); await view.selectUser(view.results.items[1]); await h.flush()
   assert.equal(view.selected.id, '3'); assert.equal(view.reason, '')
-  view.reason = '另一个原因'; await h.router.push('/cards'); await h.flush()
-  assert.equal(h.router.currentRoute.value.path, '/cards'); assert.equal(view.results, null); assert.equal(view.selected, null); assert.equal(view.reason, '')
+  view.reason = '另一个原因'; await h.router.push('/admin/reviews'); await h.flush()
+  assert.equal(h.router.currentRoute.value.path, '/admin/reviews'); assert.equal(view.results, null); assert.equal(view.selected, null); assert.equal(view.reason, '')
 })
 
 test('账号、token、角色变化清空列表草稿，旧401和403不能退出或拒绝新会话', async t => {

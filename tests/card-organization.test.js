@@ -90,17 +90,18 @@ async function mountOrganization(t, request) {
       const descriptor = parse(source).descriptor, script = compileScript(descriptor, { id: filename })
       source = script.content
       template = compileTemplate({ source: descriptor.template.content, filename, id: filename,
-        compilerOptions: { bindingMetadata: script.bindings } }).code
+        compilerOptions: { bindingMetadata: script.bindings, hoistStatic: false } }).code
     }
     const compile = value => ts.transpileModule(value, { compilerOptions: { module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText
     const module = { exports: {} }
     new Function('require', 'module', 'exports', compile(source))(specifier => {
       if (specifier === 'vue') return vue
+      if (specifier === 'element-plus') return require('./helpers/element-plus')(vue)
       if (specifier === 'vue-router') return { ...vueRouter, createWebHistory: vueRouter.createMemoryHistory }
-      if (specifier.endsWith('/auth')) return { session: vue.ref({ user: { id: 'alice' } }), clearSession() {} }
+      if (specifier.endsWith('/auth')) return { session: vue.ref({ user: { id: 'alice', role: 'USER', username: 'test_user', displayName: '测试用户' } }), clearSession() {} }
       if (specifier.endsWith('/api')) return { api: request, ApiRequestError: RequestError }
-      if (specifier.endsWith('.vue') && !/Organization/.test(specifier)) return { render: () => vue.h('div') }
+      if (specifier.endsWith('.vue') && !/Organization|Layout|UiIcon/.test(specifier)) return { render: () => vue.h('div') }
       if (specifier.startsWith('.')) {
         const target = path.resolve(path.dirname(filename), specifier)
         return load(target.endsWith('.vue') ? target : `${target}.ts`)

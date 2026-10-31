@@ -1,5 +1,5 @@
 <script setup lang="ts">
-import { onMounted, reactive, ref } from 'vue'
+import { computed, onMounted, reactive, ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { api, ApiRequestError } from '../api'
 import { clearSession } from '../auth'
@@ -12,6 +12,7 @@ const material = ref<Material | null>(null)
 const loading = ref(false)
 const saving = ref(false)
 const error = ref('')
+const restricted = computed(() => material.value?.accessState === 'RESTRICTED')
 const form = reactive({ goalType: 'REVIEW_CARDS' as GoalType, instruction: '',
   from: 1, to: 1, allowRelatedSearch: false, consent: false })
 
@@ -30,6 +31,7 @@ async function load() {
 async function submit() {
   if (!material.value || saving.value) return
   error.value = ''
+  if (restricted.value) { error.value = '这份资料的内容已变更，需重新送审通过后才能发起整理'; return }
   if (!form.consent) { error.value = '请先同意资料用于外部处理'; return }
   if (form.instruction.length > 1000) { error.value = '补充说明不能超过 1000 字'; return }
   if (material.value.type === 'PDF' && (!Number.isInteger(form.from) || !Number.isInteger(form.to) ||
@@ -71,6 +73,7 @@ onMounted(load)
     <p v-if="loading" class="list-state">正在读取资料…</p>
     <section v-if="material" class="materials-panel editor-panel">
       <p class="task-source">资料：{{ material.title }} · 版本 {{ material.version }}</p>
+      <p v-if="restricted" class="restricted-notice" role="status">这份资料的内容在审核通过后被修改过，AI 整理已暂停。请先回到资料详情重新送审，通过后再提交任务。</p>
       <form @submit.prevent="submit">
         <label for="task-goal">整理目标</label>
         <select id="task-goal" v-model="form.goalType"><option value="REVIEW_CARDS">生成复习卡片</option><option value="EXTRACT_KEY_POINTS">提炼课件重点</option><option value="LINK_NOTES">整理并关联已有笔记</option></select>
@@ -80,9 +83,13 @@ onMounted(load)
         <label class="task-check"><input v-model="form.allowRelatedSearch" type="checkbox" /> {{ relatedSearchDescription }}</label>
         <label class="task-check"><input v-model="form.consent" type="checkbox" /> {{ externalProcessingConsent }}</label>
         <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
-        <div class="editor-actions"><span>提交后可在“整理任务”查看状态</span><button type="submit" :disabled="saving">{{ saving ? '正在提交…' : '提交任务' }}</button></div>
+        <div class="editor-actions"><span>提交后可在“整理任务”查看状态</span><button type="submit" :disabled="saving || restricted">{{ saving ? '正在提交…' : '提交任务' }}</button></div>
       </form>
     </section>
     <p v-else-if="error" class="inline-error" role="alert">{{ error }} <button type="button" @click="load">重试</button></p>
   </div>
 </template>
+
+<style scoped>
+.restricted-notice { margin: 0 0 18px; padding: 12px 16px; border-radius: var(--r-md); background: #fff6e8; color: #815016; font-size: 13px; line-height: 1.7; }
+</style>

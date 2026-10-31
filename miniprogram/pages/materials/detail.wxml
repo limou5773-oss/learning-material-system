@@ -1,38 +1,38 @@
-<view class="page">
+<view class="page form-page material-detail-page">
   <view wx:if="{{loading}}" class="state">正在加载资料…</view>
-  <view wx:if="{{error}}" class="error">{{error}}<view class="retry" bindtap="load">点击重试</view></view>
-  <view wx:if="{{material}}" class="card detail-card">
-    <text class="eyebrow">{{material.type === 'IMAGE' ? '图片资料' : material.type === 'PDF' ? 'PDF 资料' : '文字笔记'}} · 版本 {{material.version}}{{material.status === 'ARCHIVED' ? ' · 已归档' : ''}}</text>
-    <view class="title">{{material.title}}</view>
-    <view class="detail-meta"><text>{{material.subject || '未分类'}}</text><text wx:for="{{material.tags}}" wx:for-item="tag" wx:key="id" class="tag-pill">#{{tag.name}}</text></view>
-    <text wx:if="{{material.type === 'NOTE'}}" class="note-content" selectable="true">{{material.noteText}}</text>
-    <view wx:if="{{material.type === 'IMAGE'}}" class="image-preview">
-      <image wx:if="{{previewPath}}" src="{{previewPath}}" mode="widthFix" class="original-image" />
-      <view wx:elif="{{previewError}}" class="error">{{previewError}}<view class="retry" bindtap="load">重试</view></view>
-      <view wx:else class="state">正在读取图片…</view>
+  <view wx:if="{{error}}" class="error" role="alert">{{error}}<view class="retry" bindtap="load">点击重试</view></view>
+  <block wx:if="{{material}}">
+    <view class="form-panel detail-header">
+      <view class="detail-badges"><text class="detail-type">{{material.type === 'IMAGE' ? '图片资料' : material.type === 'PDF' ? 'PDF 资料' : '文字笔记'}}</text><text wx:if="{{material.status === 'ARCHIVED'}}" class="archive-badge">已归档</text><text class="detail-version">版本 {{material.version}}</text></view>
+      <view class="detail-title">{{material.title}}</view>
+      <view class="detail-meta"><text class="subject-pill">{{material.subject || '未分类'}}</text><text wx:for="{{material.tags}}" wx:for-item="tag" wx:key="id" class="tag-pill">#{{tag.name}}</text></view>
     </view>
-    <view wx:if="{{material.type === 'PDF'}}" class="pdf-preview"><text>{{material.pageCount || '?'}} 页</text><button class="primary" bindtap="openPdf" disabled="{{busy}}">{{busy ? '正在读取…' : '预览 PDF'}}</button><view wx:if="{{previewError}}" class="error">{{previewError}}</view></view>
-    <view wx:if="{{actionError}}" class="error">{{actionError}}<view class="retry" bindtap="load">刷新版本</view></view>
-    <button wx:if="{{material.type === 'NOTE'}}" class="primary" bindtap="edit">编辑笔记</button>
+    <view wx:if="{{material.type === 'NOTE'}}" class="form-panel reading-panel"><view class="reading-heading">笔记正文</view><text class="note-content" selectable="true">{{material.noteText}}</text></view>
+    <view wx:if="{{material.type === 'IMAGE'}}" class="form-panel image-preview">
+      <view class="reading-heading">图片预览</view>
+      <view class="image-canvas"><image wx:if="{{previewPath}}" src="{{previewPath}}" mode="widthFix" class="original-image" /><view wx:elif="{{previewError}}" class="error">{{previewError}}<view class="retry" bindtap="load">重试</view></view><view wx:else class="state">正在读取图片…</view></view>
+      <view class="image-caption">按原始比例展示图片内容</view>
+    </view>
+    <view wx:if="{{material.type === 'PDF'}}" class="form-panel pdf-preview"><view class="reading-heading">PDF 文件</view><view class="pdf-description">共 {{material.pageCount || '?'}} 页，可打开文件预览内容。</view><button class="form-primary" bindtap="openPdf" disabled="{{busy}}">{{busy ? '正在读取…' : '预览 PDF'}}</button><view wx:if="{{previewError}}" class="error">{{previewError}}</view></view>
+    <view class="form-panel reading-panel summary-panel"><view class="reading-heading">资料摘要</view><text wx:if="{{material.summary}}" class="note-content" selectable="true">{{material.summary}}</text><view wx:else class="summary-empty">尚未保存资料摘要，可在 AI 整理后核对并确认保存。</view></view>
     <view wx:if="{{material.accessState === 'RESTRICTED'}}" class="review-restriction">此资料已限制 AI 整理。仍可查阅原文和原文件，请修正后重新送审，通过后再使用 AI。</view>
-    <button class="outline" bindtap="newTask" disabled="{{reviewSaving || material.accessState === 'RESTRICTED'}}">{{material.accessState === 'RESTRICTED' ? 'AI 整理已限制' : '提交整理任务'}}</button>
-    <button class="outline" bindtap="toggleFavorite" disabled="{{favoriteBusy}}">{{material.favorite ? '★ 取消收藏' : '☆ 收藏'}}</button>
-    <button class="outline" bindtap="changeArchive" disabled="{{busy}}">{{material.status === 'ARCHIVED' ? '恢复使用' : '归档'}}</button>
-    <button class="outline delete-action" bindtap="remove" disabled="{{busy}}">删除</button>
-    <view class="review-section">
+    <view wx:if="{{actionError}}" class="error" role="alert">{{actionError}}<view class="retry" bindtap="load">刷新版本</view></view>
+    <view class="detail-main-actions {{material.type === 'NOTE' ? 'with-note' : ''}}"><button wx:if="{{material.type === 'NOTE'}}" class="form-secondary" bindtap="edit">编辑笔记</button><button class="form-primary" bindtap="newTask" disabled="{{reviewSaving || material.accessState === 'RESTRICTED'}}">{{material.accessState === 'RESTRICTED' ? 'AI 整理已限制' : 'AI 智能整理'}}</button></view>
+    <view class="detail-tools"><button class="form-secondary {{material.favorite ? 'is-favorite' : ''}}" bindtap="toggleFavorite" disabled="{{favoriteBusy}}">{{material.favorite ? '★ 已收藏' : '☆ 收藏'}}</button><button class="form-secondary" bindtap="changeArchive" disabled="{{busy}}">{{material.status === 'ARCHIVED' ? '恢复使用' : '归档'}}</button><button class="form-secondary delete-action" bindtap="remove" disabled="{{busy}}">删除资料</button></view>
+    <view class="form-panel review-section">
       <view class="review-heading">资料审核</view>
       <view class="review-help">主动提交即授权管理员查看当前版本 {{material.version}} 的正文和原文件并进行审核。编辑后旧版本授权失效。</view>
       <view wx:if="{{reviewNotice}}" class="review-notice">{{reviewNotice}}</view>
-      <view wx:if="{{reviewActionError}}" class="error">{{reviewActionError}}<button class="outline" bindtap="refreshReviewMaterial" disabled="{{loading || reviewLoading || reviewSaving}}">刷新资料版本（保留理由）</button></view>
+      <view wx:if="{{reviewActionError}}" class="error">{{reviewActionError}}<button class="form-secondary" bindtap="refreshReviewMaterial" disabled="{{loading || reviewLoading || reviewSaving}}">刷新资料版本（保留理由）</button></view>
       <label for="review-reason">送审理由（必填）</label>
-      <textarea id="review-reason" value="{{reviewReason}}" bindinput="onReviewReason" maxlength="1000" disabled="{{loading || reviewLoading || reviewSaving || alreadySubmitted}}" placeholder="说明需要审核的原因" />
+      <textarea class="form-textarea" id="review-reason" value="{{reviewReason}}" bindinput="onReviewReason" maxlength="1000" disabled="{{loading || reviewLoading || reviewSaving || alreadySubmitted}}" placeholder="说明需要审核的原因" />
       <view wx:if="{{alreadySubmitted}}" class="review-help">当前版本已送审。需要再次提交时，请先编辑资料产生新版本。</view>
-      <button class="primary" bindtap="submitReview" disabled="{{loading || busy || reviewLoading || reviewSaving || !reviewLoaded || alreadySubmitted}}">{{reviewSaving ? '正在提交…' : '授权并提交当前版本'}}</button>
-      <button class="outline" bindtap="loadReviewHistory" disabled="{{loading || reviewLoading || reviewSaving}}">刷新审核历史</button>
+      <button class="form-primary" bindtap="submitReview" disabled="{{loading || busy || reviewLoading || reviewSaving || !reviewLoaded || alreadySubmitted}}">{{reviewSaving ? '正在提交…' : '授权并提交当前版本'}}</button>
+      <button class="form-secondary" bindtap="loadReviewHistory" disabled="{{loading || reviewLoading || reviewSaving}}">刷新审核历史</button>
       <view wx:if="{{reviewLoading}}" class="state">正在读取审核历史…</view><view wx:if="{{reviewError}}" class="error">{{reviewError}}</view>
       <view wx:if="{{!reviewLoading && !reviewError && reviewLoaded && !reviewItems.length}}" class="state">{{reviewPage > 1 ? '本页暂无审核记录，请返回上一页。' : '尚未提交审核。'}}</view>
-      <view wx:for="{{reviewItems}}" wx:key="id" class="review-record"><view>版本 {{item.materialVersion}} · {{item.statusLabel}} · {{item.isCurrent ? '当前版本' : '旧版本授权已失效'}}</view><text selectable="true">送审理由：{{item.reason}}</text><text wx:if="{{item.decisionReason}}" selectable="true">处置原因：{{item.decisionReason}}</text><view class="review-help">{{item.createdAt}}</view></view>
+      <view wx:for="{{reviewItems}}" wx:key="id" class="review-record"><view>版本 {{item.materialVersion}} · {{item.statusLabel}} · {{item.isCurrent ? '当前版本' : '旧版本授权已失效'}}</view><text selectable="true">送审理由：{{item.reason}}</text><text wx:if="{{item.decisionReason}}" selectable="true">处置原因：{{item.decisionReason}}</text><view wx:if="{{item.supersededAt}}" class="review-help">失效时间：{{item.supersededAt}}</view><view class="review-help">{{item.createdAt}}</view></view>
       <view wx:if="{{reviewPage > 1 || reviewTotal > 20}}" class="pagination"><button bindtap="reviewPrevious" disabled="{{reviewLoading || reviewSaving || reviewPage <= 1}}">上一页</button><text>第 {{reviewPage}} 页</text><button bindtap="reviewNext" disabled="{{reviewLoading || reviewSaving || reviewPage * 20 >= reviewTotal}}">下一页</button></view>
     </view>
-  </view>
+  </block>
 </view>

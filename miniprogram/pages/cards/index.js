@@ -4,7 +4,10 @@ const { cardListPath } = require('../../utils/card-editor')
 Page({
   data: { items: [], page: 1, total: 0, loading: false, error: '', keyword: '', subject: '', tag: '', favoriteOnly: false,
     applied: { keyword: '', subject: '', tag: '', favoriteOnly: false } },
-  onShow() { this.load() },
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ selected: 1 })
+    this.load()
+  },
   async load(next) {
     if (this.data.loading) return
     if (!getToken()) { wx.reLaunch({ url: '/pages/login/index?reason=expired' }); return }
@@ -22,6 +25,13 @@ Page({
   onSubjectInput(event) { this.setData({ subject: event.detail.value }) },
   onTagInput(event) { this.setData({ tag: event.detail.value }) },
   onFavoriteChange(event) { this.setData({ favoriteOnly: event.detail.value }) },
+  toggleFavFilter() {
+    const favoriteOnly = !this.data.favoriteOnly
+    const { keyword, subject, tag } = this.data
+    this.setData({ favoriteOnly, applied: { keyword, subject, tag, favoriteOnly }, page: 1 })
+    return this.load(1)
+  },
+  onPullDownRefresh() { Promise.resolve(this.load()).finally(() => wx.stopPullDownRefresh()) },
   search() {
     if (this.data.loading) return
     const { keyword, subject, tag, favoriteOnly } = this.data
@@ -31,6 +41,5 @@ Page({
   previous() { if (this.data.page > 1) return this.load(this.data.page - 1) },
   next() { if (this.data.page * 20 < this.data.total) return this.load(this.data.page + 1) },
   openCard(event) { wx.navigateTo({ url: `/pages/cards/detail?id=${encodeURIComponent(event.currentTarget.dataset.id)}` }) },
-  openTasks() { wx.navigateTo({ url: '/pages/tasks/index' }) },
-  createCard() { wx.navigateTo({ url: '/pages/cards/editor' }) },
+  openTasks() { wx.switchTab({ url: '/pages/tasks/index' }) },
 })

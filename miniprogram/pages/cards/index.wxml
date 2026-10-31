@@ -1,13 +1,52 @@
-<view class="page"><text class="eyebrow">KNOWLEDGE LIBRARY</text><view class="title">知识卡片</view><view class="lead">管理自己的学习要点与创建时的来源。</view>
-  <button class="primary" bindtap="createCard">人工创建卡片</button>
-  <view class="card"><label for="card-keyword" class="field-label">搜索标题或正文</label><input id="card-keyword" aria-label="搜索标题或正文" class="field-input" value="{{keyword}}" bindinput="onKeywordInput" maxlength="100" confirm-type="search" bindconfirm="search" />
-    <label for="filter-subject" class="field-label">学科</label><input id="filter-subject" aria-label="按学科筛选" class="field-input" value="{{subject}}" bindinput="onSubjectInput" maxlength="64" placeholder="精确匹配，可选" />
-    <label for="filter-tag" class="field-label">标签</label><input id="filter-tag" aria-label="按标签筛选" class="field-input" value="{{tag}}" bindinput="onTagInput" maxlength="64" placeholder="精确匹配，可选" />
-    <label class="favorite-filter"><switch checked="{{favoriteOnly}}" bindchange="onFavoriteChange" aria-label="仅收藏" />仅收藏</label><button class="outline" bindtap="search" disabled="{{loading}}">搜索卡片</button>
+<view class="page cards-page">
+  <view class="toolbar">
+    <view class="toolbar-title">知识卡片</view>
   </view>
-  <view wx:if="{{error}}" class="error">{{error}}</view><button wx:if="{{error}}" class="outline" bindtap="load">重试</button>
-  <view wx:if="{{loading}}" class="state">正在读取…</view><view wx:if="{{!loading && !error && !items.length}}" class="state">没有符合当前条件的卡片。可调整筛选，或人工创建卡片。</view>
-  <view wx:for="{{items}}" wx:key="id" class="card card-item" data-id="{{item.id}}" bindtap="openCard"><view class="muted">{{item.generationLabel}}{{item.favorite ? ' · 已收藏' : ''}}</view><view class="card-title">{{item.title}}</view><view class="preview">{{item.summary || item.content}}</view><view wx:if="{{item.subject}}" class="muted">{{item.subject}}</view><text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag-pill">{{tag}}</text></view>
-  <view wx:if="{{total > 20}}" class="pagination"><button disabled="{{loading || page === 1}}" bindtap="previous">上一页</button><text>{{page}} 页 · {{total}} 张</text><button disabled="{{loading || page * 20 >= total}}" bindtap="next">下一页</button></view>
-  <button class="outline" bindtap="openTasks">前往整理任务</button>
+
+  <view class="search-bar">
+    <view class="search-ico"></view>
+    <input class="search-input" value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索标题或正文" placeholder-style="color:#a0aab8" maxlength="100" confirm-type="search" bindconfirm="search" />
+    <view class="search-btn" bindtap="search">搜索</view>
+  </view>
+
+  <view class="filter-row">
+    <input class="filter-input" value="{{subject}}" bindinput="onSubjectInput" placeholder="学科" placeholder-style="color:#a0aab8" maxlength="64" />
+    <input class="filter-input" value="{{tag}}" bindinput="onTagInput" placeholder="标签" placeholder-style="color:#a0aab8" maxlength="64" />
+    <view class="fav-toggle {{favoriteOnly ? 'on' : ''}}" bindtap="toggleFavFilter">★ 收藏</view>
+  </view>
+
+  <view wx:if="{{error}}" class="error">{{error}}<view class="retry" bindtap="load">点击重试</view></view>
+
+  <view wx:if="{{loading}}" class="card-list">
+    <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-item">
+      <view class="sk sk-line w40"></view>
+      <view class="sk sk-line w80"></view>
+      <view class="sk sk-line w60"></view>
+    </view>
+  </view>
+  <view wx:elif="{{!items.length}}" class="empty">
+    <view class="empty-ico"></view>
+    <view class="empty-text">没有符合条件的卡片</view>
+    <view class="empty-sub">调整筛选条件，或点底部“＋”新建卡片</view>
+  </view>
+  <view wx:else class="card-list">
+    <view wx:for="{{items}}" wx:key="id" class="knowledge-card" data-id="{{item.id}}" bindtap="openCard">
+      <view class="kc-top">
+        <text class="kc-label">{{item.generationLabel}}</text>
+        <text wx:if="{{item.favorite}}" class="kc-fav">★</text>
+      </view>
+      <view class="kc-title">{{item.title}}</view>
+      <view class="kc-preview">{{item.summary || item.content}}</view>
+      <view wx:if="{{item.subject || item.tags.length}}" class="kc-meta">
+        <text wx:if="{{item.subject}}" class="subject-tag">{{item.subject}}</text>
+        <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="*this" class="tag-pill">#{{tag}}</text>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{total > 20}}" class="pagination">
+    <button disabled="{{loading || page === 1}}" bindtap="previous">上一页</button>
+    <text>第 {{page}} 页 · 共 {{total}} 张</text>
+    <button disabled="{{loading || page * 20 >= total}}" bindtap="next">下一页</button>
+  </view>
 </view>

@@ -1,6 +1,48 @@
-.confirm-textarea { box-sizing: border-box; width: 100%; min-height: 240rpx; padding: 22rpx; border: 1rpx solid #d9e4d9; border-radius: 16rpx; background: #fafcf9; font-size: 29rpx; line-height: 1.7; }
-.confirm-card { margin-top: 32rpx; padding-top: 32rpx; border-top: 1rpx solid #e2e9df; }
-.confirm-source { margin-top: 24rpx; padding: 20rpx; background: #f4f8f2; border-radius: 12rpx; white-space: pre-wrap; word-break: break-all; font-size: 27rpx; line-height: 1.7; }
-.source-panel { margin-top: 30rpx; }
-.draft-copy { margin-top: 24rpx; }
-.mode, .relation { display: block; margin-top: 22rpx; font-size: 27rpx; line-height: 1.6; }
+@import "../../styles/form.wxss";
+.confirmation-page { padding: 28rpx 28rpx calc(32rpx + env(safe-area-inset-bottom)); }
+.confirmation-heading { padding: 4rpx 8rpx 22rpx; }
+.confirmation-page .form-title { font-size: 38rpx; }
+.form-section-title { display: flex; align-items: center; gap: 12rpx; color: #354156; font-size: 29rpx; font-weight: 600; }
+.form-section-title::before { flex-shrink: 0; width: 6rpx; height: 26rpx; border-radius: 4rpx; background: #81b0fa; content: ''; }
+.form-section-title .form-optional { margin-left: auto; }
+.generation-notice { font-size: 24rpx; line-height: 1.7; }
+.review-steps { display: flex; margin: 26rpx 0 18rpx; padding: 24rpx 10rpx; border-radius: 28rpx; background: #fff; }
+.review-step { position: relative; display: flex; flex: 1; flex-direction: column; align-items: center; gap: 12rpx; color: #9eacc0; font-size: 23rpx; }
+.review-step::after { position: absolute; top: 23rpx; left: calc(50% + 30rpx); width: calc(100% - 60rpx); height: 2rpx; background: #e6edf8; content: ''; }
+.review-step:last-child::after { display: none; }
+.step-number { display: flex; align-items: center; justify-content: center; width: 48rpx; height: 48rpx; border-radius: 50%; background: #f1f5fc; color: #a0b4d1; font-size: 24rpx; }
+.review-step.current { color: #3385fb; font-weight: 600; }
+.current .step-number { background: #3385fb; color: #fff; box-shadow: 0 5rpx 14rpx #3385fb24; }
+.passed .step-number { background: #e8f2ff; color: #6e9fe2; }
+.version-label { margin: 0 8rpx 22rpx; color: #9eacc0; font-size: 21rpx; }
+.confirmation-page .form-panel { margin-bottom: 22rpx; padding: 28rpx; border-radius: 30rpx; }
+.confirmation-page .form-field { margin-top: 24rpx; }
+.confirmation-page .form-label { font-size: 26rpx; }
+.confirmation-page .form-input { height: 82rpx; font-size: 27rpx; }
+.confirmation-page .form-textarea { width: 100%; font-size: 27rpx; line-height: 1.7; }
+.summary-textarea { height: 260rpx; }
+.card-textarea { height: 330rpx; }
+.field-count { margin-top: 10rpx; color: #a0adc1; font-size: 21rpx; text-align: right; }
+.tag-modes { display: flex; gap: 24rpx; flex-wrap: wrap; }
+.mode { color: #7c8fa9; font-size: 25rpx; line-height: 1.8; }
+.confirm-source { margin-top: 22rpx; padding: 22rpx; border: 1rpx solid #e9eff8; border-radius: 22rpx; background: #f7faff; color: #60748f; font-size: 25rpx; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
+.source-label { margin-bottom: 10rpx; color: #91a2bb; font-size: 22rpx; }
+.selection-heading { display: flex; justify-content: space-between; align-items: center; gap: 12rpx; padding: 0 8rpx; }
+.selection-heading > text { flex-shrink: 0; color: #85a2ca; font-size: 22rpx; }
+.selection-help { margin: 14rpx 8rpx 24rpx; color: #8d9db4; font-size: 24rpx; line-height: 1.7; }
+.card-selection { display: flex; align-items: center; color: #59779f; font-size: 27rpx; }
+.card-selection text { margin-left: auto; color: #a2b0c3; font-size: 22rpx; }
+.confirmation-page .not-selected { border-color: #e8edf4; background: #fbfcff; }
+.save-card-count { margin: 24rpx 0; color: #3385fb; font-size: 58rpx; font-weight: 600; }
+.save-card-count text { margin-left: 18rpx; color: #7c90ad; font-size: 25rpx; font-weight: 400; }
+.review-caption { margin: 20rpx 0 12rpx; color: #8b9db6; font-size: 24rpx; }
+.summary-preview { display: block; color: #5c7190; font-size: 26rpx; line-height: 1.75; white-space: pre-wrap; overflow-wrap: anywhere; }
+.relation { display: block; margin-top: 24rpx; padding: 22rpx; border-radius: 22rpx; background: #f7faff; color: #6b82a3; font-size: 25rpx; line-height: 1.8; }
+.relation-endpoints { margin-top: 14rpx; color: #7188a7; }
+.relation text { white-space: pre-wrap; overflow-wrap: anywhere; }
+.step-actions { display: flex; gap: 18rpx; margin: 28rpx 0 20rpx; }
+.confirmation-page .step-actions button { flex: 1; min-width: 0; width: auto; height: 84rpx; margin: 0; font-size: 26rpx; }
+.confirmation-page button.return-task { height: 78rpx; margin-top: 18rpx; background: transparent; font-size: 25rpx; }
+.draft-panel, .draft-copy { white-space: pre-wrap; overflow-wrap: anywhere; color: #788da9; font-size: 25rpx; line-height: 1.8; }
+.draft-copy { margin-top: 22rpx; padding-top: 20rpx; border-top: 1rpx solid #e8eff9; }
+.saved-card { margin-top: 20rpx; }

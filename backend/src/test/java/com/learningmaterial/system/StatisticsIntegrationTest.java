@@ -188,6 +188,10 @@ class StatisticsIntegrationTest {
                         "SELECT COUNT(*) FROM material WHERE status<>'DELETED' AND"
                                 + " access_state='RESTRICTED'",
                         Long.class);
+        Map<String, Long> expectedSubjects = new HashMap<>(buckets(get(RANGE, admin).data().path("subjects")));
+        expectedSubjects.merge("数学", 2L, Long::sum);
+        expectedSubjects.merge("未分类", 2L, Long::sum);
+        expectedSubjects.merge("语文", 1L, Long::sum);
         material("ACTIVE", "NORMAL", "数学", "2040-01-01 15:59:59.999999");
         material("ARCHIVED", "RESTRICTED", " 数学 ", "2040-01-01 16:00:00");
         material("DELETED", "RESTRICTED", "删除学科", "2040-01-02 15:59:59.999999");
@@ -200,11 +204,7 @@ class StatisticsIntegrationTest {
         assertThat(data.path("uploadTrend").findValuesAsText("count"))
                 .containsExactly("2", "1", "0");
         Map<String, Long> subjects = buckets(data.path("subjects"));
-        assertThat(subjects)
-                .containsEntry("数学", 2L)
-                .containsEntry("未分类", 2L)
-                .containsEntry("语文", 1L)
-                .doesNotContainKey("删除学科");
+        assertThat(subjects).isEqualTo(expectedSubjects);
         JsonNode another =
                 get(
                                 RANGE.replace("2040-01-01T16:00:00Z", "2050-01-01T16:00:00Z")

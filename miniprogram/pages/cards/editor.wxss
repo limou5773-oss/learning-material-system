@@ -1,5 +1,44 @@
-.card-textarea { box-sizing: border-box; width: 100%; min-height: 390rpx; padding: 22rpx 24rpx; border: 1rpx solid #d9e4d9; border-radius: 16rpx; background: #fafcf9; font-size: 28rpx; line-height: 1.6; }
-.summary-textarea { min-height: 180rpx; height: 180rpx; }
-.character-count { margin-top: 12rpx; color: #718076; font-size: 22rpx; text-align: right; }
-.server-copy { padding: 22rpx; background: #f5f7f4; border-radius: 16rpx; font-size: 27rpx; }
-.server-content { display: block; max-height: 300rpx; margin-top: 16rpx; overflow: auto; white-space: pre-wrap; }
+@import "../../styles/form.wxss";
+.card-editor-page { display: flex; flex-direction: column; gap: 16rpx; box-sizing: border-box; height: 100vh; min-height: 0; padding: 20rpx 28rpx calc(14rpx + env(safe-area-inset-bottom)); }
+.card-editor-page .form-header { flex-shrink: 0; align-items: center; gap: 16rpx; padding: 0 2rpx; }
+.card-editor-page .form-header-mark { width: 60rpx; height: 60rpx; border-radius: 17rpx; }
+.card-editor-page .form-header-icon { width: 34rpx; height: 34rpx; }
+.card-editor-page .form-title { font-size: 34rpx; line-height: 1.3; }
+.card-editor-page .form-description { margin-top: 6rpx; font-size: 22rpx; line-height: 1.45; }
+.card-editor-page .editor-form { display: flex; flex: 1; flex-direction: column; min-height: 0; margin: 0; padding: 24rpx; border-radius: 20rpx; }
+.card-editor-page .form-field { flex-shrink: 0; margin-top: 18rpx; }
+.card-editor-page .first-field { margin-top: 0; }
+.card-editor-page .form-label { margin-bottom: 10rpx; font-size: 24rpx; line-height: 1.35; }
+.card-editor-page .form-optional { font-size: 21rpx; }
+.card-editor-page .form-input { height: 74rpx; padding: 0 20rpx; font-size: 26rpx; }
+.card-editor-page .form-placeholder { font-size: 24rpx; }
+.editor-meta { display: grid; flex-shrink: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 18rpx; }
+.editor-meta .form-field { min-width: 0; }
+.editor-tags-help { flex-shrink: 0; margin-top: 8rpx; color: #9aa6b7; font-size: 21rpx; line-height: 1.4; }
+.card-editor-page .form-textarea { padding: 16rpx 20rpx; font-size: 26rpx; line-height: 1.6; }
+.card-editor-page .summary-textarea { height: 96rpx; }
+.card-editor-page .editor-content { display: flex; flex: 1; flex-direction: column; min-height: 200rpx; }
+.editor-content .form-label { flex-shrink: 0; }
+.card-editor-page .editor-content .form-textarea { flex: 1; height: 0; min-height: 150rpx; }
+.card-editor-page .form-action-bar { position: static; flex-shrink: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.card-editor-page button.form-primary { height: 80rpx; font-size: 27rpx; }
+.card-editor-page .form-action-note { margin-top: 8rpx; font-size: 21rpx; line-height: 1.4; }
+.card-editor-page .notice, .card-editor-page .error { flex-shrink: 0; margin: 0; padding: 14rpx 20rpx; font-size: 23rpx; }
+/* 发生版本冲突时展开对照内容，保留完整信息并允许整页滚动。 */
+.card-editor-page.is-conflict { height: auto; min-height: 100vh; }
+.is-conflict .editor-form { flex: none; }
+.is-conflict .editor-content .form-textarea { flex: none; height: 240rpx; }
+@media (max-height: 540px) {
+  .card-editor-page { gap: 12rpx; padding-top: 12rpx; }
+  .card-editor-page .editor-form { padding: 18rpx 22rpx; }
+  .card-editor-page .form-field { margin-top: 12rpx; }
+  .card-editor-page .first-field { margin-top: 0; }
+  .card-editor-page .form-input { height: 68rpx; }
+  .card-editor-page .summary-textarea { height: 76rpx; }
+}
+.server-copy { border-color: #eedebc; background: #fffdf8; }
+.server-description { margin-bottom: 22rpx; color: #99834f; font-size: 25rpx; line-height: 1.7; }
+.server-title { margin-top: 24rpx; color: #4b586b; font-size: 26rpx; font-weight: 500; }
+.server-content { display: block; max-height: 300rpx; margin: 16rpx 0; padding: 20rpx; overflow: auto; border-radius: 12rpx; background: #f6f8fc; color: #66758c; font-size: 25rpx; line-height: 1.7; white-space: pre-wrap; }
+.server-copy button.form-secondary { margin-top: 20rpx; }
+.card-icon { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTM4ZGUyIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSI2IiB5PSI3IiB3aWR0aD0iMTQiIGhlaWdodD0iMTQiIHJ4PSIyIi8+PHBhdGggZD0iTTMgMTZWM2gxM00xMCAxMmg2bS02IDRoNCIvPjwvc3ZnPg=="); }

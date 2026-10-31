@@ -25,6 +25,7 @@ function validDraft(value, id) {
 Page({
   data: { generationView: null, id: '', userId: '', task: null, resultVersion: 0, sourceVersion: 0, summary: '', tagsText: '',
     tagMode: 'MERGE', cards: [], relations: [], selectedCount: 0, sources: [], warnings: [],
+    currentStep: 0, stepLabels: ['摘要与来源', '选择卡片', '关联与保存'],
     loading: false, saving: false, conflict: false, restored: false, receipt: null, error: '', draftWarning: '' },
   onLoad(options) { this.setData({ id: options.id || '' }) },
   onShow() { if (!this.data.task) this.load() },
@@ -94,25 +95,49 @@ Page({
     this.setData({ relations: this.data.relations.map(relation => ({ ...relation, selected: selected.has(relation.relationKey) })) })
     this.persistDraft()
   },
-  input() {
+  previousStep() {
+    if (this.data.saving || this.data.loading || this.data.currentStep <= 0) return
+    this.setData({ currentStep: this.data.currentStep - 1, error: this.data.conflict ? this.data.error : '' })
+    this.persistDraft()
+    wx.pageScrollTo({ scrollTop: 0, duration: 0 })
+  },
+  nextStep() {
+    if (this.data.saving || this.data.loading || this.data.conflict || this.data.receipt || !this.data.task || this.data.currentStep >= 2) return
+    try {
+      if (this.data.currentStep === 0) this.summaryInput()
+      else this.selectedCardInput()
+      this.setData({ currentStep: this.data.currentStep + 1, error: '' })
+      this.persistDraft()
+      wx.pageScrollTo({ scrollTop: 0, duration: 0 })
+    } catch (error) { this.setData({ error: error.message }) }
+  },
+  summaryInput() {
+    if (this.data.summary.length > 4000) throw new Error('摘要最多4000字')
+    return tagNames(this.data.tagsText)
+  },
+  selectedCardInput() {
     const selected = this.data.cards.filter(card => card.selected)
     if (!selected.length) throw new Error('至少选择一张卡片')
-    if (this.data.summary.length > 4000) throw new Error('摘要最多4000字')
     const keys = new Set(selected.map(card => card.candidateKey))
-    const cards = selected.map(card => {
+    return selected.map(card => {
       if (!card.title.trim() || !card.content.trim()) throw new Error('请填写选中卡片的标题和正文')
       if (card.title.length > 255 || card.content.length > 8000) throw new Error('标题最多255字，正文最多8000字')
       return { candidateKey: card.candidateKey, title: card.title.trim(), content: card.content,
         summary: card.summary || null, subject: card.subject || null, tags: tagNames(card.tagsText),
         sources: card.sources, parentCandidateKey: keys.has(card.parentCandidateKey) ? card.parentCandidateKey : null }
     })
+  },
+  input() {
+    const tags = this.summaryInput()
+    const cards = this.selectedCardInput()
+    const keys = new Set(cards.map(card => card.candidateKey))
     const relations = this.data.relations.filter(relation => relation.selected).map(relation => {
       if ([relation.source, relation.target].some(endpoint => endpoint.candidateKey && !keys.has(endpoint.candidateKey))) throw new Error('关联包含未选择的卡片，请取消该关联')
       return { relationKey: relation.relationKey, source: relation.source, target: relation.target,
         type: relation.type, evidenceText: relation.evidenceText }
     })
     return { resultVersion: this.data.resultVersion, sourceVersion: this.data.sourceVersion,
-      summary: this.data.summary, tags: tagNames(this.data.tagsText), tagMode: this.data.tagMode, cards, relations }
+      summary: this.data.summary, tags, tagMode: this.data.tagMode, cards, relations }
   },
   async submit() {
     if (!this.data.task || this.data.saving || this.data.loading || this.data.conflict || this.data.receipt) return

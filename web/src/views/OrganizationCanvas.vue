@@ -60,14 +60,14 @@ onUnmounted(() => { endDrag(); window.removeEventListener('blur', endDrag) })
 </template>
 
 <style scoped>
-.organization-scroll { max-height: 620px; overflow: auto; border: 1px solid #dce5f2; border-radius: 10px; background: #f6f8fd; }
+.organization-scroll { max-height: 620px; overflow: auto; border: 1px solid #dce5f2; border-radius: 14px; background: #f6f8fd; }
 .organization-canvas { position: relative; background-image: radial-gradient(#dce5f2 1px, transparent 1px); background-size: 20px 20px; }
-.canvas-card { position: absolute; width: 260px; height: 150px; padding: 0 14px 12px; border: 1px solid #dce5f2; border-radius: 10px; background: white; color: #34435a; }
-.canvas-card.selected { border-color: #315bc2; box-shadow: 0 0 0 2px #d9e4ff; }
+.canvas-card { position: absolute; width: 260px; height: 150px; padding: 0 14px 12px; border: 1px solid #dce5f2; border-radius: 14px; background: white; color: #34435a; }
+.canvas-card.selected { border-color: var(--brand-hover); box-shadow: 0 0 0 2px #d9e4ff; }
 .drag-handle { width: calc(100% + 28px); margin: 0 -14px 8px; padding: 7px 12px; border: 0; border-radius: 9px 9px 0 0; background: #eef3ff; color: #4265ac; text-align: left; cursor: grab; touch-action: none; }
 .drag-handle:active { cursor: grabbing; }
 .drag-handle:disabled { cursor: default; opacity: .6; }
-.drag-handle:focus-visible, a:focus-visible { outline: 2px solid #315bc2; outline-offset: 2px; }
+.drag-handle:focus-visible, a:focus-visible { outline: 2px solid var(--brand-hover); outline-offset: 2px; }
 .canvas-card h2 { overflow: hidden; margin: 5px 0; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
 .canvas-card p { overflow: hidden; margin: 5px 0; font-size: 13px; color: #64748b; text-overflow: ellipsis; white-space: nowrap; }
 .canvas-card small { color: #64748b; font-size: 11px; }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import UiIcon from '../components/UiIcon.vue'
 import { ref } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 import { ApiRequestError, uploadFile } from '../api'
@@ -123,10 +124,8 @@ async function retry(item: UploadItem, allowDuplicate = false) {
     <router-link class="back-link" to="/materials">← 返回资料</router-link>
     <div class="section-heading"><div><span class="intro-eyebrow">PDF LIBRARY</span><h1>批量上传 PDF</h1><p>一次最多 10 个，每个不超过 30 MiB、100 页；同时上传 2 个。</p></div></div>
     <section class="materials-panel editor-panel">
-      <label for="pdf-files">选择 PDF 文件</label>
-      <input id="pdf-files" type="file" accept="application/pdf,.pdf" multiple :disabled="running" @change="choose" />
-      <label for="pdf-subject">学科（应用于本批次）</label><input id="pdf-subject" v-model="subject" maxlength="64" placeholder="可选" :disabled="running" />
-      <label for="pdf-tags">标签（应用于本批次）</label><input id="pdf-tags" v-model="tagsText" placeholder="可选，多个标签用逗号隔开" :disabled="running" />
+      <div class="upload-picker"><span class="upload-picker-icon"><UiIcon name="pdf" /></span><label for="pdf-files">添加学习文档</label><p>支持一次选择多个 PDF，每个文件单独展示上传结果。</p><input id="pdf-files" type="file" accept="application/pdf,.pdf" multiple :disabled="running" @change="choose" /></div>
+      <div class="editor-meta-grid"><div><label for="pdf-subject">学科（应用于本批次）</label><input id="pdf-subject" v-model="subject" maxlength="64" placeholder="例如：高等数学（选填）" :disabled="running" /></div><div><label for="pdf-tags">标签（应用于本批次）</label><input id="pdf-tags" v-model="tagsText" placeholder="多个标签用逗号隔开（选填）" :disabled="running" /></div></div>
       <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
       <div v-if="items.length" class="pdf-queue" aria-live="polite">
         <div v-for="item in items" :key="item.key" class="pdf-queue-item">

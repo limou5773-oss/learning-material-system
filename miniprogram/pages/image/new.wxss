@@ -1,5 +1,48 @@
-.image-actions { display: flex; gap: 16rpx; }
-.image-actions .outline { flex: 1; margin-top: 0; }
-.selected-image { display: block; width: 100%; max-height: 600rpx; margin: 26rpx auto 16rpx; }
-.duplicate-actions { display: flex; gap: 16rpx; }
-.duplicate-actions .outline { flex: 1; }
+@import "../../styles/form.wxss";
+.image-page { display: flex; flex-direction: column; gap: 18rpx; box-sizing: border-box; height: 100vh; min-height: 0; padding: 22rpx 28rpx calc(16rpx + env(safe-area-inset-bottom)); }
+.image-page .form-header { align-items: center; flex-shrink: 0; gap: 16rpx; padding: 0 4rpx; }
+.image-page .form-header-mark { width: 66rpx; height: 66rpx; border-radius: 23rpx; }
+.image-page .form-header-icon { width: 36rpx; height: 36rpx; }
+.image-page .form-title { font-size: 35rpx; line-height: 1.3; }
+.image-page .form-description { margin-top: 7rpx; font-size: 22rpx; line-height: 1.45; }
+.image-page .image-form { display: flex; flex: 1; flex-direction: column; min-height: 0; margin: 0; padding: 26rpx; border-radius: 32rpx; box-shadow: 0 6rpx 24rpx #27467406; }
+.image-picker { display: flex; flex: 1; flex-direction: column; align-items: center; justify-content: center; box-sizing: border-box; min-height: 200rpx; padding: 20rpx 16rpx; border: 2rpx dashed #d6e4f7; border-radius: 26rpx; background: #f6faff; }
+.picker-illustration { position: relative; display: flex; flex-shrink: 0; align-items: center; justify-content: center; width: 78rpx; height: 70rpx; margin-bottom: 18rpx; border-radius: 24rpx; background: #e5efff; }
+.picker-illustration .gallery-icon { width: 45rpx; height: 45rpx; }
+.picker-plus { position: absolute; right: -8rpx; bottom: -5rpx; width: 30rpx; height: 30rpx; border: 4rpx solid #f6faff; border-radius: 50%; background: #78aaf4; color: #fff; font-size: 27rpx; text-align: center; line-height: 27rpx; }
+.picker-title { flex-shrink: 0; color: #607da5; font-size: 27rpx; }
+.picker-description { flex-shrink: 0; margin-top: 12rpx; color: #9daec5; font-size: 21rpx; line-height: 1.5; text-align: center; }
+.image-actions, .duplicate-actions { display: grid; flex-shrink: 0; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 18rpx; margin-top: 18rpx; }
+.image-page .image-actions button.form-secondary { gap: 12rpx; height: 72rpx; border-radius: 36rpx; background: #f9fbff; font-size: 25rpx; }
+.source-icon { flex-shrink: 0; width: 31rpx; height: 31rpx; background: no-repeat center/contain; }
+.gallery-icon { background: no-repeat center/contain; }
+.image-picker.has-image { padding: 12rpx; border-style: solid; }
+.selected-image { display: block; flex: 1; width: 100%; height: 0; min-height: 150rpx; border-radius: 22rpx; }
+.image-page .form-field { flex-shrink: 0; margin-top: 20rpx; }
+.image-page .form-label { margin-bottom: 12rpx; font-size: 25rpx; line-height: 1.35; }
+.image-page .form-optional { font-size: 21rpx; }
+.image-page .form-input { height: 78rpx; padding: 0 22rpx; font-size: 26rpx; }
+.image-page .form-placeholder { font-size: 24rpx; }
+.image-meta { display: grid; flex-shrink: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 18rpx; }
+.image-meta .form-field { min-width: 0; }
+.image-page .form-action-bar { position: static; flex-shrink: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.image-page button.form-primary { height: 84rpx; }
+.image-page .form-action-note { margin-top: 10rpx; font-size: 21rpx; line-height: 1.4; }
+.upload-status { padding: 0 6rpx 18rpx; }
+.upload-progress-label { display: flex; justify-content: space-between; margin-bottom: 12rpx; color: #6885ae; font-size: 23rpx; }
+.image-page .error { flex-shrink: 0; margin: 0; padding: 14rpx 22rpx; border-radius: 20rpx; font-size: 23rpx; }
+.image-page.has-duplicate { height: auto; min-height: 100vh; }
+.has-duplicate .image-form { flex: none; }
+.has-duplicate .image-picker { flex: none; height: 280rpx; }
+.duplicate-panel { margin: 0; border-color: #efe4cf; background: #fffdf8; }
+.duplicate-title { color: #9a793e; font-size: 28rpx; font-weight: 500; }
+.image-page .duplicate-actions button.form-secondary { padding: 0 12rpx; font-size: 25rpx; }
+@media (max-height: 540px) {
+  .image-page { gap: 12rpx; padding-top: 12rpx; }
+  .image-page .image-form { padding: 20rpx 24rpx; }
+  .image-page .form-field { margin-top: 14rpx; }
+  .image-page .form-input { height: 70rpx; }
+  .image-picker { min-height: 180rpx; }
+}
+.capture-icon, .camera-icon { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTM4ZGUyIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMyA3aDVsMi0zaDRsMiAzaDV2MTNIM1oiLz48Y2lyY2xlIGN4PSIxMiIgY3k9IjEzIiByPSI0Ii8+PC9zdmc+"); }
+.gallery-icon { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTM4ZGUyIiBzdHJva2Utd2lkdGg9IjEuNiIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cmVjdCB4PSIzIiB5PSIzIiB3aWR0aD0iMTgiIGhlaWdodD0iMTgiIHJ4PSIzIi8+PGNpcmNsZSBjeD0iOCIgY3k9IjgiIHI9IjEuNSIvPjxwYXRoIGQ9Im0zIDE3IDUtNSA0IDQgMy0zIDYgNiIvPjwvc3ZnPg=="); }

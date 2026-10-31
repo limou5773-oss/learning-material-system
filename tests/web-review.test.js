@@ -28,17 +28,18 @@ async function mount(t, request, options = {}) {
       const descriptor = parse(source).descriptor, script = compileScript(descriptor, { id: filename })
       source = script.content
       template = compileTemplate({ source: descriptor.template.content, filename, id: filename,
-        compilerOptions: { bindingMetadata: script.bindings } }).code
+        compilerOptions: { bindingMetadata: script.bindings, hoistStatic: false } }).code
     }
     const compile = value => ts.transpileModule(value, { compilerOptions: { module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText
     const module = { exports: {} }
     new Function('require', 'module', 'exports', compile(source))(specifier => {
       if (specifier === 'vue') return vue
+      if (specifier === 'element-plus') return require('./helpers/element-plus')(vue)
       if (specifier === 'vue-router') return { ...vueRouter, createWebHistory: vueRouter.createMemoryHistory }
       if (specifier.endsWith('/auth')) return { session, clearSession() { session.value = null } }
       if (specifier.endsWith('/api')) return { api: request, ApiRequestError: RequestError, reviewFileBlob: options.file || (async () => new Blob(['file'])), materialFileBlob: async () => new Blob(['owner']) }
-      if (specifier.endsWith('.vue') && !/AdminReviews|OwnerMaterialReview|MaterialDetail|ForbiddenView|App.vue/.test(specifier)) return { render: () => vue.h('div') }
+      if (specifier.endsWith('.vue') && !/AdminReviews|OwnerMaterialReview|MaterialDetail|ForbiddenView|App.vue|Layout|UiIcon/.test(specifier)) return { render: () => vue.h('div') }
       if (specifier.startsWith('.')) {
         const target = path.resolve(path.dirname(filename), specifier)
         return load(target.endsWith('.vue') ? target : `${target}.ts`)
@@ -99,6 +100,19 @@ test('审核队列ADMIN入口默认只读PENDING元数据，普通账号禁止�
   h.session.value = identity('3', 'user', 'USER'); await h.flush()
   assert.equal(h.adminLink(), undefined); assert.equal(h.router.currentRoute.value.name, 'forbidden')
   assert.equal(reads.length, 1)
+})
+
+test('已失效审核可筛选并展示失效时间，不能再次读取正文或处置', async t => {
+  const reads = []
+  const item = review('8', { status: 'SUPERSEDED', isCurrent: false, supersededAt: '2026-10-30T12:00:00Z' })
+  const h = await mount(t, async url => { reads.push(url); return page([item]) })
+  assert.ok(h.all().some(n => n.tag === 'option' && n.props.value === 'SUPERSEDED'))
+  const state = h.state(); state.status = 'SUPERSEDED'; await state.applyFilters(); await h.flush()
+  assert.match(reads.at(-1), /status=SUPERSEDED/)
+  state.selectReview(state.results.items[0]); await h.flush()
+  assert.match(h.text(), /已失效，需重新送审/); assert.match(h.text(), /失效时间/)
+  assert.equal(state.actionable, false); assert.equal(h.button('记录理由并查看正文'), undefined)
+  await state.viewContent(); assert.equal(reads.length, 2)
 })
 
 test('先理由POST查看正文，原文件需另行鉴权读取；未查看和旧版本不能处置', async t => {

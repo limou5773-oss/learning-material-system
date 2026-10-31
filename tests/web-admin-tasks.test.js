@@ -3,7 +3,7 @@ const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
 const ts = require('../web/node_modules/typescript')
-const identity = (id = '1', token = 'admin-token', role = 'ADMIN') => ({ user: { id, role }, accessToken: token })
+const identity = (id = '1', token = 'admin-token', role = 'ADMIN') => ({ user: { id, role, username: 'account_' + id, displayName: '用户 ' + id }, accessToken: token })
 const task = (id = '2', extra = {}) => ({ id, userId: '8', materialId: '19', goalType: 'REVIEW_CARDS', status: 'SUCCEEDED',
   stage: 'CONFIRMED', stepCount: 2, errorCode: null, createdAt: '2026-10-26T00:00:00Z',
   startedAt: '2026-10-26T00:01:00Z', finishedAt: '2026-10-27T00:01:00Z', durationMs: 86400000, ...extra })
@@ -36,17 +36,18 @@ async function mount(t, request, options = {}) {
       const descriptor = parse(source).descriptor, script = compileScript(descriptor, { id: filename })
       source = script.content
       template = compileTemplate({ source: descriptor.template.content, filename, id: filename,
-        compilerOptions: { bindingMetadata: script.bindings } }).code
+        compilerOptions: { bindingMetadata: script.bindings, hoistStatic: false } }).code
     }
     const compile = value => ts.transpileModule(value, { compilerOptions: { module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText
     const module = { exports: {} }
     new Function('require', 'module', 'exports', compile(source))(specifier => {
       if (specifier === 'vue') return vue
+      if (specifier === 'element-plus') return require('./helpers/element-plus')(vue)
       if (specifier === 'vue-router') return { ...vueRouter, createWebHistory: vueRouter.createMemoryHistory }
       if (specifier.endsWith('/auth')) return { session, clearSession() { session.value = null } }
       if (specifier.endsWith('/api')) return { api: request, ApiRequestError: RequestError }
-      if (specifier.endsWith('.vue') && !/AdminTasks|ForbiddenView|App.vue/.test(specifier)) return { render: () => vue.h('div') }
+      if (specifier.endsWith('.vue') && !/AdminTasks|ForbiddenView|App.vue|Layout|UiIcon/.test(specifier)) return { render: () => vue.h('div') }
       if (specifier.startsWith('.')) {
         const target = path.resolve(path.dirname(filename), specifier)
         return load(target.endsWith('.vue') ? target : `${target}.ts`)

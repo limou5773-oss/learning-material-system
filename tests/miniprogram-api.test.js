@@ -11,7 +11,8 @@ global.wx = {
 }
 
 const api = require('../miniprogram/utils/api')
-const token = 'a'.repeat(43)
+// JWT 格式样例；签名真实性由后端校验。
+const token = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.' + 'a'.repeat(43)
 
 test.beforeEach(() => {
   storage.clear()
@@ -52,6 +53,8 @@ test('退出请求处理 204；网络错误时保留会话以便重试', async (
 
 test('拒绝无效令牌和非契约成功响应', async () => {
   assert.throws(() => api.saveToken('bad'), /无效/)
+  assert.throws(() => api.saveToken('a'.repeat(43)), /无效/)
+  assert.throws(() => api.saveToken('header.payload.'), /无效/)
   nextRequest = options => options.success({ statusCode: 200, data: { userId: '1' } })
   await assert.rejects(api.getMe(), error => error.message === '服务端响应格式错误')
 })

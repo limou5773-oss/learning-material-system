@@ -6,7 +6,7 @@ const vue = require('../web/node_modules/vue')
 const vueRouter = require('../web/node_modules/vue-router')
 const { parse, compileScript, compileTemplate } = require('../web/node_modules/@vue/compiler-sfc')
 const ts = require('../web/node_modules/typescript')
-const identity = (id = '1', token = 'admin-token', role = 'ADMIN') => ({ user: { id, role }, accessToken: token })
+const identity = (id = '1', token = 'admin-token', role = 'ADMIN') => ({ user: { id, role, username: 'account_' + id, displayName: '用户 ' + id }, accessToken: token })
 const deferred = () => { let resolve, reject; const promise = new Promise((yes, no) => { resolve = yes; reject = no }); return { promise, resolve, reject } }
 const statuses = ['QUEUED', 'RUNNING', 'WAIT_CONFIRM', 'SUCCEEDED', 'FAILED', 'CANCELLED']
 const sample = (overrides = {}) => ({ from: '2026-10-20T16:00:00Z', to: '2026-10-27T16:00:00Z', timezone: 'Asia/Shanghai',
@@ -47,13 +47,14 @@ async function mount(t, request, options = {}) {
       const descriptor = parse(source).descriptor, script = compileScript(descriptor, { id: filename })
       source = script.content
       template = compileTemplate({ source: descriptor.template.content, filename, id: filename,
-        compilerOptions: { bindingMetadata: script.bindings } }).code
+        compilerOptions: { bindingMetadata: script.bindings, hoistStatic: false } }).code
     }
     const compile = value => ts.transpileModule(value, { compilerOptions: { module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText
     const module = { exports: {} }
     new Function('require', 'module', 'exports', compile(source))(specifier => {
       if (specifier === 'vue') return vue
+      if (specifier === 'element-plus') return require('./helpers/element-plus')(vue)
       if (specifier === 'vue-router') return { ...vueRouter, createWebHistory: vueRouter.createMemoryHistory }
       if (specifier.endsWith('/auth')) return { session, clearSession() { session.value = null } }
       if (specifier.endsWith('/api')) return { api: request, ApiRequestError: RequestError }
@@ -62,7 +63,7 @@ async function mount(t, request, options = {}) {
         return { setOption(value) { record.options.push(value) }, resize() { record.resizes++ }, dispose() { record.disposed = true } }
       } }
       if (specifier.startsWith('echarts/')) return new Proxy({}, { get: (_, key) => key })
-      if (specifier.endsWith('.vue') && !/Statistics|App.vue|ForbiddenView/.test(specifier)) return { render: () => vue.h('div') }
+      if (specifier.endsWith('.vue') && !/Statistics|App.vue|ForbiddenView|Layout|UiIcon/.test(specifier)) return { render: () => vue.h('div') }
       if (specifier.startsWith('.')) {
         const target = path.resolve(path.dirname(filename), specifier)
         return load(target.endsWith('.vue') ? target : `${target}.ts`)
@@ -121,8 +122,8 @@ test('默认请求显式上海7个自然日与UTC Z参数；展示后端口径�
   assert.match(query.get('from'), /T16:00:00(?:\.000)?Z$/); assert.match(query.get('to'), /T16:00:00(?:\.000)?Z$/)
   assert.equal((Date.parse(query.get('to')) - Date.parse(query.get('from'))) / 86400000, 7)
   assert.match(h.text(), /60%/); assert.match(h.text(), /CNY/); assert.match(h.text(), /0\.000000/)
-  assert.match(h.text(), /USD/); assert.match(h.text(), /2\.250000/); assert.match(h.text(), /历史归属未知/)
-  assert.match(h.text(), /当前库存不受日期筛选/); assert.match(h.text(), /MOCK/)
+  assert.match(h.text(), /USD/); assert.match(h.text(), /2\.250000/); assert.match(h.text(), /历史重试归属未知/)
+  assert.match(h.text(), /库存不受日期筛选/); assert.match(h.text(), /MOCK/)
   assert.match(h.text(), /<img src=x onerror=alert\(1\)>/); assert.equal(h.all().some(node => node.tag === 'img'), false)
   assert.equal(h.chartCalls.length, 3); assert.ok(h.chartCalls.every(chart => chart.config.renderer === 'svg'))
   for (const chart of h.chartCalls) { const option = chart.options.at(-1); assert.equal(option.tooltip.renderMode, 'richText'); assert.equal(option.aria.enabled, true) }
@@ -200,7 +201,7 @@ for (const outcome of ['success', 401, 403]) test(`换号和离页后迟到${out
   if (outcome === 'success') pending.resolve(sample()); else pending.reject(new h.RequestError(outcome, '旧权限失败'))
   await loading; await h.flush(); assert.equal(old.statistics, null); assert.equal(h.session.value.accessToken, 'next-admin')
   assert.equal(h.router.currentRoute.value.path, '/admin/statistics')
-  const current = h.state(); await h.router.push('/cards'); await h.flush(); assert.equal(current.statistics, null)
+  const current = h.state(); await h.router.push('/admin/users'); await h.flush(); assert.equal(current.statistics, null)
 })
 
 test('角色降级同步清除统计并隐藏导航，不继续请求', async t => {

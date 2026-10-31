@@ -1,6 +1,6 @@
 export interface NotificationView {
   id: string
-  type: 'RESULT_READY' | 'TASK_FAILED' | 'REVIEW_DECIDED'
+  type: 'RESULT_READY' | 'TASK_FAILED' | 'REVIEW_DECIDED' | 'REVIEW_SUPERSEDED'
   content: string
   target: { type: 'AI_TASK'; taskId: string } | { type: 'MATERIAL'; materialId: string; reviewId: string }
   isRead: boolean

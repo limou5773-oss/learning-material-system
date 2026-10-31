@@ -1,67 +1,116 @@
-<view class="page">
-  <text class="eyebrow">PERSONAL SPACE</text>
-  <view class="title">我的信息</view>
-  <view class="lead">管理个人资料、账号密码与微信绑定。</view>
-  <view wx:if="{{loading}}" class="muted">正在读取本人信息…</view>
+<wxs module="fmt">
+module.exports.initial = function (name) {
+  return name ? name.substring(0, 1).toUpperCase() : '学'
+}
+</wxs>
+<view class="page me-page">
+  <view wx:if="{{loading && !user}}" class="state">正在加载个人中心…</view>
   <view wx:if="{{notice}}" class="notice">{{notice}}</view>
   <view wx:if="{{error && !errorAction}}" class="error" role="alert">{{error}}</view>
-  <button wx:if="{{error && !errorAction}}" class="outline" bindtap="refresh" disabled="{{loading || pending}}">重试</button>
-
+  <button wx:if="{{error && !errorAction}}" class="outline" bindtap="refresh" disabled="{{loading || pending}}">重新加载</button>
   <block wx:if="{{user}}">
-    <view class="card">
-      <view class="card-title">{{user.displayName}}</view>
-      <view class="muted">@{{user.username}}</view>
-      <view class="field-row"><text>用户 ID</text><text selectable="true">{{user.id}}</text></view>
-      <view class="field-row"><text>账号类型</text><text>{{user.role === 'ADMIN' ? '管理员' : '普通用户'}}</text></view>
-      <view class="field-row"><text>账号状态</text><text>{{user.status === 'ENABLED' ? '正常' : '已停用'}}</text></view>
-      <button class="primary" bindtap="openMaterials">查看我的资料</button>
-      <button class="outline" bindtap="openTasks">查看整理任务</button>
-      <button class="outline" bindtap="openNotifications">查看站内通知</button>
-      <button class="outline" bindtap="openCards">查看知识卡片</button>
-      <button class="outline" bindtap="newNote">快速记笔记</button>
+    <view class="profile-area">
+      <view class="profile-tools">
+        <text class="profile-caption">我的学习空间</text>
+        <button class="icon-button" bindtap="openNotifications" aria-label="站内通知"><view class="line-icon icon-bell"></view></button>
+        <button class="icon-button" data-panel="account" bindtap="openPanel" aria-label="账号设置"><view class="line-icon icon-settings"></view></button>
+      </view>
+      <view class="profile">
+        <view class="avatar">{{fmt.initial(user.displayName)}}<view class="avatar-dot"></view></view>
+        <view class="profile-main">
+          <view class="profile-name">{{user.displayName}}</view>
+          <view class="profile-handle">@{{user.username}}</view>
+          <view class="profile-role">{{user.role === 'ADMIN' ? '平台管理员' : '记录每一次学习与成长'}}</view>
+        </view>
+        <button class="edit-profile" data-panel="profile" bindtap="openPanel">修改资料</button>
+      </view>
+      <view class="overview">
+        <button class="overview-item" bindtap="openMaterials"><text class="overview-number">{{overview ? overview.materials : '—'}}</text><text class="overview-label">资料总数</text></button>
+        <button class="overview-item" bindtap="openCards"><text class="overview-number">{{overview ? overview.cards : '—'}}</text><text class="overview-label">知识卡片</text></button>
+        <button class="overview-item" bindtap="openTasks"><text class="overview-number">{{overview ? overview.tasks : '—'}}</text><text class="overview-label">整理任务</text></button>
+        <button class="overview-item" bindtap="openFavorites" aria-label="查看我的收藏"><text class="overview-number">{{overview ? overview.favorites : '—'}}</text><text class="overview-label">我的收藏 ›</text></button>
+      </view>
+      <view wx:if="{{overviewError}}" class="overview-error" role="alert"><text>学习数据加载失败：{{overviewError}}</text><button bindtap="refresh" disabled="{{loading || pending}}">重试</button></view>
     </view>
-
-    <view class="card account-card">
-      <view class="card-title">个人资料</view>
-      <text class="field-label">昵称</text>
-      <input class="field-input" value="{{displayName}}" bindinput="onNameInput" maxlength="64" disabled="{{loading || pending}}" aria-label="昵称" />
-      <view wx:if="{{nameError}}" class="field-error">{{nameError}}</view>
-      <view wx:if="{{error && errorAction === 'name'}}" class="error" role="alert">{{error}}</view>
-      <button class="primary" bindtap="submitName" loading="{{pending === 'name'}}" disabled="{{loading || pending}}">保存昵称</button>
+    <view class="assistant-banner">
+      <view class="banner-mark"><view class="line-icon icon-spark"></view></view>
+      <view class="banner-copy"><view class="banner-title">你的 AI 学习助手</view><view class="banner-subtitle">整理零散资料，积累每一点知识</view></view>
+      <button class="banner-action" bindtap="openMaterials">去整理<text class="button-arrow">›</text></button>
     </view>
-
-    <view class="card account-card">
-      <view class="card-title">修改密码</view>
-      <view class="muted">修改后，Web 和小程序中的所有登录会话都会失效。</view>
-      <text class="field-label">当前密码</text>
-      <input class="field-input" value="{{currentPassword}}" bindinput="onCurrentPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="请输入当前密码" aria-label="当前密码" />
-      <view wx:if="{{currentPasswordError}}" class="field-error">{{currentPasswordError}}</view>
-      <text class="field-label">新密码</text>
-      <input class="field-input" value="{{newPassword}}" bindinput="onNewPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="请输入 8–64 个字符的新密码" aria-label="新密码" />
-      <view class="input-help">UTF-8 编码不超过 72 字节，汉字和表情会占用多个字节。</view>
-      <view wx:if="{{newPasswordError}}" class="field-error">{{newPasswordError}}</view>
-      <view wx:if="{{error && errorAction === 'password'}}" class="error" role="alert">{{error}}</view>
-      <button class="primary" bindtap="submitPassword" loading="{{pending === 'password'}}" disabled="{{loading || pending}}">修改密码并重新登录</button>
+    <view class="section-heading"><text>我的学习</text><text class="section-note">点滴积累，自有收获</text></view>
+    <view class="menu-card learning-grid">
+      <button class="menu-item" bindtap="openMaterials"><view class="feature-icon feature-folder"><view class="line-icon icon-folder"></view></view><text>我的资料</text></button>
+      <button class="menu-item" bindtap="openCards"><view class="feature-icon feature-cards"><view class="line-icon icon-cards"></view></view><text>知识卡片</text></button>
+      <button class="menu-item" bindtap="openTasks"><view class="feature-icon feature-task"><view class="line-icon icon-task"></view></view><text>整理任务</text></button>
+      <button class="menu-item" bindtap="openNotifications"><view class="feature-icon feature-notice"><view class="line-icon icon-bell"></view></view><text>消息中心</text></button>
     </view>
-
-    <view class="card account-card">
-      <view class="card-title">微信绑定</view>
-      <view class="field-row binding-status"><text>绑定状态</text><text>{{user.hasWechatBinding ? '已绑定' : '未绑定'}}</text></view>
-      <block wx:if="{{user.hasWechatBinding}}">
-        <view class="muted">解绑后，小程序需重新使用账号密码登录，Web 登录会保留。</view>
-        <text class="field-label">当前密码</text>
-        <input class="field-input" value="{{unbindPassword}}" bindinput="onUnbindPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="输入当前密码确认解绑" aria-label="解绑验证密码" />
-        <view wx:if="{{unbindPasswordError}}" class="field-error">{{unbindPasswordError}}</view>
-        <button class="outline" bindtap="submitUnbind" loading="{{pending === 'unbind'}}" disabled="{{loading || pending}}">确认解绑微信并重新登录</button>
-      </block>
-      <block wx:else>
-        <view class="muted">将当前微信绑定到此账号，下次可直接微信登录。绑定不会合并其他账号。</view>
-        <button class="primary" bindtap="submitBinding" loading="{{pending === 'bind'}}" disabled="{{loading || pending}}">绑定当前微信</button>
-      </block>
-      <view wx:if="{{error && (errorAction === 'bind' || errorAction === 'unbind')}}" class="error" role="alert">{{error}}</view>
+    <view class="section-heading"><text>常用工具</text></view>
+    <view class="menu-card tools-grid">
+      <button class="menu-item" bindtap="newImage"><view class="tool-icon"><view class="line-icon icon-camera"></view></view><text>拍照上传</text></button>
+      <button class="menu-item" bindtap="newNote"><view class="tool-icon"><view class="line-icon icon-note"></view></view><text>随手记</text></button>
+      <button class="menu-item" data-panel="wechat" bindtap="openPanel"><view class="tool-icon"><view class="line-icon icon-wechat"></view></view><text>微信绑定</text><text class="item-caption {{user.hasWechatBinding ? 'is-bound' : ''}}">{{user.hasWechatBinding ? '已绑定' : '未绑定'}}</text></button>
+      <button class="menu-item" data-panel="password" bindtap="openPanel"><view class="tool-icon"><view class="line-icon icon-shield"></view></view><text>账号安全</text></button>
     </view>
-
     <view wx:if="{{error && errorAction === 'logout'}}" class="error" role="alert">{{error}}</view>
-    <button class="outline logout-action" bindtap="submitLogout" loading="{{pending === 'logout'}}" disabled="{{loading || pending}}">退出登录</button>
+    <button class="logout-action" bindtap="submitLogout" loading="{{pending === 'logout'}}" disabled="{{loading || pending}}">退出登录</button>
+    <view class="me-footer">学材 · 让学习有迹可循</view>
   </block>
 </view>
+<block wx:if="{{user && activePanel}}">
+  <view class="sheet-backdrop" bindtap="closePanel" catchtouchmove="stopPropagation"></view>
+  <view class="account-sheet panel-{{activePanel}}" role="dialog" aria-modal="true">
+    <view class="sheet-handle"></view>
+    <view class="sheet-heading">
+      <text>{{activePanel === 'profile' ? '修改个人资料' : activePanel === 'password' ? '账号安全' : activePanel === 'wechat' ? '微信绑定' : '账号设置'}}</text>
+      <button class="sheet-close" bindtap="closePanel" disabled="{{pending}}" aria-label="关闭">×</button>
+    </view>
+    <scroll-view scroll-y="true" class="sheet-scroll">
+      <view class="sheet-body">
+        <block wx:if="{{activePanel === 'profile'}}">
+          <text class="sheet-description">一个熟悉的名字，开启每一天的学习。</text>
+          <text class="field-label">昵称</text>
+          <input class="field-input" value="{{displayName}}" bindinput="onNameInput" maxlength="64" disabled="{{loading || pending}}" aria-label="昵称" />
+          <view wx:if="{{nameError}}" class="field-error">{{nameError}}</view>
+          <view wx:if="{{error && errorAction === 'name'}}" class="error" role="alert">{{error}}</view>
+          <button class="primary" bindtap="submitName" loading="{{pending === 'name'}}" disabled="{{loading || pending}}">保存昵称</button>
+        </block>
+        <block wx:if="{{activePanel === 'password'}}">
+          <text class="sheet-description">修改密码后，Web 和小程序需重新登录。</text>
+          <text class="field-label">当前密码</text>
+          <input class="field-input" value="{{currentPassword}}" bindinput="onCurrentPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="请输入当前密码" aria-label="当前密码" />
+          <view wx:if="{{currentPasswordError}}" class="field-error">{{currentPasswordError}}</view>
+          <text class="field-label">新密码</text>
+          <input class="field-input" value="{{newPassword}}" bindinput="onNewPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="请输入 8–64 个字符的新密码" aria-label="新密码" />
+          <view class="input-help">UTF-8 编码最多 72 字节，汉字和表情会占用多个字节。</view>
+          <view wx:if="{{newPasswordError}}" class="field-error">{{newPasswordError}}</view>
+          <view wx:if="{{error && errorAction === 'password'}}" class="error" role="alert">{{error}}</view>
+          <button class="primary" bindtap="submitPassword" loading="{{pending === 'password'}}" disabled="{{loading || pending}}">修改密码并重新登录</button>
+        </block>
+        <block wx:if="{{activePanel === 'wechat'}}">
+          <view class="binding-status"><view class="line-icon icon-wechat"></view><text>{{user.hasWechatBinding ? '已绑定微信' : '尚未绑定微信'}}</text></view>
+          <block wx:if="{{user.hasWechatBinding}}">
+            <text class="sheet-description">解绑后小程序需使用账号密码登录，Web 登录会保留。</text>
+            <text class="field-label">当前密码</text>
+            <input class="field-input" value="{{unbindPassword}}" bindinput="onUnbindPasswordInput" password="true" maxlength="64" disabled="{{loading || pending}}" placeholder="输入当前密码确认解绑" aria-label="解绑验证密码" />
+            <view wx:if="{{unbindPasswordError}}" class="field-error">{{unbindPasswordError}}</view>
+            <button class="outline" bindtap="submitUnbind" loading="{{pending === 'unbind'}}" disabled="{{loading || pending}}">确认解绑微信并重新登录</button>
+          </block>
+          <block wx:else>
+            <text class="sheet-description">绑定当前微信后，下次可一键登录。绑定不会合并其他账号。</text>
+            <button class="primary" bindtap="submitBinding" loading="{{pending === 'bind'}}" disabled="{{loading || pending}}">绑定当前微信</button>
+          </block>
+          <view wx:if="{{error && (errorAction === 'bind' || errorAction === 'unbind')}}" class="error" role="alert">{{error}}</view>
+        </block>
+        <block wx:if="{{activePanel === 'account'}}">
+          <view class="field-row"><text>用户 ID</text><text selectable="true">{{user.id}}</text></view>
+          <view class="field-row"><text>账号</text><text>{{user.username}}</text></view>
+          <view class="field-row"><text>账号类型</text><text>{{user.role === 'ADMIN' ? '管理员' : '普通用户'}}</text></view>
+          <view class="field-row"><text>账号状态</text><text class="{{user.status === 'ENABLED' ? 'status-ok' : 'status-off'}}">{{user.status === 'ENABLED' ? '正常' : '已停用'}}</text></view>
+          <button class="settings-link" data-panel="profile" bindtap="openPanel"><text>修改个人资料</text><text>›</text></button>
+          <button class="settings-link" data-panel="password" bindtap="openPanel"><text>修改登录密码</text><text>›</text></button>
+          <button class="settings-link" data-panel="wechat" bindtap="openPanel"><text>微信绑定</text><text>{{user.hasWechatBinding ? '已绑定' : '未绑定'}} ›</text></button>
+        </block>
+      </view>
+    </scroll-view>
+  </view>
+</block>

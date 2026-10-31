@@ -5,8 +5,8 @@
     <view class="muted">{{goalDescriptions[goals[goalIndex].value]}}</view>
     <text class="field-label">补充说明</text><textarea class="task-textarea" value="{{instruction}}" maxlength="1000" bindinput="onInstructionInput" placeholder="可选，说明希望关注的内容" />
     <view wx:if="{{material.type === 'PDF'}}"><text class="field-label">PDF页段（最多20页，共{{material.pageCount}}页）</text><view class="task-range"><input class="field-input" type="number" value="{{from}}" bindinput="onFromInput" /><text>至</text><input class="field-input" type="number" value="{{to}}" bindinput="onToInput" /></view></view>
-    <view class="task-switch"><text>{{relatedSearchDescription}}</text><switch checked="{{allowRelatedSearch}}" bindchange="onRelatedChange" color="#276c47" /></view>
-    <view class="task-switch"><text>{{externalProcessingConsent}}</text><switch checked="{{consent}}" bindchange="onConsentChange" color="#276c47" /></view>
+    <view class="task-switch"><text>{{relatedSearchDescription}}</text><switch checked="{{allowRelatedSearch}}" bindchange="onRelatedChange" color="#2f7bf6" /></view>
+    <view class="task-switch"><text>{{externalProcessingConsent}}</text><switch checked="{{consent}}" bindchange="onConsentChange" color="#2f7bf6" /></view>
     <button class="primary" bindtap="submit" loading="{{saving}}" disabled="{{saving}}">提交任务</button>
   </view>
 </view>

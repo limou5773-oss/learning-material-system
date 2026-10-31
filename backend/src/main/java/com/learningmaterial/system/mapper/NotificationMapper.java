@@ -9,6 +9,18 @@ import org.apache.ibatis.annotations.*;
 public interface NotificationMapper {
     @Insert("""
         INSERT INTO notification(user_id,review_id,type,dedupe_key,content,target_json,channel_status,created_at)
+        SELECT r.user_id,r.id,'REVIEW_SUPERSEDED',CONCAT('material:',m.id,':',m.version,':REVIEW_SUPERSEDED'),
+          '资料内容已变更，原审核已失效，需重新送审。',
+          JSON_OBJECT('type','MATERIAL','materialId',CAST(m.id AS CHAR),'reviewId',CAST(r.id AS CHAR)),
+          'NOT_REQUESTED',#{now}
+        FROM content_review r JOIN material m ON m.id=r.material_id
+        WHERE r.material_id=#{materialId} AND r.status='SUPERSEDED' AND r.superseded_at=#{now}
+        ORDER BY r.material_version DESC,r.id DESC LIMIT 1
+        ON DUPLICATE KEY UPDATE id=notification.id
+        """)
+    int insertSupersededEvent(@Param("materialId")long materialId,@Param("now")LocalDateTime now);
+    @Insert("""
+        INSERT INTO notification(user_id,review_id,type,dedupe_key,content,target_json,channel_status,created_at)
         VALUES(#{userId},#{reviewId},'REVIEW_DECIDED',CONCAT('review:',#{reviewId},':DECIDED'),'资料审核已有处理结果，请查看审核历史。',
           JSON_OBJECT('type','MATERIAL','materialId',CAST(#{materialId} AS CHAR),'reviewId',CAST(#{reviewId} AS CHAR)),'NOT_REQUESTED',#{now})
         """)

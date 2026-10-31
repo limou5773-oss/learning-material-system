@@ -2,6 +2,7 @@
   "pages": [
     "pages/login/index",
     "pages/me/index",
+    "pages/favorites/index",
     "pages/notifications/index",
     "pages/materials/index",
     "pages/note/new",
@@ -18,10 +19,22 @@
     "pages/cards/editor"
   ],
   "window": {
-    "navigationBarTitleText": "学材",
-    "navigationBarBackgroundColor": "#f4f8f5",
+    "navigationBarTitleText": "智能学习资料整理平台",
+    "navigationBarBackgroundColor": "#ffffff",
     "navigationBarTextStyle": "black",
-    "backgroundColor": "#f4f8f5"
+    "backgroundColor": "#f3f6fb"
+  },
+  "tabBar": {
+    "custom": true,
+    "color": "#94a0b0",
+    "selectedColor": "#2f7bf6",
+    "backgroundColor": "#ffffff",
+    "list": [
+      { "pagePath": "pages/materials/index", "text": "资料", "iconPath": "custom-tab-bar/placeholder.png", "selectedIconPath": "custom-tab-bar/placeholder.png" },
+      { "pagePath": "pages/cards/index", "text": "卡片", "iconPath": "custom-tab-bar/placeholder.png", "selectedIconPath": "custom-tab-bar/placeholder.png" },
+      { "pagePath": "pages/tasks/index", "text": "任务", "iconPath": "custom-tab-bar/placeholder.png", "selectedIconPath": "custom-tab-bar/placeholder.png" },
+      { "pagePath": "pages/me/index", "text": "我的", "iconPath": "custom-tab-bar/placeholder.png", "selectedIconPath": "custom-tab-bar/placeholder.png" }
+    ]
   },
   "style": "v2"
 }

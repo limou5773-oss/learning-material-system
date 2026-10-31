@@ -60,7 +60,7 @@ class AuthFlowIntegrationTest {
                 Map.of("username", username, "password", password, "clientType", "WEB"));
             assertThat(login.getStatusCode()).isEqualTo(HttpStatus.CREATED);
             String token = login.getBody().path("data").path("accessToken").asText();
-            assertThat(token).hasSize(43);
+            assertThat(token).matches("[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
             assertThat(login.getBody().path("data").path("tokenType").asText()).isEqualTo("Bearer");
 
             String passwordHash = jdbc.queryForObject("SELECT password_hash FROM app_user WHERE id = ?",

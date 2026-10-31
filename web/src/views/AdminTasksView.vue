@@ -1,10 +1,11 @@
 <script setup lang="ts">
+import { ElDialog } from 'element-plus'
 import { useAdminTaskMonitor } from '../admin-task-monitor'
 import { adminTaskStatuses, adminGoalLabel, adminStatusLabel, adminStageLabel, adminToolLabel, adminProviderLabel,
   adminStepStatusLabel, adminErrorLabel, formatAdminTime, formatAdminDuration } from '../admin-tasks'
 
 const { status, fromDate, toDate, page, results, selected, steps, stepPage, loading, stepsLoading, error, stepsError,
-  load, applyFilters, changePage, selectTask, loadSteps, changeStepPage } = useAdminTaskMonitor()
+  load, applyFilters, changePage, selectTask, clearSelection, loadSteps, changeStepPage } = useAdminTaskMonitor()
 </script>
 
 <template>
@@ -39,6 +40,8 @@ const { status, fromDate, toDate, page, results, selected, steps, stepPage, load
         <span>第 {{ page }} 页<span v-if="results"> · 共 {{ results.total }} 条</span></span>
         <button type="button" :disabled="loading || !results || page * results.pageSize >= results.total" @click="changePage(page + 1)">下一页</button>
       </div>
+    </section>
+    <el-dialog :model-value="!!selected" title="工具执行步骤" width="1120px" class="workspace-dialog task-dialog" align-center append-to-body :close-on-click-modal="false" :before-close="clearSelection">
       <section v-if="selected" class="task-steps" :aria-busy="stepsLoading" aria-labelledby="task-steps-title">
         <div class="steps-heading"><h2 id="task-steps-title">任务 #{{ selected.id }} 的工具步骤</h2><button type="button" :disabled="stepsLoading" @click="loadSteps">刷新步骤</button></div>
         <p class="task-help">步骤用时仅表示本条工具记录的开始至结束跨度。</p>
@@ -57,27 +60,43 @@ const { status, fromDate, toDate, page, results, selected, steps, stepPage, load
           <button type="button" :disabled="stepPage <= 1 || stepsLoading" @click="changeStepPage(stepPage - 1)">步骤上一页</button><span>第 {{ stepPage }} 页<span v-if="steps"> · 共 {{ steps.total }} 条</span></span><button type="button" :disabled="stepsLoading || !steps || stepPage * steps.pageSize >= steps.total" @click="changeStepPage(stepPage + 1)">步骤下一页</button>
         </div>
       </section>
-    </section>
+      <template #footer><button type="button" @click="clearSelection">关闭</button></template>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
 .task-monitor, .task-monitor .materials-panel, .task-steps { min-width: 0; max-width: 100%; }
-.task-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 16px; }
-.task-filters label { display: grid; gap: 8px; min-width: 0; max-width: 100%; color: #43516a; font-size: 14px; }
-.task-filters input, .task-filters select { min-width: 0; max-width: 100%; padding: 10px 12px; border: 1px solid #dfe6f0; border-radius: 8px; font: inherit; background: #fff; }
-.task-monitor button { padding: 10px 12px; border: 1px solid #dce5f2; border-radius: 8px; color: #315bc2; background: #fff; cursor: pointer; }
-.task-monitor :disabled { opacity: .5; cursor: default; }
-.task-monitor :focus-visible { outline: 2px solid #315bc2; outline-offset: 2px; }
+.task-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 24px; }
+.task-filters label { display: grid; gap: 12px; min-width: 0; max-width: 100%; color: #43516a; font-size: 14px; }
+.task-filters input, .task-filters select { min-width: 0; max-width: 100%; padding: 10px 12px; border: 1px solid #dfe6f0; border-radius: 12px; font: inherit; background: #fff; }
+.task-monitor button, .task-dialog button { padding: 10px 12px; border: 1px solid #dce5f2; border-radius: 12px; color: var(--brand-hover); background: #fff; cursor: pointer; }
+.task-monitor :disabled, .task-dialog :disabled { opacity: .5; cursor: default; }
+.task-monitor :focus-visible, .task-dialog :focus-visible { outline: 2px solid var(--brand-hover); outline-offset: 2px; }
 .task-help { color: #64748b; font-size: 13px; line-height: 1.8; overflow-wrap: anywhere; }
 .task-table-wrap { max-width: 100%; overflow-x: auto; }
-.task-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-.task-table th, .task-table td { padding: 14px 10px; border-bottom: 1px solid #eef1f6; white-space: nowrap; }
-.task-table th { color: #64748b; font-weight: 600; }
+.task-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; text-align: left; }
+.task-table th, .task-table td { padding: 13px 12px; border-bottom: 1px solid #eef2f8; white-space: nowrap; height: 52px; }
+.task-table thead th { background: #f4f8fe; color: #5a7395; font-weight: 500; height: 52px; }
+.task-table thead th:first-child { border-radius: var(--r-md) 0 0 var(--r-md); height: 52px; }
+.task-table thead th:last-child { border-radius: 0 var(--r-md) var(--r-md) 0; height: 52px; }
+.task-table tbody tr { transition: background-color .16s; }
+.task-table tbody tr:hover { background: #f8fbff; }
 .task-table .task-error-cell { min-width: 100px; max-width: 240px; white-space: normal; overflow-wrap: anywhere; }
 .selected-row { background: #f3f7ff; }
-.task-steps { margin-top: 28px; padding-top: 24px; border-top: 1px solid #eef1f6; }
+.task-steps { margin: 0; }
 .steps-heading { display: flex; flex-wrap: wrap; align-items: center; justify-content: space-between; gap: 12px; }
 .steps-heading h2 { margin: 0; font-size: 20px; overflow-wrap: anywhere; }
 @media (max-width: 600px) { .task-filters label { flex: 1 1 100%; } .task-filters button { flex: 1; } }
+/* v3 视觉统一 */
+.task-filters label { color: #4d637f; font-size: 14px; font-weight: 500; gap: 12px; }
+.task-filters input, .task-filters select { min-height: 40px; border-color: #e1e9f3; border-radius: var(--r-md); font-size: 14px; color: #33506f; }
+.task-monitor button, .task-dialog button { min-height: 40px; padding: 8px 14px; border-color: var(--line-strong); border-radius: var(--r-md); color: #47617f; font-size: 14px; font-weight: 500; }
+.task-monitor button:hover:not(:disabled), .task-dialog button:hover:not(:disabled) { border-color: #bcd3f1; background: #f4f8ff; color: var(--brand-hover); }
+.task-table-wrap { border: 1px solid var(--line); border-radius: var(--r-md); }
+.task-table thead th { background: #f7f9fd; color: #4d637f; font-size: 14px; font-weight: 600; height: 52px; }
+.task-table th, .task-table td { padding: 12px 14px; border-color: var(--line); height: 52px; }
+.task-table tbody tr:last-child td { border-bottom: 0; }
+.steps-heading h2 { font-size: 17px; }
+.task-help { color: #74869e; font-size: 12px; }
 </style>

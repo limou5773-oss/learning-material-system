@@ -1,14 +1,19 @@
-<view class="page">
-  <text class="eyebrow">QUICK CAPTURE</text>
-  <view class="title">写下此刻的要点</view>
-  <view class="lead">保存后，可以在 Web 和小程序中查看同一篇笔记。</view>
-  <view class="card">
-    <view wx:if="{{error}}" class="error">{{error}}</view>
-    <text class="field-label">标题</text><input class="field-input" value="{{title}}" bindinput="onTitleInput" placeholder="例如：线性代数第三章要点" maxlength="255" />
-    <text class="field-label">学科</text><input class="field-input" value="{{subject}}" bindinput="onSubjectInput" placeholder="可选，例如：数学" maxlength="64" />
-    <text class="field-label">标签</text><input class="field-input" value="{{tagsText}}" bindinput="onTagsInput" placeholder="可选，多个标签用逗号隔开" />
-    <text class="field-label">正文</text><textarea class="note-textarea" value="{{noteText}}" bindinput="onNoteInput" placeholder="写下学习内容…" maxlength="20000" />
-    <view class="character-count">{{noteText.length}} / 20000 字</view>
-    <button class="primary" bindtap="submit" loading="{{loading}}" disabled="{{loading}}">保存笔记</button>
-  </view>
+<view class="page form-page note-editor-page">
+  <view class="form-header"><view class="form-header-mark"><view class="form-header-icon note-icon"></view></view><view class="form-header-copy"><view class="form-title">新建笔记</view><view class="form-description">把课堂要点与学习灵感，留在这里。</view></view></view>
+  <view wx:if="{{error}}" class="error" role="alert">{{error}}</view>
+    <view class="form-panel note-form">
+      <view class="form-field first-field">
+        <label for="note-title" class="form-label"><text>笔记标题<text class="form-required">*</text></text></label>
+        <input id="note-title" class="form-input" value="{{title}}" bindinput="onTitleInput" maxlength="255" disabled="{{loading}}" placeholder="例如：线性代数第三章要点" placeholder-class="form-placeholder" aria-label="笔记标题" />
+      </view>
+      <view class="note-meta">
+        <view class="form-field"><label for="note-subject" class="form-label"><text>学科</text><text class="form-optional">选填</text></label><input id="note-subject" class="form-input" value="{{subject}}" bindinput="onSubjectInput" maxlength="64" disabled="{{loading}}" placeholder="例如：数学" placeholder-class="form-placeholder" aria-label="学科" /></view>
+        <view class="form-field"><label for="note-tags" class="form-label"><text>标签</text><text class="form-optional">选填</text></label><input id="note-tags" class="form-input" value="{{tagsText}}" bindinput="onTagsInput" disabled="{{loading}}" placeholder="用逗号分隔多个标签" placeholder-class="form-placeholder" aria-label="标签，多个标签用逗号隔开" /></view>
+      </view>
+      <view class="form-field note-body">
+        <label for="note-content" class="form-label"><text>笔记正文<text class="form-required">*</text></text><text class="form-optional">{{noteText.length}} / 20000 字</text></label>
+        <textarea id="note-content" class="form-textarea note-textarea" value="{{noteText}}" bindinput="onNoteInput" maxlength="20000" disabled="{{loading}}" placeholder="记录课堂要点、自己的理解，或值得记住的灵感…" placeholder-class="form-placeholder" aria-label="笔记正文" />
+      </view>
+    </view>
+  <view class="form-action-bar"><button class="form-primary" bindtap="submit" loading="{{loading}}" disabled="{{loading}}">保存笔记</button><view class="form-action-note">保存后可在 Web 和小程序中查看</view></view>
 </view>

@@ -1,5 +1,6 @@
 <script setup lang="ts">
 import { reactive, ref } from 'vue'
+import UiIcon from '../components/UiIcon.vue'
 import { useRouter } from 'vue-router'
 import { api } from '../api'
 import type { User } from '../auth'
@@ -46,15 +47,25 @@ async function submit() {
 </script>
 
 <template>
-  <div class="auth-layout">
+  <div class="auth-layout editorial-auth">
     <section class="intro">
-      <span class="intro-eyebrow">START YOUR LEARNING SPACE</span>
-      <h1>为你的知识，<br />留一个位置。</h1>
-      <p>创建个人账号，开始建立属于自己的学习资料空间。注册后使用同一账号登录 Web 和后续的小程序。</p>
-      <div class="intro-points"><span>自主整理</span><span>安心保存</span><span>随时查阅</span></div>
+      <header class="masthead">
+        <span class="masthead-name">Learning Library</span>
+        <span class="masthead-meta">No.02 — 2026</span>
+      </header>
+      <p class="kicker"><UiIcon name="spark" />从这里开始积累</p>
+      <h1>为你的知识，<br /><em>留一个位置。</em></h1>
+      <div class="rule-row" aria-hidden="true"><i class="rule-line"></i><span>账号 · 空间 · 同步</span></div>
+      <p class="lede">创建个人账号，在 Web 和微信小程序中管理同一份学习资料。随手记下的知识，也能在电脑上认真整理。</p>
+      <ul class="index-points">
+        <li><span>01</span>随手记录</li>
+        <li><span>02</span>集中整理</li>
+        <li><span>03</span>关联知识</li>
+      </ul>
     </section>
 
     <section class="auth-card" aria-labelledby="register-title">
+      <div class="card-head"><span class="card-issue">Create Account</span></div>
       <h2 id="register-title">创建账号</h2>
       <p class="card-subtitle">只需几步，开启你的学习空间</p>
       <el-alert v-if="error" class="form-error" :title="error" type="error" show-icon :closable="false" />

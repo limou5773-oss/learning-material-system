@@ -19,7 +19,8 @@ function getToken() {
 }
 
 function saveToken(token) {
-  if (typeof token !== 'string' || !/^[A-Za-z0-9_-]{43}$/.test(token)) {
+  // 客户端只检查JWT格式，签名、过期与权限由后端校验。
+  if (typeof token !== 'string' || !/^[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+\.[A-Za-z0-9_-]+$/.test(token)) {
     throw new Error('服务端返回的会话令牌无效')
   }
   wx.setStorageSync(TOKEN_KEY, token)
@@ -69,10 +70,10 @@ function request(path, options = {}) {
   })
 }
 
-function uploadImage(filePath, formData) {
+function uploadImage(filePath, formData, onProgress) {
   const token = getToken()
   return new Promise((resolve, reject) => {
-    wx.uploadFile({
+    const task = wx.uploadFile({
       url: `${API_BASE_URL}/materials/files`, filePath, name: 'file', formData,
       header: token ? { Authorization: `Bearer ${token}` } : {},
       success(response) {
@@ -91,6 +92,7 @@ function uploadImage(filePath, formData) {
       },
       fail() { reject(new ApiError(0, '无法连接服务器，请检查后端地址与网络')) },
     })
+    if (onProgress) task.onProgressUpdate(onProgress)
   })
 }
 

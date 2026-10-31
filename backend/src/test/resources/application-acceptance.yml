@@ -4,3 +4,31 @@ spring:
     url: ${DB_URL}
     username: ${DB_USERNAME}
     password: ${DB_PASSWORD}
+    hikari:
+      # 多个 Spring 测试上下文同时缓存，避免每个池预占 10 条连接耗尽 MySQL。
+      maximum-pool-size: 5
+      minimum-idle: 0
+lms:
+  # 隔离日常开发配置；各测试可用显式测试属性覆盖，不调用真实付费厂商。
+  model:
+    provider: disabled
+    api-key: ""
+  ocr:
+    enabled: false
+    provider: disabled
+    secret-id: ""
+    secret-key: ""
+  task:
+    processor:
+      mode: disabled
+    worker:
+      enabled: false
+  admin-bootstrap:
+    enabled: false
+  wechat:
+    enabled: false
+  jwt:
+    # 公开测试密钥，仅用于自动测试。
+    secret: "AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8="
+    issuer: learning-material-test
+    ttl: 7d

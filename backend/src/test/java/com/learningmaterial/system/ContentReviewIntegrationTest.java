@@ -42,6 +42,7 @@ class ContentReviewIntegrationTest {
     @Autowired TaskLeaseService leases;
     @Autowired TaskCandidateService candidates;
     @Autowired MockTaskProcessor processor;
+    @Autowired com.learningmaterial.system.mapper.PersonalMaterialSearchMapper searchable;
     @MockitoSpyBean Clock clock;
     final List<String> files=new ArrayList<>();
     final HttpClient http=HttpClient.newBuilder().connectTimeout(Duration.ofSeconds(5)).build();
@@ -58,7 +59,7 @@ class ContentReviewIntegrationTest {
     }
     @AfterEach void clean() {
         reset(clock);
-        for(String trigger:List.of("d22_fail_audit","d22_fail_notification","d22_fail_cancel")) jdbc.execute("DROP TRIGGER IF EXISTS "+trigger);
+        for(String trigger:List.of("d22_fail_audit","d22_fail_notification","d22_fail_cancel","d26_fail_notification")) jdbc.execute("DROP TRIGGER IF EXISTS "+trigger);
         for(long id:users) {
             jdbc.update("DELETE FROM review_record WHERE operator_id=? OR target_user_id=?",id,id);
             if(table("content_review")) {
@@ -83,11 +84,94 @@ class ContentReviewIntegrationTest {
     }
     boolean table(String name) { return jdbc.queryForObject("SELECT COUNT(*) FROM information_schema.tables WHERE table_schema=DATABASE() AND table_name=?",Integer.class,name)>0; }
 
+    @Test void approvedVersionBecomesSupersededOnEditAndDeletionAndCanBeReviewedAgain() throws Exception {
+        String task=task();processor.execute(leases.claim());
+        Reply confirmed=request("PUT","/ai-tasks/"+task+"/confirmation",confirmation(task),owner.token());
+        assertThat(confirmed.status()).isEqualTo(200);
+        String card=confirmed.data().path("cardIds").get(0).asText();
+        String review=submit(2).data().path("id").asText();view(review,admin.token());
+        assertThat(decide(review,1,"APPROVED",admin.token()).status()).isEqualTo(200);
+        assertThat(request("GET",history(),null,owner.token()).data().path("items").get(0).path("status").asText()).isEqualTo("APPROVED");
+        assertThat(searchable.findAvailable(owner.id(),Long.parseLong(card))).isNotNull();
+        Reply edited=request("PATCH","/materials/"+material,Map.of("version",2,"noteText","已替换的正文"),owner.token());
+        assertThat(edited.status()).isEqualTo(200);
+        assertThat(edited.data().path("accessState").asText()).isEqualTo("RESTRICTED");
+        assertThat(searchable.findAvailable(owner.id(),Long.parseLong(card))).isNull();
+        JsonNode source=request("GET","/cards/"+card+"/sources",null,owner.token()).data().path("items").get(0);
+        assertThat(source.path("isAvailable").asBoolean()).isFalse();
+        assertThat(source.path("unavailableReason").asText()).isEqualTo("SOURCE_RESTRICTED");
+        JsonNode old=request("GET",history(),null,owner.token()).data().path("items").get(0);
+        assertThat(old.path("status").asText()).isEqualTo("SUPERSEDED");
+        assertThat(old.path("supersededAt").asText()).endsWith("Z");
+        assertThat(old.path("isCurrent").asBoolean()).isFalse();
+        assertThat(request("GET","/admin/reviews?status=SUPERSEDED",null,admin.token()).status()).isEqualTo(200);
+        String fresh=submit(3).data().path("id").asText();view(fresh,admin.token());
+        assertThat(decide(fresh,1,"APPROVED",admin.token()).status()).isEqualTo(200);
+        assertThat(searchable.findAvailable(owner.id(),Long.parseLong(card))).isNotNull();
+        assertThat(request("DELETE","/materials/"+material+"?version=3",null,owner.token()).status()).isEqualTo(204);
+        assertThat(jdbc.queryForObject("SELECT status FROM content_review WHERE id=?",String.class,fresh)).isEqualTo("SUPERSEDED");
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM notification WHERE user_id=? AND type='REVIEW_SUPERSEDED'",Integer.class,owner.id())).isEqualTo(2);
+    }
+
+    @Test void metadataEditKeepsApprovalAndOnlyContentEditSupersedes() throws Exception {
+        String review=submit(1).data().path("id").asText();view(review,admin.token());
+        assertThat(decide(review,1,"APPROVED",admin.token()).status()).isEqualTo(200);
+        Reply renamed=request("PATCH","/materials/"+material,Map.of("version",1,"title","改名后的标题","tags",List.of("重点")),owner.token());
+        assertThat(renamed.status()).isEqualTo(200);
+        assertThat(renamed.data().path("accessState").asText()).isEqualTo("NORMAL");
+        assertThat(renamed.data().path("version").asInt()).isEqualTo(2);
+        JsonNode kept=request("GET",history(),null,owner.token()).data().path("items").get(0);
+        assertThat(kept.path("status").asText()).isEqualTo("APPROVED");
+        assertThat(kept.path("isCurrent").asBoolean()).isTrue();
+        assertThat(request("PATCH","/materials/"+material,Map.of("version",2,"status","ARCHIVED"),owner.token()).status()).isEqualTo(200);
+        assertThat(request("PATCH","/materials/"+material,Map.of("version",3,"status","ACTIVE"),owner.token()).status()).isEqualTo(200);
+        assertThat(jdbc.queryForObject("SELECT status FROM content_review WHERE id=?",String.class,review)).isEqualTo("APPROVED");
+        assertThat(jdbc.queryForObject("SELECT access_state FROM material WHERE id=?",String.class,material)).isEqualTo("NORMAL");
+        Reply edited=request("PATCH","/materials/"+material,Map.of("version",4,"noteText","新的正文内容"),owner.token());
+        assertThat(edited.status()).isEqualTo(200);
+        assertThat(edited.data().path("accessState").asText()).isEqualTo("RESTRICTED");
+        assertThat(jdbc.queryForObject("SELECT status FROM content_review WHERE id=?",String.class,review)).isEqualTo("SUPERSEDED");
+    }
+
+    @Test void aiConfirmationSupersedesApprovalWithoutCancellingItsOwnSuccessfulTask() throws Exception {
+        String task=task();processor.execute(leases.claim());JsonNode input=confirmation(task);
+        String review=submit(1).data().path("id").asText();view(review,admin.token());
+        assertThat(decide(review,1,"APPROVED",admin.token()).status()).isEqualTo(200);
+        String otherTask=task();
+        Reply confirmed=request("PUT","/ai-tasks/"+task+"/confirmation",input,owner.token());
+        assertThat(confirmed.status()).isEqualTo(200);
+        assertThat(jdbc.queryForObject("SELECT status FROM ai_task WHERE id=?",String.class,task)).isEqualTo("SUCCEEDED");
+        assertThat(jdbc.queryForObject("SELECT status FROM ai_task WHERE id=?",String.class,otherTask)).isEqualTo("CANCELLED");
+        assertThat(jdbc.queryForObject("SELECT access_state FROM material WHERE id=?",String.class,material)).isEqualTo("RESTRICTED");
+        assertThat(jdbc.queryForObject("SELECT status FROM content_review WHERE id=?",String.class,review)).isEqualTo("SUPERSEDED");
+        assertThat(request("PUT","/ai-tasks/"+task+"/confirmation",input,owner.token()).status()).isEqualTo(200);
+        assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM notification WHERE review_id=? AND type='REVIEW_SUPERSEDED'",Integer.class,review)).isEqualTo(1);
+    }
+
+    @Test void supersedeNotificationFailureRollsBackEditDeleteAndConfirmation() throws Exception {
+        String task=task();processor.execute(leases.claim());JsonNode input=confirmation(task);
+        String review=submit(1).data().path("id").asText();view(review,admin.token());
+        assertThat(decide(review,1,"APPROVED",admin.token()).status()).isEqualTo(200);
+        jdbc.execute("CREATE TRIGGER d26_fail_notification BEFORE INSERT ON notification FOR EACH ROW SIGNAL SQLSTATE '45000' SET MESSAGE_TEXT='D26 notification rollback'");
+        try {
+            for(String action:List.of("PATCH","DELETE","CONFIRM")) {
+                Reply response=action.equals("CONFIRM")?request("PUT","/ai-tasks/"+task+"/confirmation",input,owner.token())
+                    :request(action,"/materials/"+material+(action.equals("DELETE")?"?version=1":""),action.equals("PATCH")?Map.of("version",1,"noteText","不能提交的修改"):null,owner.token());
+                assertThat(response.status()).as(action).isEqualTo(500);
+                assertThat(jdbc.queryForMap("SELECT status,version,access_state FROM material WHERE id=?",material))
+                    .containsEntry("status","ACTIVE").containsEntry("version",1).containsEntry("access_state","NORMAL");
+                assertThat(jdbc.queryForObject("SELECT status FROM content_review WHERE id=?",String.class,review)).isEqualTo("APPROVED");
+                assertThat(jdbc.queryForObject("SELECT status FROM ai_task WHERE id=?",String.class,task)).isEqualTo("WAIT_CONFIRM");
+                assertThat(jdbc.queryForObject("SELECT COUNT(*) FROM knowledge_card WHERE user_id=?",Integer.class,owner.id())).isZero();
+            }
+        } finally {jdbc.execute("DROP TRIGGER d26_fail_notification");}
+    }
+
     @Test void ownerExplicitlyAuthorizesVersionAndListsOnlySafeMetadata() throws Exception {
         Reply sent=submit(1);
         assertThat(sent.status()).isEqualTo(201);
         JsonNode review=sent.data();
-        assertThat(review.fieldNames()).toIterable().containsExactlyInAnyOrder("id","materialId","materialVersion","title","triggerType","status","version","reason","decisionReason","createdAt","ownerId","type","accessScope","isCurrent");
+        assertThat(review.fieldNames()).toIterable().containsExactlyInAnyOrder("id","materialId","materialVersion","title","triggerType","status","version","reason","decisionReason","createdAt","ownerId","type","accessScope","isCurrent","supersededAt");
         assertThat(review.path("ownerId").asText()).isEqualTo(Long.toString(owner.id()));
         assertThat(review.path("reason").asText()).isEqualTo("本人授权");
         assertThat(review.path("createdAt").asText()).endsWith("Z");
@@ -295,9 +379,11 @@ class ContentReviewIntegrationTest {
         assertThat(confirmed.get(10,TimeUnit.SECONDS).status()).isEqualTo(200);assertThat(rejected.get(10,TimeUnit.SECONDS).status()).isEqualTo(409);
         assertThat(jdbc.queryForObject("SELECT status FROM ai_task WHERE id=?",String.class,task)).isEqualTo("SUCCEEDED");
         // A fresh current-version candidate reverses the ordering: rejection holds material first.
-        Map<String,Object> taskInput=new HashMap<>(taskInput());taskInput.put("materialVersion",2);
+        // 前一份资料的批准已随确认升版失效；反向锁顺序用另一份未送审资料。
+        material=request("POST","/materials",Map.of("type","NOTE","title","反向并发审核","noteText","第二份正文"),owner.token()).data().path("id").asText();
+        Map<String,Object> taskInput=new HashMap<>(taskInput());
         String nextTask=request("POST","/ai-tasks",taskInput,owner.token()).data().path("id").asText();processor.execute(leases.claim());
-        JsonNode nextInput=confirmation(nextTask);String nextReview=submit(2).data().path("id").asText();view(nextReview,admin.token());
+        JsonNode nextInput=confirmation(nextTask);String nextReview=submit(1).data().path("id").asText();view(nextReview,admin.token());
         try(Connection blocker=blockSession(admin.token())) {
             rejected=async(()->decide(nextReview,1,"REJECTED",admin.token()));awaitWaiters("auth_session",1);
             confirmed=async(()->request("PUT","/ai-tasks/"+nextTask+"/confirmation",nextInput,owner.token()));

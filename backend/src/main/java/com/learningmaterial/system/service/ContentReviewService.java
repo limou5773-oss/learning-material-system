@@ -8,6 +8,9 @@ import com.learningmaterial.system.security.AuthPrincipal;
 
 /** ContentReviewService 的业务契约。 */
 public interface ContentReviewService {
+    void supersedeByMaterial(long owner,long materialId,java.time.LocalDateTime now);
+    /** 元数据变更只让待审单失效，保留已通过的审核结论与访问状态。 */
+    void supersedePendingByMaterial(long materialId,java.time.LocalDateTime now);
     StoredFile file(AuthPrincipal actor,long id);
 
     ReviewContent content(AuthPrincipal actor,long id,String reason);

@@ -1,17 +1,41 @@
-.detail-card .title { font-size: 46rpx; overflow-wrap: anywhere; }
-.detail-meta { margin-top: 24rpx; color: #718076; font-size: 25rpx; }
-.note-content { display: block; min-height: 320rpx; margin-top: 38rpx; padding-top: 38rpx; border-top: 1rpx solid #eaf0e9; color: #34483b; font-size: 29rpx; line-height: 1.8; white-space: pre-wrap; overflow-wrap: anywhere; }
-.retry { margin-top: 10rpx; text-decoration: underline; }
-.delete-action { color: #a2463b; border-color: #ecd8d3; }
-.image-preview { margin-top: 38rpx; padding-top: 38rpx; border-top: 1rpx solid #eaf0e9; }
-.original-image { display: block; width: 100%; }
-.pdf-preview { margin-top: 38rpx; padding-top: 38rpx; border-top: 1rpx solid #eaf0e9; color: #718076; }
-.pdf-preview button { margin: 24rpx 0; }
-.review-section { margin-top: 40rpx; padding-top: 32rpx; border-top: 1rpx solid #e5eaf2; }
-.review-heading { font-size: 34rpx; font-weight: 600; margin-bottom: 20rpx; }
-.review-help { color: #64748b; line-height: 1.7; font-size: 26rpx; margin: 16rpx 0; }
-.review-section textarea { box-sizing: border-box; width: 100%; padding: 20rpx; border: 1rpx solid #dfe6f0; border-radius: 12rpx; margin: 16rpx 0; }
-.review-notice { color: #286448; margin: 16rpx 0; }
-.review-restriction { background: #fff6e8; color: #815016; padding: 24rpx; margin: 24rpx 0; line-height: 1.7; border-radius: 12rpx; }
-.review-record { border-bottom: 1rpx solid #e5eaf2; padding: 24rpx 0; line-height: 1.7; }
-.review-record text { display: block; white-space: pre-wrap; overflow-wrap: anywhere; }
+@import "../../styles/form.wxss";
+.summary-empty { color: #8b9bb1; font-size: 25rpx; line-height: 1.8; }
+.material-detail-page { padding: 24rpx 28rpx calc(36rpx + env(safe-area-inset-bottom)); }
+.material-detail-page .form-panel { padding: 30rpx; border-radius: 32rpx; box-shadow: 0 6rpx 24rpx #27467406; }
+.detail-badges { display: flex; align-items: center; flex-wrap: wrap; gap: 12rpx; }
+.detail-type, .archive-badge { padding: 8rpx 18rpx; border-radius: 24rpx; background: #eaf2ff; color: #5c8bcf; font-size: 22rpx; line-height: 1.4; }
+.archive-badge { background: #fff4e3; color: #ad8850; }
+.detail-version { flex: 1; text-align: right; color: #a6b0bf; font-size: 21rpx; }
+.detail-title { margin-top: 24rpx; color: #29394f; font-size: 38rpx; font-weight: 600; line-height: 1.5; overflow-wrap: anywhere; }
+.detail-meta { display: flex; align-items: center; flex-wrap: wrap; gap: 12rpx; margin-top: 22rpx; }
+.subject-pill, .material-detail-page .tag-pill { margin: 0; padding: 8rpx 18rpx; border-radius: 24rpx; background: #f2f6fc; color: #8a9bb3; font-size: 22rpx; line-height: 1.5; }
+.subject-pill { background: #edf4ff; color: #7097ce; }
+.reading-heading { display: flex; align-items: center; gap: 12rpx; margin-bottom: 22rpx; color: #64758e; font-size: 26rpx; font-weight: 500; }
+.reading-heading::before { width: 6rpx; height: 24rpx; border-radius: 4rpx; background: #93b9f2; content: ''; }
+.note-content { display: block; color: #43536a; font-size: 29rpx; line-height: 1.95; white-space: pre-wrap; overflow-wrap: anywhere; }
+.image-canvas { overflow: hidden; border-radius: 24rpx; background: #f6f9ff; }
+.original-image { display: block; width: 100%; border-radius: 24rpx; }
+.image-caption { margin-top: 18rpx; color: #a0aec1; font-size: 22rpx; text-align: center; }
+.image-canvas .error { margin: 0; }
+.pdf-description { margin-bottom: 24rpx; color: #8c9ab0; font-size: 25rpx; line-height: 1.7; }
+.pdf-preview .error { margin-top: 20rpx; }
+.detail-main-actions { display: grid; grid-template-columns: minmax(0, 1fr); gap: 18rpx; margin: 0 0 18rpx; }
+.detail-main-actions.with-note { grid-template-columns: repeat(2, minmax(0, 1fr)); }
+.detail-tools { display: grid; grid-template-columns: repeat(3, minmax(0, 1fr)); gap: 14rpx; margin-bottom: 28rpx; }
+.material-detail-page .detail-tools button.form-secondary { height: 74rpx; padding: 0 8rpx; border-color: #e5ecf7; background: #fff; color: #8a9ab0; font-size: 24rpx; }
+.material-detail-page .detail-tools button.is-favorite { border-color: #cfdef5; background: #edf4ff; color: #608aca; }
+.material-detail-page .detail-tools button.delete-action { color: #c88282; }
+.retry { margin-top: 12rpx; font-size: 24rpx; text-decoration: underline; }
+.review-heading { margin-bottom: 18rpx; color: #60718a; font-size: 28rpx; font-weight: 500; }
+.review-help { margin: 14rpx 0 22rpx; color: #9aa6b8; font-size: 24rpx; line-height: 1.75; }
+.review-section label { display: block; margin-top: 24rpx; color: #687990; font-size: 25rpx; }
+.review-section textarea.form-textarea { height: 164rpx; margin: 14rpx 0 20rpx; padding: 20rpx 22rpx; border-radius: 24rpx; font-size: 26rpx; }
+.review-section button.form-primary, .review-section button.form-secondary { margin: 18rpx 0; font-size: 25rpx; }
+.review-notice { margin: 16rpx 0; padding: 16rpx 20rpx; border-radius: 20rpx; background: #edf4ff; color: #648ac2; font-size: 24rpx; line-height: 1.7; }
+.review-restriction { margin-bottom: 24rpx; padding: 22rpx 26rpx; border: 1rpx solid #f4e8cf; border-radius: 26rpx; background: #fff9ee; color: #aa8b51; font-size: 25rpx; line-height: 1.75; }
+.review-section .state { padding: 30rpx 12rpx; font-size: 24rpx; }
+.review-record { margin-top: 18rpx; padding: 22rpx; border-radius: 22rpx; background: #f7faff; color: #8191a8; font-size: 24rpx; line-height: 1.75; }
+.review-record text { display: block; margin-top: 12rpx; color: #63748e; white-space: pre-wrap; overflow-wrap: anywhere; }
+.review-record .review-help { margin: 12rpx 0 0; font-size: 21rpx; }
+.review-section .pagination { gap: 12rpx; margin-top: 20rpx; color: #9aa8ba; }
+.review-section .pagination button { width: auto; min-width: 0; margin: 0; padding: 0 20rpx; border-radius: 30rpx; }

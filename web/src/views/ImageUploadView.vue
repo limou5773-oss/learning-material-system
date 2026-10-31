@@ -4,6 +4,7 @@ import { useRoute, useRouter } from 'vue-router'
 import { ApiRequestError, uploadFile } from '../api'
 import { clearSession } from '../auth'
 import type { Material } from '../materials'
+import UiIcon from '../components/UiIcon.vue'
 
 const router = useRouter()
 const route = useRoute()
@@ -78,11 +79,10 @@ async function submit(allowDuplicate = false) {
       <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
       <div v-if="existingId" class="duplicate-actions"><router-link :to="`/materials/${existingId}`">查看已有资料</router-link><button type="button" :disabled="saving" @click="submit(true)">确认保存副本</button></div>
       <form @submit.prevent="submit(false)">
-        <label for="image-file">图片</label><input id="image-file" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" @change="choose" />
+        <div class="upload-picker"><span class="upload-picker-icon"><UiIcon name="image" /></span><label for="image-file">选择一张学习图片</label><p>课件截图、课堂板书，都可以整理进资料库。</p><input id="image-file" type="file" accept="image/jpeg,image/png,.jpg,.jpeg,.png" :disabled="saving" @change="choose" /></div>
         <img v-if="previewUrl" class="upload-preview" :src="previewUrl" alt="待上传图片预览" />
         <label for="image-title">标题</label><input id="image-title" v-model="form.title" maxlength="255" placeholder="例如：课堂板书" />
-        <label for="image-subject">学科</label><input id="image-subject" v-model="form.subject" maxlength="64" placeholder="可选" />
-        <label for="image-tags">标签</label><input id="image-tags" v-model="form.tags" placeholder="可选，多个标签用逗号隔开" />
+        <div class="editor-meta-grid"><div><label for="image-subject">所属学科</label><input id="image-subject" v-model="form.subject" maxlength="64" placeholder="例如：计算机网络（选填）" /></div><div><label for="image-tags">标签</label><input id="image-tags" v-model="form.tags" placeholder="多个标签用逗号隔开（选填）" /></div></div>
         <div class="editor-actions"><span>{{ selected ? `${(selected.size / 1024 / 1024).toFixed(2)} MiB` : '尚未选择图片' }}</span><button type="submit" :disabled="saving || !selected">{{ saving ? '正在上传…' : '上传图片' }}</button></div>
       </form>
     </section>

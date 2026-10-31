@@ -1,7 +1,8 @@
 const test = require('node:test')
 const assert = require('node:assert/strict')
 
-const token = 'a'.repeat(43), otherToken = 'b'.repeat(43)
+const jwtPrefix = 'eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJzdWIiOiIxIn0.'
+const token = jwtPrefix + 'a'.repeat(43), otherToken = jwtPrefix + 'b'.repeat(43)
 const storage = new Map()
 let definition, requestHandler, loginHandler, navigation
 global.Page = value => { definition = value }
@@ -153,4 +154,41 @@ test('账号变化后迟到资料与微信code不能写入新会话', async () =
   completeLogin({ code: 'late-code' })
   await assert.rejects(binding, error => error.code === 'SESSION_CHANGED')
   assert.equal(api.getToken(), otherToken)
+})
+
+
+test('个人中心读取本人四项统计，保留真实零值，读取失败明确提示', async () => {
+  api.saveToken(token)
+  const me = page('me')
+  const totals = { materials: 12, cards: 0, 'ai-tasks': 3, favorites: 2 }
+  requestHandler = options => {
+    const resource = options.url.match(/\/([^/?]+)\?/)[1]
+    succeed(options, { items: [], total: totals[resource] })
+  }
+  await me.loadOverview(token)
+  assert.deepEqual(me.data.overview, { materials: 12, cards: 0, tasks: 3, favorites: 2 })
+  requestHandler = options => fail(options, 503, 'DATABASE_UNAVAILABLE', '数据暂不可用')
+  await me.loadOverview(token)
+  assert.equal(me.data.overview, null)
+  assert.equal(me.data.overviewError, '数据暂不可用')
+})
+
+test('个人中心迟到的统计不写入新账号，关闭设置面板清除密码', async () => {
+  api.saveToken(token)
+  const me = page('me')
+  const requests = []
+  requestHandler = options => requests.push(options)
+  const loading = me.loadOverview(token)
+  api.saveToken(otherToken)
+  requests.forEach(options => succeed(options, { items: [], total: 9 }))
+  await loading
+  assert.equal(me.data.overview, null)
+  me.setData({ user, currentPassword: 'private', newPassword: 'private', unbindPassword: 'private' })
+  me.openPanel({ currentTarget: { dataset: { panel: 'password' } } })
+  assert.equal(me.data.activePanel, 'password')
+  assert.equal(me.data.currentPassword, '')
+  me.setData({ currentPassword: 'private', newPassword: 'private', unbindPassword: 'private' })
+  me.closePanel()
+  assert.equal(me.data.activePanel, '')
+  assert.equal(me.data.currentPassword + me.data.newPassword + me.data.unbindPassword, '')
 })

@@ -4260,7 +4260,7 @@
     "get":
       "summary": "本人查看资料审核历史"
       "operationId": "get_materials_id_review_requests"
-      "description": "仅资料本人可读，跨用户/删除资料/非法ID404。返回该资料全部送审版本及决定原因；旧PENDING保留且isCurrent=false。分页与管理员队列一致，错误不能降级为空。"
+      "description": "仅资料本人可读，跨用户/删除资料/非法ID404。返回该资料全部送审版本及决定原因；版本变化使旧PENDING/APPROVED置SUPERSEDED并限制访问；历史保留失效时间。分页与管理员队列一致，错误不能降级为空。"
       "responses":
         "200":
           "description": "管理员查询审核队列"
@@ -4590,7 +4590,7 @@
     "get":
       "summary": "管理员查询审核队列"
       "operationId": "get_admin_reviews"
-      "description": "仅ADMIN；默认只返回送审元数据，title/type为送审快照，不含正文、摘要或本地文件路径。status空白不筛选，仅PENDING/APPROVED/REJECTED，page>=1/pageSize1..100，createdAt/id倒序。isCurrent表示资料未删除且仍为送审版本。"
+      "description": "仅ADMIN；默认只返回送审元数据，title/type为送审快照，不含正文、摘要或本地文件路径。status空白不筛选，仅PENDING/APPROVED/REJECTED/SUPERSEDED，page>=1/pageSize1..100，createdAt/id倒序。isCurrent表示资料未删除且仍为送审版本。"
       "responses":
         "200":
           "description": "管理员查询审核队列"
@@ -5273,7 +5273,8 @@
     "bearerSession":
       "type": "http"
       "scheme": "bearer"
-      "description": "随机不透明会话令牌，非JWT；摘要存MySQL"
+      "bearerFormat": "JWT"
+      "description": "HS256签名JWT；校验签名、签发方、过期时间后检查MySQL会话摘要及账号状态，支持即时撤销"
   "schemas":
     "ApiError":
       "type": "object"
@@ -5389,6 +5390,7 @@
       "properties":
         "accessToken":
           "type": "string"
+          "description": "HS256签名JWT，通过Authorization: Bearer传递，不解析为客户端可信权限"
         "tokenType":
           "type": "string"
           "enum":
@@ -6595,6 +6597,10 @@
         "accessScope":
           "type": "string"
           "enum": ["MATERIAL_CONTENT"]
+        "supersededAt":
+          "type": ["string", "null"]
+          "format": "date-time"
+          "description": "审核失效时间，UTC；未失效时为null"
         "isCurrent":
           "type": "boolean"
           "description": "资料未删除且当前version等于送审version"
@@ -6622,6 +6628,7 @@
             - "PENDING"
             - "APPROVED"
             - "REJECTED"
+            - "SUPERSEDED"
         "version":
           "type": "integer"
           "minimum": 1

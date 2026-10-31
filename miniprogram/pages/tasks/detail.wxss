@@ -1,14 +1,14 @@
 .task-title { margin-top: 18rpx; }
-.field-row { display: flex; justify-content: space-between; margin-top: 28rpx; color: #627266; font-size: 26rpx; }
+.field-row { display: flex; justify-content: space-between; margin-top: 28rpx; color: var(--ink-2); font-size: 26rpx; }
 .retry { margin-top: 10rpx; text-decoration: underline; }
 .steps-title { margin: 32rpx 0 12rpx; font-weight: 600; }
-.step-row { padding: 16rpx 0; border-bottom: 1rpx solid #edf0f4; overflow-wrap: anywhere; }
+.step-row { padding: 16rpx 0; border-bottom: 1rpx solid var(--line); overflow-wrap: anywhere; }
 .retry-consent { display: flex; align-items: center; margin: 28rpx 0; font-size: 26rpx; }
-.candidate-preview { margin-top: 36rpx; padding-top: 28rpx; border-top: 1rpx solid #edf0f4; }
+.candidate-preview { margin-top: 36rpx; padding-top: 28rpx; border-top: 1rpx solid var(--line); }
 .candidate-title { font-size: 34rpx; font-weight: 700; margin-bottom: 12rpx; }
-.candidate-badge { margin-left: 12rpx; padding: 5rpx 10rpx; border-radius: 8rpx; background: #fff1dc; color: #8e5c16; font-size: 22rpx; }
-.candidate-warning { margin-top: 14rpx; padding: 14rpx; border-radius: 8rpx; background: #fff7eb; color: #805719; font-size: 25rpx; }
-.candidate-card { margin-top: 22rpx; padding: 18rpx; border: 1rpx solid #dce5f2; border-radius: 12rpx; }
-.candidate-source { margin-top: 16rpx; padding: 16rpx; border-radius: 8rpx; background: #f6f8fd; }
+.candidate-badge { margin-left: 12rpx; padding: 5rpx 14rpx; border-radius: var(--r-pill); background: #fff4e6; color: #9a5b12; font-size: 22rpx; }
+.candidate-warning { margin-top: 14rpx; padding: 16rpx; border-radius: var(--r-sm); background: #fff4e6; color: #9a5b12; font-size: 25rpx; }
+.candidate-card { margin-top: 22rpx; padding: 24rpx; border: 1rpx solid var(--line); border-radius: var(--r-md); background: var(--surface-2); }
+.candidate-source { margin-top: 16rpx; padding: 20rpx; border-radius: var(--r-sm); background: var(--brand-soft); }
 .candidate-copy, .candidate-quote { white-space: pre-wrap; overflow-wrap: anywhere; line-height: 1.7; }
-.candidate-quote { margin: 12rpx 0; padding-left: 12rpx; border-left: 4rpx solid #a6bbdf; }
+.candidate-quote { margin: 12rpx 0; padding-left: 16rpx; border-left: 4rpx solid var(--brand); }

@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { ElDialog } from 'element-plus'
 import { useAdminUsers } from '../admin-users'
 
 const { ownerId, keyword, status, page, results, selected, targetStatus, reason, dirty, busy, loading,
@@ -15,7 +16,6 @@ const { ownerId, keyword, status, page, results, selected, targetStatus, reason,
         <button type="submit" :disabled="busy">筛选</button><button type="button" :disabled="busy" @click="load">刷新</button>
       </form>
       <p v-if="notice" class="admin-notice" role="status">{{ notice }}</p>
-      <p v-if="actionError" class="inline-error" role="alert">{{ actionError }}</p>
       <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
       <p v-if="loading" class="list-state" role="status">正在读取用户…</p>
       <template v-else-if="results">
@@ -34,8 +34,10 @@ const { ownerId, keyword, status, page, results, selected, targetStatus, reason,
         <span>第 {{ page }} 页<span v-if="results"> · 共 {{ results.total }} 条</span></span>
         <button type="button" :disabled="busy || !results || page * results.pageSize >= results.total" @click="changePage(page + 1)">下一页</button>
       </div>
-      <section v-if="selected" class="admin-editor editor-panel" aria-labelledby="admin-status-title">
-        <h2 id="admin-status-title">设置账号状态</h2>
+    </section>
+    <el-dialog :model-value="!!selected" title="设置账号状态" width="560px" class="workspace-dialog" align-center append-to-body :close-on-click-modal="false" :close-on-press-escape="!busy" :show-close="!busy" :before-close="cancelEdit">
+      <section v-if="selected" class="admin-editor editor-panel" aria-label="账号状态设置">
+        <p v-if="actionError" class="inline-error" role="alert">{{ actionError }}</p>
         <p>账号：{{ selected.username }}（{{ selected.displayName }}） · 当前状态：{{ selected.status === 'ENABLED' ? '启用' : '停用' }}</p>
         <label for="admin-target-status">目标状态</label>
         <select id="admin-target-status" v-model="targetStatus" :disabled="busy"><option value="ENABLED">启用</option><option value="DISABLED" :disabled="selected.id === ownerId">停用</option></select>
@@ -45,27 +47,37 @@ const { ownerId, keyword, status, page, results, selected, targetStatus, reason,
         <p id="admin-reason-help" class="field-help">原因将记入状态审计。停用后该账号全部登录会话失效，重新启用后须重新登录。</p>
         <div class="editor-actions"><span>{{ reason.length }} / 1000 字{{ dirty ? ' · 未保存' : '' }}</span><div class="admin-actions"><button type="button" :disabled="busy" @click="cancelEdit">取消</button><button type="button" :disabled="busy" @click="submit">确认保存状态</button></div></div>
       </section>
-    </section>
+    </el-dialog>
   </div>
 </template>
 
 <style scoped>
-.admin-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 20px; }
-.admin-filters label { display: grid; gap: 8px; color: #43516a; font-size: 14px; }
-.admin-filters input, .admin-filters select { max-width: 100%; padding: 10px 12px; border: 1px solid #dfe6f0; border-radius: 8px; font: inherit; background: #fff; }
-.admin-filters button, .admin-table button { padding: 10px 12px; border: 1px solid #dce5f2; border-radius: 8px; color: #315bc2; background: #fff; cursor: pointer; }
-.admin-filters :disabled, .admin-table :disabled { opacity: .5; cursor: default; }
-.admin-filters :focus-visible, .admin-table-wrap:focus-visible { outline: 2px solid #315bc2; outline-offset: 2px; }
-.admin-table-wrap { overflow-x: auto; }
-.admin-table { width: 100%; border-collapse: collapse; font-size: 13px; text-align: left; }
-.admin-table th, .admin-table td { padding: 14px 10px; border-bottom: 1px solid #eef1f6; white-space: nowrap; }
-.admin-table th { color: #64748b; font-weight: 600; }
-.admin-table td:nth-child(3) { min-width: 120px; max-width: 220px; white-space: normal; overflow-wrap: anywhere; }
-.admin-notice { color: #286448; }
-.admin-editor { margin-top: 28px; padding-top: 24px; border-top: 1px solid #eef1f6; }
-.admin-editor h2 { margin-top: 0; font-size: 20px; }
+.admin-filters { display: flex; flex-wrap: wrap; align-items: end; gap: 12px; margin-bottom: 24px; }
+.admin-filters label { display: grid; gap: 12px; color: #4d637f; font-size: 14px; font-weight: 500; }
+.admin-filters input, .admin-filters select { max-width: 100%; min-height: 40px; padding: 9px 12px; border: 1px solid #e1e9f3; border-radius: var(--r-md); font: inherit; font-size: 14px; background: #fff; }
+.admin-filters input:focus, .admin-filters select:focus { border-color: var(--brand); box-shadow: 0 0 0 3px rgba(44, 113, 228, .12); outline: none; }
+.admin-filters button, .admin-table button { min-height: 40px; padding: 8px 14px; border: 1px solid var(--line-strong); border-radius: var(--r-md); color: #47617f; background: #fff; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; transition: background .16s, border-color .16s, color .16s; }
+.admin-filters button:hover:not(:disabled), .admin-table button:hover:not(:disabled) { border-color: #bcd3f1; background: #f4f8ff; color: var(--brand-hover); }
+.admin-filters :disabled, .admin-table :disabled { opacity: .55; cursor: default; }
+.admin-filters :focus-visible, .admin-table-wrap:focus-visible { outline: 2px solid var(--brand-hover); outline-offset: 2px; }
+.admin-table-wrap { overflow-x: auto; border: 1px solid var(--line); border-radius: var(--r-md); }
+.admin-table { width: 100%; border-collapse: separate; border-spacing: 0; font-size: 14px; text-align: left; }
+.admin-table th, .admin-table td { padding: 12px 14px; border-bottom: 1px solid var(--line); white-space: nowrap; height: 52px; }
+.admin-table thead th { background: #f7f9fd; color: #4d637f; font-size: 14px; font-weight: 600; height: 52px; }
+.admin-table thead th:first-child { border-radius: var(--r-md) 0 0 0; height: 52px; }
+.admin-table thead th:last-child { border-radius: 0 var(--r-md) 0 0; height: 52px; }
+.admin-table tbody tr:last-child td { border-bottom: 0; }
+.admin-table tbody tr { transition: background-color .16s; }
+.admin-table tbody tr:hover { background: #f8fbff; }
+.admin-table td:nth-child(3) { min-width: 120px; max-width: 220px; white-space: normal; overflow-wrap: anywhere; height: 52px; }
+.admin-table button { min-height: 40px; padding: 6px 12px; font-size: 14px; color: var(--brand-hover); border-color: #d9e6f6; }
+.admin-notice { padding: 10px 14px; border-radius: var(--r-md); background: #eef8f2; color: #226e4c; font-size: 12.5px; }
+.admin-editor { margin: 0; }
+.admin-editor h2 { margin-top: 0; font-size: 17px; }
 .admin-editor p { overflow-wrap: anywhere; line-height: 1.7; }
-.admin-editor .field-help { color: #64748b; font-size: 13px; }
-.admin-actions { display: flex; flex-wrap: wrap; gap: 12px; }
+.admin-editor .field-help { color: #74869e; font-size: 12px; }
+.admin-actions { display: flex; flex-wrap: wrap; gap: 10px; }
+.admin-actions button { min-height: 40px; padding: 8px 16px; border: 1px solid var(--line-strong); border-radius: var(--r-md); background: #fff; color: #47617f; font: inherit; font-size: 14px; font-weight: 500; cursor: pointer; }
+.admin-actions button:last-child { border-color: var(--brand); background: var(--brand); color: #fff; }
 @media (max-width: 600px) { .admin-editor .editor-actions { align-items: stretch; flex-direction: column; } .admin-actions button { flex: 1; } }
 </style>

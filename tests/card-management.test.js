@@ -257,7 +257,7 @@ test('Web真实编辑路由切换卡片时确认草稿、重建状态并隔离�
     setItem: (key, value) => drafts.set(key, value), removeItem: key => drafts.delete(key) }
   t.after(() => { app?.unmount(); global.window = previousWindow; global.sessionStorage = previousStorage
     global.Document = previousDocument; global.ShadowRoot = previousShadowRoot })
-  const auth = { session: vue.ref({ user: { id: 'alice' } }), clearSession() {} }
+  const auth = { session: vue.ref({ user: { id: 'alice', role: 'USER', username: 'test_user', displayName: '测试用户' } }), clearSession() {} }
   const api = { ApiRequestError: class extends Error {}, api: async (url, method = 'GET', body) => {
     if (method === 'PATCH') {
       patches.push({ url, body })
@@ -277,13 +277,14 @@ test('Web真实编辑路由切换卡片时确认草稿、重建状态并隔离�
       const script = compileScript(descriptor, { id: filename, inlineTemplate: filename.endsWith('CardEditorRoute.vue') })
       source = script.content
       if (filename.endsWith('CardEditorView.vue')) template = compileTemplate({ source: descriptor.template.content,
-        filename, id: filename, compilerOptions: { bindingMetadata: script.bindings } }).code
+        filename, id: filename, compilerOptions: { bindingMetadata: script.bindings, hoistStatic: false } }).code
     }
     const output = ts.transpileModule(source, { compilerOptions: { module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText
     const module = { exports: {} }
     new Function('require', 'module', 'exports', output)(specifier => {
       if (specifier === 'vue') return vue
+      if (specifier === 'element-plus') return require('./helpers/element-plus')(vue)
       if (specifier === 'vue-router') return { ...vueRouter, createWebHistory: vueRouter.createMemoryHistory }
       if (specifier.endsWith('/auth')) return auth
       if (specifier.endsWith('/api')) return api

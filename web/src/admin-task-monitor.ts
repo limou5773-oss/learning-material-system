@@ -72,5 +72,5 @@ export function useAdminTaskMonitor() {
     stepPage.value = next; await loadSteps()
   }
   return { status, fromDate, toDate, page, results, selected, steps, stepPage, loading, stepsLoading, error, stepsError,
-    load, applyFilters, changePage, selectTask, loadSteps, changeStepPage }
+    load, applyFilters, changePage, selectTask, clearSelection, loadSteps, changeStepPage }
 }

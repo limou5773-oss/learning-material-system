@@ -7,7 +7,10 @@ const statusLabels = { QUEUED: '排队中', RUNNING: '执行中', WAIT_CONFIRM: 
 
 Page({
   data: { items: [], page: 1, pageSize: 20, total: 0, loading: false, error: '' },
-  onShow() { this.load() },
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ selected: 2 })
+    this.load()
+  },
   async load() {
     if (!getToken()) { wx.reLaunch({ url: '/pages/login/index?reason=expired' }); return }
     this.setData({ loading: true, error: '' })
@@ -27,4 +30,5 @@ Page({
   openDetail(event) { wx.navigateTo({ url: `/pages/tasks/detail?id=${event.currentTarget.dataset.id}` }) },
   previous() { if (this.data.page > 1) { this.setData({ page: this.data.page - 1 }); this.load() } },
   next() { if (this.data.page * this.data.pageSize < this.data.total) { this.setData({ page: this.data.page + 1 }); this.load() } },
+  onPullDownRefresh() { Promise.resolve(this.load()).finally(() => wx.stopPullDownRefresh()) },
 })

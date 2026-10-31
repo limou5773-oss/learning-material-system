@@ -1,5 +1,22 @@
-.task-item { margin-bottom: 20rpx; }
-.task-item .card-title { margin-top: 12rpx; }
-.pagination { display: flex; justify-content: space-between; align-items: center; margin-top: 25rpx; color: #718076; font-size: 23rpx; }
-.pagination button { margin: 0; padding: 0 16rpx; height: 62rpx; line-height: 62rpx; border-radius: 10rpx; background: #fff; color: #276c47; font-size: 23rpx; }
-.retry { margin-top: 10rpx; text-decoration: underline; }
+.tasks-page { padding-top: 36rpx; }
+.tasks-page .lead { margin-top: -8rpx; margin-bottom: 20rpx; }
+
+.card-list { margin-top: 20rpx; }
+.task-item {
+  margin-bottom: 20rpx;
+  padding: 32rpx;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+}
+.task-item:active { background: var(--surface-2); }
+.ti-top { display: flex; align-items: center; justify-content: space-between; }
+.status-badge { padding: 6rpx 20rpx; border-radius: var(--r-pill); font-size: 22rpx; font-weight: 700; }
+.s-ok { background: var(--brand-soft); color: var(--brand-ink); }
+.s-bad { background: #fdecea; color: #c7472e; }
+.s-wait { background: #fff4e6; color: #9a5b12; }
+.s-run { background: #e8f1fe; color: #1a5bc4; }
+.ti-date { color: var(--ink-3); font-size: 23rpx; }
+.ti-title { margin-top: 18rpx; font-size: 34rpx; font-weight: 700; }
+.ti-meta { margin-top: 10rpx; color: var(--ink-3); font-size: 24rpx; }
+.ti-error { margin-top: 14rpx; padding: 16rpx 20rpx; border-radius: var(--r-sm); background: #fff4e6; color: #9a5b12; font-size: 24rpx; line-height: 1.5; }

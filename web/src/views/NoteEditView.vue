@@ -117,23 +117,38 @@ function discardDraft() {
   <div class="materials-layout narrow">
     <router-link class="back-link" :to="`/materials/${route.params.id}`">← 返回笔记</router-link>
     <div class="section-heading"><div><span class="intro-eyebrow">EDIT NOTE</span><h1>编辑文字笔记</h1><p v-if="material">正在编辑版本 {{ editingVersion }}</p></div></div>
-    <p v-if="loading" class="list-state">正在加载笔记…</p>
-    <section v-else-if="material" class="materials-panel editor-panel">
-      <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
-      <div v-if="conflict && serverCopy" class="server-copy">
-        <strong>服务器版本 {{ serverCopy.version }}：{{ serverCopy.title }}</strong>
-        <p>{{ serverCopy.noteText }}</p>
-        <span>本页草稿未被替换。请先对照并复制需要保留的内容。</span>
-        <button type="button" class="discard-button" @click="discardDraft">放弃草稿，使用服务器版本</button>
-      </div>
-      <form @submit.prevent="submit">
-        <label for="edit-title">标题</label><input id="edit-title" v-model="form.title" maxlength="255" />
-        <label for="edit-subject">学科</label><input id="edit-subject" v-model="form.subject" maxlength="64" />
-        <label for="edit-tags">标签</label><input id="edit-tags" v-model="form.tags" placeholder="多个标签用逗号隔开" />
-        <label for="edit-body">笔记正文</label><textarea id="edit-body" v-model="form.noteText" maxlength="20000" rows="13"></textarea>
-        <div class="editor-actions"><span>{{ form.noteText.length }} / 20000 字{{ dirty ? ' · 未保存' : '' }}</span><button type="submit" :disabled="saving || conflict">{{ saving ? '正在保存…' : '保存修改' }}</button></div>
-      </form>
+    <div v-if="loading" class="loading-panel"><el-skeleton :rows="6" animated /></div>
+    <section v-else-if="material" class="materials-panel form-panel">
+      <el-alert v-if="error" class="form-alert" :title="error" type="error" show-icon :closable="false" role="alert" />
+      <el-alert v-if="conflict && serverCopy" class="form-alert" type="warning" :closable="false" show-icon>
+        <template #title><strong>服务器版本 {{ serverCopy.version }}：{{ serverCopy.title }}</strong></template>
+        <div class="server-copy">
+          <p>{{ serverCopy.noteText }}</p>
+          <span>本页草稿未被替换。请先对照并复制需要保留的内容。</span>
+          <el-button class="discard-button" @click="discardDraft">放弃草稿，使用服务器版本</el-button>
+        </div>
+      </el-alert>
+      <el-form label-position="top" @submit.prevent="submit">
+        <el-form-item label="标题" required><el-input v-model="form.title" maxlength="255" /></el-form-item>
+        <div class="form-row-2">
+          <el-form-item label="学科"><el-input v-model="form.subject" maxlength="64" /></el-form-item>
+          <el-form-item label="标签"><el-input v-model="form.tags" placeholder="多个标签用逗号隔开" /></el-form-item>
+        </div>
+        <el-form-item label="笔记正文" required>
+          <el-input v-model="form.noteText" type="textarea" :rows="13" maxlength="20000" />
+        </el-form-item>
+        <div class="editor-actions"><span>{{ form.noteText.length }} / 20000 字{{ dirty ? ' · 未保存' : '' }}</span><el-button type="primary" native-type="submit" :loading="saving" :disabled="conflict">{{ saving ? '正在保存…' : '保存修改' }}</el-button></div>
+      </el-form>
     </section>
-    <section v-else-if="error" class="materials-panel"><p class="inline-error" role="alert">{{ error }}</p><button class="retry-button" @click="load">重试</button></section>
+    <section v-else-if="error" class="materials-panel"><el-alert :title="error" type="error" show-icon :closable="false" role="alert" /><el-button class="retry-button" @click="load">重试</el-button></section>
   </div>
 </template>
+
+<style scoped>
+.form-alert { margin-bottom: 18px; }
+.form-alert .server-copy { margin-top: 10px; }
+.form-alert .server-copy p { max-height: 240px; overflow: auto; margin: 0 0 10px; padding: 12px; border-radius: var(--r-md); background: rgba(255, 255, 255, .7); white-space: pre-wrap; overflow-wrap: anywhere; }
+.form-alert .server-copy span { display: block; margin-bottom: 10px; color: var(--el-text-color-regular); font-size: 12px; }
+.retry-button { margin-top: 14px; }
+.editor-actions { justify-content: space-between; }
+</style>

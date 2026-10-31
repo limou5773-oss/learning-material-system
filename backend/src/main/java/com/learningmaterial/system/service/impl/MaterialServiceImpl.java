@@ -28,6 +28,7 @@ import java.time.LocalDateTime;
 import java.time.ZoneOffset;
 import java.util.HashSet;
 import java.util.List;
+import java.util.Objects;
 import java.util.Locale;
 import java.util.Set;
 import org.springframework.http.HttpStatus;
@@ -51,11 +52,14 @@ public class MaterialServiceImpl implements MaterialService {
     private final OcrAttemptMapper ocrAttempts;
     private final ModelAttemptMapper modelAttempts;
     private final ObjectMapper objectMapper;
+    private final com.learningmaterial.system.service.ContentReviewService reviews;
 
     public MaterialServiceImpl(MaterialMapper materials, TagMapper tags, Clock clock,
                            FileStorage storage, ImageValidator imageValidator, PdfValidator pdfValidator,
                            FavoriteMapper favorites, AiTaskMapper tasks, AiToolCallMapper toolCalls,
-                           ObjectMapper objectMapper, OcrAttemptMapper ocrAttempts, ModelAttemptMapper modelAttempts) {
+                           ObjectMapper objectMapper, OcrAttemptMapper ocrAttempts, ModelAttemptMapper modelAttempts,
+                           com.learningmaterial.system.service.ContentReviewService reviews) {
+        this.reviews = reviews;
         this.materials = materials;
         this.tags = tags;
         this.clock = clock;
@@ -209,6 +213,13 @@ public class MaterialServiceImpl implements MaterialService {
         int changed = materials.updateConditional(materialId, userId, patch.getVersion(), title.trim(),
             subject, noteText, summary, status, now);
         if (changed == 0) throw failedVersion(userId, materialId);
+        // 审核结论绑定的是正文内容：只有正文或摘要变化才使已通过的审核失效，
+        // 修改标题/学科/标签或归档恢复不影响已通过的审核结论；
+        // 但版本号变化会让待审单无法再被处置，因此元数据变更时清理未处置的送审单。
+        boolean contentChanged = !Objects.equals(noteText, current.getNoteText())
+            || !Objects.equals(summary, current.getSummary());
+        if (contentChanged) reviews.supersedeByMaterial(userId, materialId, now);
+        else reviews.supersedePendingByMaterial(materialId, now);
         if (names != null) {
             tags.detachAll(materialId);
             attachTags(userId, materialId, names, now);
@@ -226,6 +237,7 @@ public class MaterialServiceImpl implements MaterialService {
             throw failedVersion(userId, materialId);
         }
         favorites.removeMaterial(userId, materialId);
+        reviews.supersedeByMaterial(userId, materialId, now);
         tasks.cancelForDeletedMaterial(userId, materialId, now);
         toolCalls.markDeletedSourceUnknown(userId, materialId, now);
         ocrAttempts.markDeletedSourceUnknown(userId, materialId, now);

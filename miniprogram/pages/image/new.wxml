@@ -1,16 +1,21 @@
-<view class="page">
-  <text class="eyebrow">IMAGE CAPTURE</text>
-  <view class="title">上传图片资料</view>
-  <view class="lead">拍照或从相册选择 JPEG、PNG 图片，单张不超过 10 MiB。</view>
-  <view class="card">
-    <view wx:if="{{error}}" class="error">{{error}}</view>
-    <view class="image-actions"><button class="outline" bindtap="camera">拍照</button><button class="outline" bindtap="album">从相册选择</button></view>
-    <image wx:if="{{filePath}}" class="selected-image" src="{{filePath}}" mode="widthFix" />
-    <view wx:if="{{filePath}}" class="muted">已选择图片：{{fileSize}} 字节</view>
-    <text class="field-label">标题</text><input class="field-input" value="{{title}}" bindinput="onTitleInput" maxlength="255" placeholder="例如：课堂板书" />
-    <text class="field-label">学科</text><input class="field-input" value="{{subject}}" bindinput="onSubjectInput" maxlength="64" placeholder="可选" />
-    <text class="field-label">标签</text><input class="field-input" value="{{tagsText}}" bindinput="onTagsInput" placeholder="多个标签用逗号隔开" />
-    <button class="primary" bindtap="submit" loading="{{uploading}}" disabled="{{uploading || !filePath}}">上传图片</button>
-    <view wx:if="{{existingId}}" class="duplicate-actions"><button class="outline" bindtap="openExisting">查看已有资料</button><button class="outline" bindtap="saveCopy">确认保存副本</button></view>
+<view class="page form-page image-page {{existingId ? 'has-duplicate' : ''}}">
+  <view class="form-header"><view class="form-header-mark"><view class="form-header-icon capture-icon"></view></view><view class="form-header-copy"><view class="form-title">上传图片资料</view><view class="form-description">把课件截图、课堂板书，收进学习资料库。</view></view></view>
+  <view wx:if="{{error}}" class="error" role="alert">{{error}}</view>
+  <view class="form-panel image-form">
+    <view class="image-picker {{filePath ? 'has-image' : ''}}">
+      <image wx:if="{{filePath}}" class="selected-image" src="{{filePath}}" mode="aspectFit" aria-label="已选择的图片" />
+      <block wx:else><view class="picker-illustration"><view class="gallery-icon"></view><view class="picker-plus">+</view></view><view class="picker-title">添加一张学习图片</view><view class="picker-description">JPEG、PNG · 单张不超过 10 MiB</view></block>
+    </view>
+    <view class="image-actions"><button class="form-secondary" bindtap="camera" disabled="{{uploading}}"><view class="source-icon camera-icon"></view>拍照</button><button class="form-secondary" bindtap="album" disabled="{{uploading}}"><view class="source-icon gallery-icon"></view>从相册选择</button></view>
+    <view class="form-field"><label for="image-title" class="form-label"><text>资料标题<text class="form-required">*</text></text></label><input id="image-title" class="form-input" value="{{title}}" bindinput="onTitleInput" maxlength="255" disabled="{{uploading}}" placeholder="例如：高等数学课堂板书" placeholder-class="form-placeholder" aria-label="资料标题" /></view>
+    <view class="image-meta">
+      <view class="form-field"><label for="image-subject" class="form-label"><text>学科</text><text class="form-optional">选填</text></label><input id="image-subject" class="form-input" value="{{subject}}" bindinput="onSubjectInput" maxlength="64" disabled="{{uploading}}" placeholder="例如：高等数学" placeholder-class="form-placeholder" aria-label="所属学科" /></view>
+      <view class="form-field"><label for="image-tags" class="form-label"><text>标签</text><text class="form-optional">选填</text></label><input id="image-tags" class="form-input" value="{{tagsText}}" bindinput="onTagsInput" disabled="{{uploading}}" placeholder="用逗号分隔，最多 10 个" placeholder-class="form-placeholder" aria-label="标签，多个标签用逗号隔开" /></view>
+    </view>
+  </view>
+  <view wx:if="{{existingId}}" class="form-panel duplicate-panel"><view class="duplicate-title">发现相同图片</view><view class="form-help">可以查看已有资料，或确认另存一份副本。</view><view class="duplicate-actions"><button class="form-secondary" bindtap="openExisting" disabled="{{uploading}}">查看已有资料</button><button class="form-secondary" bindtap="saveCopy" disabled="{{uploading}}">保存一份副本</button></view></view>
+  <view class="form-action-bar">
+    <view wx:if="{{uploading}}" class="upload-status" role="status"><view class="upload-progress-label"><text>{{uploadProgress < 100 ? '正在发送图片' : '正在保存资料'}}</text><text>{{uploadProgress}}%</text></view><progress percent="{{uploadProgress}}" stroke-width="4" activeColor="#3385fb" backgroundColor="#e2ecfa" border-radius="8" /></view>
+    <button class="form-primary" bindtap="submit" loading="{{uploading}}" disabled="{{uploading || !filePath}}">{{uploading ? (uploadProgress < 100 ? '上传中 ' + uploadProgress + '%' : '等待保存结果…') : '上传图片'}}</button><view class="form-action-note">{{uploading ? (uploadProgress < 100 ? '请保持网络连接' : '文件已发送，等待服务器确认保存') : (filePath ? '已选择图片，核对标题后即可上传' : '先拍照或从相册选择一张图片')}}</view>
   </view>
 </view>

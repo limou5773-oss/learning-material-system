@@ -1,0 +1,28 @@
+<block wx:if="{{!hidden}}">
+  <block wx:if="{{createOpen}}">
+    <view class="create-backdrop" bindtap="closeCreate" catchtouchmove="stopPropagation"></view>
+    <view class="create-panel" role="dialog" aria-label="新建学习内容">
+      <view class="create-heading">
+        <view><view class="create-title">记录新的收获</view><view class="create-subtitle">选择一种方式，开始积累知识</view></view>
+        <button class="create-close" bindtap="closeCreate" disabled="{{createBusy}}" aria-label="关闭新建菜单">×</button>
+      </view>
+      <view class="create-grid">
+        <button wx:for="{{createActions}}" wx:key="key" class="create-option" data-path="{{item.path}}" bindtap="createItem" disabled="{{createBusy}}">
+          <view class="create-icon create-icon-{{item.key}}"><image src="{{item.icon}}" class="create-option-icon" /></view>
+          <text class="create-option-label">{{item.label}}</text>
+          <text class="create-option-description">{{item.description}}</text>
+        </button>
+      </view>
+      <view wx:if="{{createError}}" class="create-error" role="alert">{{createError}}</view>
+    </view>
+  </block>
+  <view class="tab-bar">
+    <block wx:for="{{list}}" wx:key="pagePath">
+      <button wx:if="{{index === 2}}" class="create-tab" bindtap="toggleCreate" disabled="{{createBusy}}" aria-label="{{createOpen ? '关闭新建菜单' : '新建笔记、图片或卡片'}}"><view class="create-symbol {{createOpen ? 'is-open' : ''}}"></view></button>
+      <button class="tab-item {{selected === index ? 'active' : ''}}" data-index="{{index}}" data-path="{{item.pagePath}}" bindtap="switchTab" disabled="{{createBusy}}">
+        <image class="tab-icon" src="{{selected === index ? item.iconActive : item.icon}}" />
+        <text class="tab-text">{{item.text}}</text>
+      </button>
+    </block>
+  </view>
+</block>

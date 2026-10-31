@@ -1,4 +1,4 @@
-const { ApiError, getToken, clearToken, getMe, updateMe, bindWechat, unbindWechat, logout } = require('../../utils/api')
+const { ApiError, getToken, clearToken, request, getMe, updateMe, bindWechat, unbindWechat, logout } = require('../../utils/api')
 
 function newPasswordError(value) {
   if (!value.trim() || value.length < 8 || value.length > 64) return '新密码须为 8–64 个字符'
@@ -15,19 +15,42 @@ Page({
     user: null, loading: false, pending: '', error: '', errorAction: '', notice: '', displayName: '',
     currentPassword: '', newPassword: '', unbindPassword: '',
     nameError: '', currentPasswordError: '', newPasswordError: '', unbindPasswordError: '',
+    activePanel: '', overview: null, overviewError: '',
   },
 
-  onShow() { return this.refresh() },
-  onHide() { this.clearPasswords() },
+  onShow() {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ selected: 3, hidden: false })
+    return this.refresh()
+  },
+  onHide() { this.clearPasswords(); this.setData({ activePanel: '' }); this.setTabBarHidden(false) },
   onUnload() { this._closed = true },
 
   clearPasswords() { this.setData({ currentPassword: '', newPassword: '', unbindPassword: '' }) },
   isCurrentSession(token) { return !this._closed && getToken() === token },
-  openMaterials() { wx.navigateTo({ url: '/pages/materials/index' }) },
-  openTasks() { wx.navigateTo({ url: '/pages/tasks/index' }) },
+  openMaterials() { wx.switchTab({ url: '/pages/materials/index' }) },
+  openTasks() { wx.switchTab({ url: '/pages/tasks/index' }) },
   openNotifications() { wx.navigateTo({ url: '/pages/notifications/index' }) },
-  openCards() { wx.navigateTo({ url: '/pages/cards/index' }) },
+  openCards() { wx.switchTab({ url: '/pages/cards/index' }) },
+  openFavorites() { wx.navigateTo({ url: '/pages/favorites/index' }) },
   newNote() { wx.navigateTo({ url: '/pages/note/new' }) },
+  newImage() { wx.navigateTo({ url: '/pages/image/new' }) },
+  setTabBarHidden(hidden) {
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ hidden })
+  },
+  openPanel(event) {
+    if (this.data.pending) return
+    this.clearPasswords()
+    this.setData({ activePanel: event.currentTarget.dataset.panel, displayName: this.data.user.displayName,
+      error: '', errorAction: '', nameError: '', currentPasswordError: '', newPasswordError: '', unbindPasswordError: '' })
+    this.setTabBarHidden(true)
+  },
+  closePanel() {
+    if (this.data.pending) return
+    this.clearPasswords()
+    this.setData({ activePanel: '' })
+    this.setTabBarHidden(false)
+  },
+  stopPropagation() {},
   onNameInput(event) { this.setData({ displayName: event.detail.value, nameError: '' }) },
   onCurrentPasswordInput(event) { this.setData({ currentPassword: event.detail.value, currentPasswordError: '' }) },
   onNewPasswordInput(event) { this.setData({ newPassword: event.detail.value, newPasswordError: '' }) },
@@ -61,11 +84,32 @@ Page({
     this.setData({ loading: true, error: '', errorAction: '' })
     try {
       const user = await getMe()
-      if (this.isCurrentSession(token)) this.setData({ user, displayName: user.displayName })
+      if (!this.isCurrentSession(token)) return
+      this.setData({ user, displayName: user.displayName })
+      await this.loadOverview(token)
     } catch (error) {
       this.handleError(error, token)
     } finally {
       if (this.isCurrentSession(token)) this.setData({ loading: false })
+    }
+  },
+
+  async loadOverview(token) {
+    this.setData({ overview: null, overviewError: '' })
+    try {
+      const [materials, cards, tasks, favorites] = await Promise.all([
+        request('/materials?page=1&pageSize=1&status=ALL'),
+        request('/cards?page=1&pageSize=1'),
+        request('/ai-tasks?page=1&pageSize=1'),
+        request('/favorites?page=1&pageSize=1'),
+      ])
+      if (this.isCurrentSession(token)) {
+        this.setData({ overview: { materials: materials.total, cards: cards.total,
+          tasks: tasks.total, favorites: favorites.total } })
+      }
+    } catch (error) {
+      if (error instanceof ApiError && error.status === 401) this.handleError(error, token)
+      else if (this.isCurrentSession(token)) this.setData({ overviewError: error.message })
     }
   },
 
@@ -97,7 +141,8 @@ Page({
     this.setData({ nameError })
     if (nameError) return
     return this.runAction('name', () => updateMe({ displayName }), user => {
-      this.setData({ user, displayName: user.displayName, notice: '昵称已更新' })
+      this.setData({ user, displayName: user.displayName, notice: '昵称已更新', activePanel: '' })
+      this.setTabBarHidden(false)
     })
   },
 

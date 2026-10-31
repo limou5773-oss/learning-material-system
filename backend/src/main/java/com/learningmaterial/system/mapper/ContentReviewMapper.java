@@ -9,6 +9,17 @@ import org.apache.ibatis.annotations.*;
 
 @Mapper
 public interface ContentReviewMapper {
+    @Update("""
+        UPDATE content_review SET status='SUPERSEDED',version=version+1,superseded_at=#{now}
+        WHERE material_id=#{materialId} AND status IN ('PENDING','APPROVED')
+        """)
+    int supersedeByMaterial(@Param("materialId")long materialId,@Param("now")LocalDateTime now);
+    /** 仅失效尚未处置的送审单：标题、学科、标签、归档等元数据变更不影响已通过的审核结论。 */
+    @Update("""
+        UPDATE content_review SET status='SUPERSEDED',version=version+1,superseded_at=#{now}
+        WHERE material_id=#{materialId} AND status='PENDING'
+        """)
+    int supersedePendingByMaterial(@Param("materialId")long materialId,@Param("now")LocalDateTime now);
     @Select("SELECT * FROM app_user WHERE id=#{id} FOR SHARE")
     UserRow lockActor(long id);
     @Select("SELECT * FROM material WHERE id=#{id} FOR UPDATE")

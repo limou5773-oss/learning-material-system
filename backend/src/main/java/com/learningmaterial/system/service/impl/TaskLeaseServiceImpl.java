@@ -49,25 +49,28 @@ public class TaskLeaseServiceImpl implements TaskLeaseService {
     @Transactional
     public TaskLease claim() {
         LocalDateTime now = now();
-        AiTaskRow row = tasks.findClaimable(now);
-        if (row == null) return null;
-        if (row.getStartedAt() != null && !row.getStartedAt().plusSeconds(EXECUTION_SECONDS).isAfter(now)) {
-            if (tasks.failTimedOut(row.getId(), row.getExecutionEpoch(), now) == 1) {
-                calls.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
-                ocrAttempts.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
-                modelAttempts.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
-                notifications.recordTaskState(row.getUserId(), row.getId(), "FAILED", now);
+        for (int attempt = 0; attempt < 3; attempt++) {
+            AiTaskRow row = tasks.findClaimable(now);
+            if (row == null) return null;
+            if (row.getStartedAt() != null && !row.getStartedAt().plusSeconds(EXECUTION_SECONDS).isAfter(now)) {
+                if (tasks.failTimedOut(row.getId(), row.getExecutionEpoch(), now) == 1) {
+                    calls.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
+                    ocrAttempts.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
+                    modelAttempts.markRunningUnknown(row.getId(), "TASK_TIMEOUT", now);
+                    notifications.recordTaskState(row.getUserId(), row.getId(), "FAILED", now);
+                }
+                continue;
             }
-            return null;
+            int nextEpoch = row.getExecutionEpoch() + 1;
+            if (tasks.claim(row.getId(), row.getExecutionEpoch(), now, now.plusSeconds(LEASE_SECONDS)) != 1) {
+                continue;
+            }
+            calls.markOlderUnknown(row.getId(), nextEpoch, now);
+            ocrAttempts.markRunningUnknown(row.getId(), "LEASE_LOST", now);
+            modelAttempts.markRunningUnknown(row.getId(), "LEASE_LOST", now);
+            return new TaskLease(row.getId(), nextEpoch);
         }
-        int nextEpoch = row.getExecutionEpoch() + 1;
-        if (tasks.claim(row.getId(), row.getExecutionEpoch(), now, now.plusSeconds(LEASE_SECONDS)) != 1) {
-            return null;
-        }
-        calls.markOlderUnknown(row.getId(), nextEpoch, now);
-        ocrAttempts.markRunningUnknown(row.getId(), "LEASE_LOST", now);
-        modelAttempts.markRunningUnknown(row.getId(), "LEASE_LOST", now);
-        return new TaskLease(row.getId(), nextEpoch);
+        return null;
     }
 
     @Override

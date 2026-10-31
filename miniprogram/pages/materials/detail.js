@@ -66,7 +66,7 @@ Page({
     try {
       const result = await request(`/materials/${encodeURIComponent(this.data.id)}/review-requests?page=${page}&pageSize=20`)
       if (!this.current(token, sequence)) return
-      const labels = { PENDING: '待审核', APPROVED: '已通过', REJECTED: '已驳回' }
+      const labels = { PENDING: '待审核', APPROVED: '已通过', REJECTED: '已驳回', SUPERSEDED: '已失效，需重新送审' }
       this.setData({ reviewItems: result.items.map(item => ({ ...item, statusLabel: labels[item.status] })), reviewPage: result.page,
         reviewTotal: result.total, reviewLoaded: true,
         alreadySubmitted: page === 1 ? result.items.some(item => item.materialVersion === this.data.material.version) : this.data.alreadySubmitted })
@@ -150,7 +150,7 @@ Page({
     if (!material || this.data.busy || this.data.reviewSaving) return
     const token = this.sessionToken || getToken(), sequence = this.requestVersion
     if (!this.current(token, sequence)) return
-    wx.showModal({ title: '删除资料', content: '删除后将无法在资料列表中查看。确定删除吗？',
+    wx.showModal({ title: '删除资料', content: '删除后，排队、执行中及待确认的整理任务将取消。已有知识卡片会保留，但这份资料的原文和文件将无法查看，卡片来源会标记为已删除。确定删除吗？',
       success: async response => {
         if (!response.confirm || !this.current(token, sequence)) return
         this.setData({ busy: true, actionError: '' })

@@ -28,7 +28,7 @@ defineProps<{ card: KnowledgeCard; sources: CardSource[] }>()
 </template>
 
 <style scoped>
-.relation-card-detail { min-width: 0; padding: 16px; border: 1px solid #e3e9f1; border-radius: 8px; overflow-wrap: anywhere; }
+.relation-card-detail { min-width: 0; padding: 16px; border: 1px solid #e3e9f1; border-radius: 12px; overflow-wrap: anywhere; }
 h3 { margin: 0 0 12px; font-size: 16px; }
 small { display: block; margin-top: 8px; color: #64748b; font-size: 12px; font-weight: normal; }
 h4 { margin-bottom: 8px; font-size: 14px; }

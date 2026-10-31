@@ -1,0 +1,16 @@
+<view class="page form-page favorites-page">
+  <view class="favorites-heading"><view><view class="form-title">我的收藏</view><view class="form-description">值得回看的资料与知识，收在一起。</view></view><text class="favorite-star">★</text></view>
+  <view class="favorite-filters"><button class="filter-chip {{type === '' ? 'selected' : ''}}" data-type="" bindtap="filter" disabled="{{loading || removing}}">全部</button><button class="filter-chip {{type === 'MATERIAL' ? 'selected' : ''}}" data-type="MATERIAL" bindtap="filter" disabled="{{loading || removing}}">学习资料</button><button class="filter-chip {{type === 'CARD' ? 'selected' : ''}}" data-type="CARD" bindtap="filter" disabled="{{loading || removing}}">知识卡片</button></view>
+  <view wx:if="{{actionError}}" class="error" role="alert">{{actionError}}，可再次点击取消收藏。</view>
+  <view wx:if="{{loading}}" class="form-panel empty-panel">正在加载收藏…</view>
+  <view wx:elif="{{error}}" class="form-panel empty-panel"><view class="error" role="alert">{{error}}</view><button class="form-secondary" bindtap="retry">重新加载</button></view>
+  <block wx:else>
+    <view class="result-count">共 {{total}} 项收藏<text>仅自己可见</text></view>
+    <view wx:if="{{!items.length}}" class="form-panel empty-panel"><view class="empty-star">☆</view><view class="empty-title">{{page > 1 ? '这一页暂无收藏' : '还没有收藏内容'}}</view><view class="form-help">{{page > 1 ? '可返回上一页查看。' : '在资料或卡片详情点击收藏，即可在这里找到。'}}</view></view>
+    <view wx:for="{{items}}" wx:key="key" class="form-panel favorite-item">
+      <button class="favorite-open" data-type="{{item.type}}" data-id="{{item.targetId}}" bindtap="open"><view class="favorite-type {{item.type === 'CARD' ? 'card-type' : ''}}">{{item.typeLabel}}</view><view class="favorite-title">{{item.title}}</view><view class="favorite-date">收藏于 {{item.dateLabel}}<text>查看详情 ›</text></view></button>
+      <view class="favorite-footer"><text>已加入我的收藏</text><button class="unfavorite-button" data-type="{{item.type}}" data-id="{{item.targetId}}" bindtap="remove" disabled="{{loading || removing}}" loading="{{removing === item.key}}">取消收藏</button></view>
+    </view>
+  </block>
+  <view wx:if="{{!loading && (page > 1 || total > pageSize)}}" class="favorite-pagination"><button class="form-secondary" bindtap="previous" disabled="{{loading || removing || page <= 1}}">上一页</button><text>第 {{page}} 页</text><button class="form-secondary" bindtap="next" disabled="{{loading || removing || page * pageSize >= total}}">下一页</button></view>
+</view>

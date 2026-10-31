@@ -28,14 +28,14 @@ const lines = computed(() => graph.value.edges.map(edge => ({ ...edge,
 </template>
 
 <style scoped>
-.hierarchy-scroll { max-height: 620px; overflow: auto; border: 1px solid #dce5f2; border-radius: 10px; background: #f6f8fd; }
+.hierarchy-scroll { max-height: 620px; overflow: auto; border: 1px solid #dce5f2; border-radius: 14px; background: #f6f8fd; }
 .hierarchy-stage { position: relative; }
 svg { position: absolute; inset: 0; }
 path { fill: none; stroke: #a6bbdf; stroke-width: 2; }
-.hierarchy-node { position: absolute; width: 260px; min-height: 110px; padding: 16px; border: 1px solid #dce5f2; border-radius: 10px; background: white; }
+.hierarchy-node { position: absolute; width: 260px; min-height: 110px; padding: 16px; border: 1px solid #dce5f2; border-radius: 14px; background: white; }
 .hierarchy-node span { color: #64748b; font-size: 12px; overflow-wrap: anywhere; }
 .hierarchy-node .outside-parent { color: #805719; }
 .hierarchy-node h2 { overflow: hidden; margin: 8px 0; font-size: 16px; text-overflow: ellipsis; white-space: nowrap; }
 .hierarchy-node p { overflow: hidden; margin: 5px 0; color: #64748b; font-size: 13px; text-overflow: ellipsis; white-space: nowrap; }
-a:focus-visible { outline: 2px solid #315bc2; outline-offset: 2px; }
+a:focus-visible { outline: 2px solid var(--brand-hover); outline-offset: 2px; }
 </style>

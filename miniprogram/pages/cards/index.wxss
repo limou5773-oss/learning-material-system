@@ -1,5 +1,29 @@
-.card-item { margin-top: 28rpx; }
-.preview { margin-top: 18rpx; color: #718076; font-size: 27rpx; line-height: 1.7; display: -webkit-box; -webkit-line-clamp: 3; -webkit-box-orient: vertical; overflow: hidden; }
-.pagination { margin-top: 32rpx; display: flex; align-items: center; gap: 14rpx; font-size: 24rpx; }
-.pagination button { flex: 1; font-size: 24rpx; background: #fff; }
-.favorite-filter { display: flex; align-items: center; gap: 16rpx; margin-top: 24rpx; font-size: 28rpx; }
+.cards-page { padding-top: 36rpx; }
+
+.card-list { margin-top: 28rpx; }
+.knowledge-card {
+  position: relative;
+  margin-bottom: 20rpx;
+  padding: 32rpx;
+  border-radius: var(--r-lg);
+  background: var(--surface);
+  box-shadow: var(--shadow-sm);
+  border-left: 6rpx solid var(--brand);
+}
+.knowledge-card:active { background: var(--surface-2); }
+.kc-top { display: flex; align-items: center; justify-content: space-between; }
+.kc-label { color: var(--brand-ink); font-size: 22rpx; font-weight: 600; }
+.kc-fav { color: #f5a623; font-size: 28rpx; }
+.kc-title { margin-top: 14rpx; font-size: 34rpx; font-weight: 700; line-height: 1.35; }
+.kc-preview {
+  margin-top: 12rpx;
+  overflow: hidden;
+  color: var(--ink-2);
+  font-size: 26rpx;
+  line-height: 1.55;
+  display: -webkit-box;
+  -webkit-box-orient: vertical;
+  -webkit-line-clamp: 2;
+}
+.kc-meta { margin-top: 16rpx; }
+.subject-tag { display: inline-block; margin-right: 10rpx; color: var(--ink-3); font-size: 23rpx; }

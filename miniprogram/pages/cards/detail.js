@@ -42,7 +42,7 @@ Page({
     try {
       await request(`/cards/${encodeURIComponent(card.id)}?version=${card.version}`, { method: 'DELETE' })
       if (!isCurrentPage() || getToken() !== token) return
-      wx.reLaunch({ url: '/pages/cards/index' })
+      wx.switchTab({ url: '/pages/cards/index' })
     } catch (error) {
       // The request helper clears the original token before rejecting a current 401.
       if (!isCurrentPage() || (getToken() !== token && !(error instanceof ApiError && error.status === 401 && !getToken()))) return

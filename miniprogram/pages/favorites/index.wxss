@@ -1,0 +1,26 @@
+@import "../../styles/form.wxss";
+.favorites-page { padding: 28rpx 28rpx calc(32rpx + env(safe-area-inset-bottom)); }
+.favorites-heading { display: flex; justify-content: space-between; align-items: center; padding: 8rpx 8rpx 28rpx; }
+.favorites-page .form-title { font-size: 38rpx; }
+.favorite-star { display: flex; align-items: center; justify-content: center; width: 80rpx; height: 80rpx; border-radius: 28rpx; background: #e8f1ff; color: #629df0; font-size: 44rpx; }
+.favorite-filters { display: flex; gap: 14rpx; padding-bottom: 24rpx; }
+.favorites-page button.filter-chip { width: auto; min-height: 68rpx; margin: 0; padding: 0 30rpx; border: 1rpx solid #e3eafa; border-radius: 36rpx; background: #fff; color: #8192ad; font-size: 26rpx; line-height: 68rpx; }
+.favorites-page button.filter-chip.selected { border-color: #3385fb; background: #3385fb; color: #fff; }
+.favorites-page button.filter-chip::after, .favorites-page button.favorite-open::after, .favorites-page button.unfavorite-button::after { border: 0; }
+.result-count { display: flex; justify-content: space-between; margin: 0 8rpx 20rpx; color: #7e92af; font-size: 23rpx; }
+.result-count text { color: #a3afc0; }
+.favorites-page .favorite-item { margin-bottom: 20rpx; padding: 0; overflow: hidden; border-radius: 30rpx; }
+.favorites-page button.favorite-open { display: block; width: 100%; margin: 0; padding: 26rpx; border-radius: 0; background: transparent; text-align: left; line-height: 1.6; }
+.favorite-type { display: inline-block; padding: 4rpx 14rpx; border-radius: 14rpx; background: #eaf3ff; color: #588ed5; font-size: 21rpx; }
+.favorite-type.card-type { background: #f0edff; color: #8c7bc3; }
+.favorite-title { margin-top: 16rpx; color: #33435b; font-size: 31rpx; font-weight: 600; overflow-wrap: anywhere; }
+.favorite-date { display: flex; justify-content: space-between; margin-top: 14rpx; color: #9aa9bc; font-size: 22rpx; }
+.favorite-date text { color: #7a9bc8; }
+.favorite-footer { display: flex; align-items: center; justify-content: space-between; padding: 14rpx 26rpx; border-top: 1rpx solid #f0f3f9; color: #a3b1c4; font-size: 21rpx; }
+.favorites-page button.unfavorite-button { width: auto; margin: 0; padding: 0 22rpx; border-radius: 28rpx; background: #f2f6fd; color: #8199b9; font-size: 22rpx; line-height: 56rpx; }
+.empty-panel { padding: 56rpx 24rpx; color: #8e9eb4; text-align: center; font-size: 27rpx; }
+.empty-panel .form-secondary { margin-top: 24rpx; }
+.empty-star { color: #b3ccf1; font-size: 72rpx; }
+.empty-title { margin: 16rpx 0; color: #617a9c; font-size: 29rpx; }
+.favorite-pagination { display: flex; align-items: center; justify-content: space-between; gap: 20rpx; color: #8c9cb2; font-size: 23rpx; }
+.favorite-pagination button.form-secondary { width: auto; min-width: 150rpx; height: 72rpx; margin: 0; font-size: 24rpx; }

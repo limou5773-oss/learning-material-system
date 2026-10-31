@@ -8,6 +8,7 @@ global.wx = {
   getStorageSync: () => currentToken, removeStorageSync: () => { currentToken = '' },
   request: options => requestHandler(options),
   reLaunch: options => { navigation = options.url },
+  switchTab: options => { navigation = options.url },
   showModal: options => { assert.match(options.content, /子卡片.*保留/); options.success({ confirm }) },
 }
 const card = { id: '42', title: '旧标题', version: 2, generationMode: 'MANUAL', isEdited: false }

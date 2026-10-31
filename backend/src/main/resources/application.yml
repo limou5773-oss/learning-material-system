@@ -4,8 +4,8 @@ spring:
     name: learning-material-system
   datasource:
     # MySQL 地址、数据库名、账号和密码
-    url: jdbc:mysql://127.0.0.1:3306/learning_material_dev?connectionTimeZone=UTC&forceConnectionTimeZoneToSession=true
-    username: root
+    url: "jdbc:mysql://127.0.0.1:3306/learning_material_dev?useUnicode=true&characterEncoding=utf8&serverTimezone=Asia/Shanghai"
+    username: "root"
     password: ""
   flyway:
     enabled: false # 合并 SQL 采用手动导入方式；首次使用前需先建好数据表
@@ -37,6 +37,11 @@ server:
   port: 8080
 
 lms:
+  jwt:
+    # Base64 编码的签名密钥；修改后所有旧 JWT 失效。请勿上传真实密钥。
+    secret: ""
+    issuer: learning-material-system
+    ttl: 7d
   admin-bootstrap:
     # 仅首次创建管理员时开启，成功后关闭
     enabled: false
@@ -45,13 +50,13 @@ lms:
     display-name: ""
   model:
     # 接入 DeepSeek：provider 改为 deepseek，并填写 api-key
-    provider: "disabled"
+    provider: disabled
     name: deepseek-flash
     api-key: ""
   ocr:
     # 接入腾讯云：enabled 改为 true，provider 改为 tencent，并填写两项密钥
     enabled: false
-    provider: "disabled"
+    provider: disabled
     secret-id: ""
     secret-key: ""
   task:
@@ -66,7 +71,7 @@ lms:
   wechat:
     # 真实微信登录需填写与小程序项目一致的 AppID 和 AppSecret，再开启
     enabled: false
-    app-id: "wx9980e36f77a1784f"
+    app-id: ""
     app-secret: ""
 
 

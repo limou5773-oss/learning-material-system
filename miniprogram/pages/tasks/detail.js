@@ -86,5 +86,5 @@ Page({
   },
   openMaterial() { if (this.data.task) wx.navigateTo({ url: `/pages/materials/detail?id=${this.data.task.materialId}` }) },
   openConfirmation() { if (this.data.task && this.data.task.status === 'WAIT_CONFIRM') wx.navigateTo({ url: `/pages/tasks/confirm?id=${encodeURIComponent(this.data.id)}` }) },
-  openCards() { wx.navigateTo({ url: '/pages/cards/index' }) },
+  openCards() { wx.switchTab({ url: '/pages/cards/index' }) },
 })

@@ -66,13 +66,24 @@ onMounted(load)
 
 <template>
   <div class="materials-layout"><router-link class="back-link" to="/cards">← 返回知识卡片</router-link>
-    <p v-if="loading" class="list-state" role="status">正在读取卡片…</p>
-    <p v-if="error" class="inline-error" role="alert">{{ error }} <button @click="load">重试</button></p>
+    <div v-if="loading" class="loading-panel"><el-skeleton :rows="5" animated /></div>
+    <el-alert v-if="error" class="form-alert" type="error" show-icon :closable="false" role="alert">
+      <template #title>{{ error }} <el-button link type="primary" @click="load">重试</el-button></template>
+    </el-alert>
     <article v-if="card" class="materials-panel detail-panel">
-      <span class="candidate-badge">{{ savedGenerationLabel(card.generationMode, card.isEdited) }}</span>
-      <h1>{{ card.title }}</h1><div class="detail-meta"><span>卡片 #{{ card.id }} · 版本 {{ card.version }}</span><span v-if="card.isEdited">已人工修改</span><span v-if="card.subject">{{ card.subject }}</span><span v-for="tag in card.tags" :key="tag" class="mini-tag">{{ tag }}</span></div>
-      <div class="heading-actions"><router-link class="new-note-link secondary-link" :to="`/cards/${card.id}/edit`">编辑卡片</router-link><router-link class="new-note-link secondary-link" :to="{ path: '/knowledge-graph', query: { rootCardId: card.id } }">查看知识关联</router-link><button class="favorite-action" type="button" :disabled="favoriteBusy || deleteBusy" :aria-pressed="card.favorite" @click="toggleFavorite">{{ favoriteBusy ? '正在更新…' : card.favorite ? '★ 取消收藏' : '☆ 收藏卡片' }}</button><button class="delete-action" type="button" :disabled="deleteBusy || favoriteBusy || loading || deleteConflict" @click="deleteCard">{{ deleteBusy ? '正在删除…' : '删除卡片' }}</button></div><p v-if="actionError || deleteConflict" class="inline-error" role="alert">{{ actionError }} <button v-if="deleteConflict" :disabled="loading" @click="load">重新读取卡片</button></p>
-      <p class="candidate-warning">{{ savedGenerationWarning(card.generationMode, card.isEdited) }}</p>
+      <el-tag size="small" type="warning" effect="plain">{{ savedGenerationLabel(card.generationMode, card.isEdited) }}</el-tag>
+      <h1>{{ card.title }}</h1>
+      <div class="detail-meta"><span>卡片 #{{ card.id }} · 版本 {{ card.version }}</span><span v-if="card.isEdited">已人工修改</span><span v-if="card.subject">{{ card.subject }}</span><el-tag v-for="tag in card.tags" :key="tag" size="small" type="info" effect="plain">{{ tag }}</el-tag></div>
+      <div class="card-actions">
+        <el-button @click="router.push(`/cards/${card.id}/edit`)">编辑卡片</el-button>
+        <el-button @click="router.push({ path: '/knowledge-graph', query: { rootCardId: card.id } })">查看知识关联</el-button>
+        <el-button :loading="favoriteBusy" :disabled="deleteBusy" :aria-pressed="card.favorite" @click="toggleFavorite">{{ favoriteBusy ? '正在更新…' : card.favorite ? '★ 取消收藏' : '☆ 收藏卡片' }}</el-button>
+        <el-button type="danger" plain :disabled="deleteBusy || favoriteBusy || loading || deleteConflict" @click="deleteCard">{{ deleteBusy ? '正在删除…' : '删除卡片' }}</el-button>
+      </div>
+      <el-alert v-if="actionError || deleteConflict" class="form-alert" type="error" show-icon :closable="false" role="alert">
+        <template #title>{{ actionError }} <el-button v-if="deleteConflict" link type="primary" :disabled="loading" @click="load">重新读取卡片</el-button></template>
+      </el-alert>
+      <el-alert class="form-alert" type="info" :title="savedGenerationWarning(card.generationMode, card.isEdited)" :closable="false" show-icon />
       <p v-if="card.summary" class="candidate-copy">{{ card.summary }}</p><div class="detail-text">{{ card.content }}</div>
       <section class="task-steps"><h2>来源与依据</h2><p v-if="card.origin === 'MANUAL'" class="candidate-warning">人工创建的卡片无自动来源。</p><div v-for="source in sources" :key="source.chunkId" class="candidate-source">
         <h3>{{ source.materialTitle }} · 来源版本 {{ source.materialVersion }}<span v-if="source.pageNo"> · 第 {{ source.pageNo }} 页</span></h3>
@@ -84,7 +95,8 @@ onMounted(load)
 </template>
 
 <style scoped>
-.heading-actions .favorite-action { position: static; }
-.delete-action { color: #a3362d; border: 1px solid currentColor; background: transparent; border-radius: 6px; padding: 8px 14px; cursor: pointer; }
-.delete-action:disabled { opacity: .55; cursor: default; }
+.card-actions { display: flex; flex-wrap: wrap; gap: 10px; margin: 18px 0 4px; }
+.card-actions .el-button { margin: 0; }
+.form-alert { margin: 14px 0; }
+.detail-panel h1 { margin: 12px 0; }
 </style>

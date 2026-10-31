@@ -133,7 +133,13 @@ class AiTaskWorkerIntegrationTest {
             jdbc.update("UPDATE ai_task SET started_at = ?, lease_until = ? WHERE id = ?",
                 LocalDateTime.now(ZoneOffset.UTC).minusSeconds(301),
                 LocalDateTime.now(ZoneOffset.UTC).minusSeconds(1), lease.taskId());
-            assertThat(leases.claim()).isNull();
+            String nextTask = exchange("/ai-tasks", HttpMethod.POST,
+                Map.of("materialId", materialId, "materialVersion", 1, "requestKey", "timeout-next",
+                    "goalType", "REVIEW_CARDS", "externalProcessingConsent", true), token)
+                .getBody().path("data").path("id").asText();
+            TaskLease nextLease = leases.claim();
+            assertThat(nextLease).as("清理过期任务后同次领取正常任务").isNotNull();
+            assertThat(nextLease.taskId()).isEqualTo(Long.parseLong(nextTask));
             assertThat(exchange("/ai-tasks/" + taskId, HttpMethod.GET, null, token)
                 .getBody().path("data").path("errorCode").asText()).isEqualTo("TASK_TIMEOUT");
             assertThat(leases.heartbeat(lease)).isFalse();

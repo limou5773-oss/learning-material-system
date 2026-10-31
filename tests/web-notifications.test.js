@@ -2,6 +2,7 @@ const test = require('node:test')
 const assert = require('node:assert/strict')
 const fs = require('node:fs')
 const path = require('node:path')
+const withinMain = node => Boolean(node && (node.tag === 'main' || withinMain(node.parent)))
 
 const notification = (id = '1', isRead = false, taskId = '91') => ({ id, type: 'RESULT_READY',
   content: '整理结果已生成，请查看并确认。', target: { type: 'AI_TASK', taskId }, isRead,
@@ -29,7 +30,7 @@ async function mount(t, request, initialPath = '/notifications') {
   const previous = { window: global.window, Document: global.Document, ShadowRoot: global.ShadowRoot }
   global.Document = class {}; global.ShadowRoot = class {}; global.window = {}
   let app
-  const session = vue.ref({ user: { id: 'alice' }, accessToken: 'alice-token' })
+  const session = vue.ref({ user: { id: 'alice', role: 'USER', username: 'test_user', displayName: '测试用户' }, accessToken: 'alice-token' })
   t.after(() => { app?.unmount(); Object.assign(global, previous) })
   class RequestError extends Error { constructor(status, message) { super(message); this.status = status } }
   function load(filename) {
@@ -39,17 +40,18 @@ async function mount(t, request, initialPath = '/notifications') {
       const descriptor = parse(source).descriptor, script = compileScript(descriptor, { id: filename })
       source = script.content
       template = compileTemplate({ source: descriptor.template.content, filename, id: filename,
-        compilerOptions: { bindingMetadata: script.bindings } }).code
+        compilerOptions: { bindingMetadata: script.bindings, hoistStatic: false } }).code
     }
     const compile = value => ts.transpileModule(value, { compilerOptions: { module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText
     const module = { exports: {} }
     new Function('require', 'module', 'exports', compile(source))(specifier => {
       if (specifier === 'vue') return vue
+      if (specifier === 'element-plus') return require('./helpers/element-plus')(vue)
       if (specifier === 'vue-router') return { ...vueRouter, createWebHistory: vueRouter.createMemoryHistory }
       if (specifier.endsWith('/auth')) return { session, clearSession() { session.value = null } }
       if (specifier.endsWith('/api')) return { api: request, ApiRequestError: RequestError }
-      if (specifier.endsWith('.vue') && !/Notifications|App.vue/.test(specifier)) return { render: () => vue.h('div') }
+      if (specifier.endsWith('.vue') && !/Notifications|App.vue|Layout|UiIcon/.test(specifier)) return { render: () => vue.h('div') }
       if (specifier.startsWith('.')) {
         const target = path.resolve(path.dirname(filename), specifier)
         return load(target.endsWith('.vue') ? target : `${target}.ts`)
@@ -102,7 +104,7 @@ test('任务入口只接受AI_TASK白名单和正BIGINT字符串，忽略任意U
 test('实际路由和导航入口展示通知，分页与未读筛选发送固定查询并重置首页', async t => {
   const reads = []
   const h = await mount(t, async url => { reads.push(url); const query = new URLSearchParams(url.split('?')[1]); return page([notification(query.get('page'))], Number(query.get('page')), 41) })
-  assert.ok(h.all().some(node => node.tag === 'a' && node.props.href === '/notifications' && node.children.some(child => child.text === '通知')))
+  assert.ok(h.all().some(node => node.tag === 'a' && node.props.href === '/notifications' && node.children.some(child => child.text === '消息通知')))
   assert.equal(h.router.currentRoute.value.meta.requiresAuth, true)
   assert.equal(reads[0], '/notifications?unreadOnly=false&page=1&pageSize=20')
   assert.match(h.text(), /微信订阅消息尚未开通，站内通知正常/)
@@ -151,7 +153,7 @@ test('查看任务必须等待已读写成功才跳详情，在途锁定并拒�
   })
   const view = h.state(), opening = view.openTask(view.results.items[0]); await h.flush()
   assert.equal(h.router.currentRoute.value.path, '/notifications')
-  const controls = h.all().filter(node => ['button', 'select', 'input'].includes(node.tag))
+  const controls = h.all().filter(node => ['button', 'select', 'input'].includes(node.tag) && withinMain(node))
   assert.ok(controls.length >= 5); assert.ok(controls.every(node => node.props.disabled === true))
   await view.openTask(view.results.items[0]); await view.setRead(view.results.items[0], false)
   await view.changePage(2); await view.changeFilter(true)
@@ -228,12 +230,12 @@ test('账号或同账号token切换立即清空旧数据，旧401不能退出新
     return page([notification('old')])
   })
   const old = h.state(); hold = true; const loading = old.load(); await h.flush()
-  h.session.value = { user: { id: 'bob' }, accessToken: 'bob-token' }; hold = false; await h.flush()
+  h.session.value = { user: { id: 'bob', role: 'USER', username: 'test_user', displayName: '测试用户' }, accessToken: 'bob-token' }; hold = false; await h.flush()
   assert.notEqual(h.state(), old); assert.equal(old.results, null)
   waits[0].reject(new h.RequestError(401, '旧登录过期')); await loading; await h.flush()
   assert.equal(h.session.value.accessToken, 'bob-token'); assert.equal(h.router.currentRoute.value.path, '/notifications')
   const bob = h.state(); hold = true; const reloading = bob.load(); await h.flush()
-  h.session.value = { user: { id: 'bob' }, accessToken: 'bob-new-token' }; hold = false; await h.flush()
+  h.session.value = { user: { id: 'bob', role: 'USER', username: 'test_user', displayName: '测试用户' }, accessToken: 'bob-new-token' }; hold = false; await h.flush()
   assert.notEqual(h.state(), bob); assert.equal(bob.results, null)
   waits[1].reject(new h.RequestError(401, '旧token过期')); await reloading; await h.flush()
   assert.equal(h.session.value.accessToken, 'bob-new-token')
@@ -261,7 +263,7 @@ test('读状态写入迟到401不能清除新账号或跳登录', async t => {
   const pending = deferred()
   const h = await mount(t, async (url, method = 'GET') => method === 'PUT' ? pending.promise : page())
   const old = h.state(), opening = old.openTask(old.results.items[0]); await h.flush()
-  h.session.value = { user: { id: 'bob' }, accessToken: 'bob-token' }; await h.flush()
+  h.session.value = { user: { id: 'bob', role: 'USER', username: 'test_user', displayName: '测试用户' }, accessToken: 'bob-token' }; await h.flush()
   pending.reject(new h.RequestError(401, '甲账号已过期')); await opening; await h.flush()
   assert.equal(h.session.value.accessToken, 'bob-token'); assert.equal(h.router.currentRoute.value.path, '/notifications')
   assert.equal(h.state().actionError, ''); assert.equal(old.results, null)

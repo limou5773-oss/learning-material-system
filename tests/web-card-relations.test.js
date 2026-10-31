@@ -21,7 +21,7 @@ async function mount(t, request, initialPath = '/knowledge-graph') {
   const stored = new Map(); global.sessionStorage = { getItem: key => stored.get(key) || null,
     setItem: (key, value) => stored.set(key, value), removeItem: key => stored.delete(key) }
   let app, allowConfirm = false
-  const session = vue.ref({ user: { id: 'alice' }, accessToken: 'test' })
+  const session = vue.ref({ user: { id: 'alice', role: 'USER', username: 'test_user', displayName: '测试用户' }, accessToken: 'test' })
   global.window = { addEventListener: (name, handler) => listeners.set(name, handler),
     removeEventListener: name => listeners.delete(name), confirm(message) { confirmations.push(message); return allowConfirm } }
   t.after(() => { app?.unmount(); global.window = oldWindow; global.Document = oldDocument;
@@ -34,17 +34,18 @@ async function mount(t, request, initialPath = '/knowledge-graph') {
       const descriptor = parse(source).descriptor, script = compileScript(descriptor, { id: filename })
       source = script.content
       template = compileTemplate({ source: descriptor.template.content, filename, id: filename,
-        compilerOptions: { bindingMetadata: script.bindings } }).code
+        compilerOptions: { bindingMetadata: script.bindings, hoistStatic: false } }).code
     }
     const compile = value => ts.transpileModule(value, { compilerOptions: { module: ts.ModuleKind.CommonJS,
       target: ts.ScriptTarget.ES2022, esModuleInterop: true } }).outputText
     const module = { exports: {} }
     new Function('require', 'module', 'exports', compile(source))(specifier => {
       if (specifier === 'vue') return vue
+      if (specifier === 'element-plus') return require('./helpers/element-plus')(vue)
       if (specifier === 'vue-router') return { ...vueRouter, createWebHistory: vueRouter.createMemoryHistory }
       if (specifier.endsWith('/auth')) return { session, clearSession() { session.value = null } }
       if (specifier.endsWith('/api')) return { api: request, ApiRequestError: RequestError }
-      if (specifier.endsWith('.vue') && !/KnowledgeGraph|TaskConfirm|CardsView|CardDetailView/.test(specifier)) return { render: () => vue.h('div') }
+      if (specifier.endsWith('.vue') && !/KnowledgeGraph|TaskConfirm|CardsView|CardDetailView|Layout|UiIcon/.test(specifier)) return { render: () => vue.h('div') }
       if (specifier.startsWith('.')) {
         const target = path.resolve(path.dirname(filename), specifier)
         return load(target.endsWith('.vue') ? target : `${target}.ts`)
@@ -248,7 +249,7 @@ test('选取读取在途不切换对象；账号切换清空旧说明且迟到�
   const selecting = old.selectRelation('9'); await h.flush()
   await old.selectCard('3'); assert.equal(old.selection.kind, 'relation')
   old.form.evidenceText = '甲账号草稿'
-  h.session.value = { user: { id: 'bob' }, accessToken: 'other' }; hold = false; await h.flush()
+  h.session.value = { user: { id: 'bob', role: 'USER', username: 'test_user', displayName: '测试用户' }, accessToken: 'other' }; hold = false; await h.flush()
   assert.notEqual(h.state(), old); assert.equal(h.state().form.evidenceText, ''); assert.equal(h.state().selection, null)
   for (const item of waiting) item.resolve(item.url.endsWith('/sources') ? { items: [] } : card(item.url.split('/').at(-1)))
   await selecting; await h.flush()

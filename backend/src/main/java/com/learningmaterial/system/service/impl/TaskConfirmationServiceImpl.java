@@ -45,6 +45,7 @@ public class TaskConfirmationServiceImpl implements TaskConfirmationService {
     private final TransactionTemplate transactions;
     private final PersonalMaterialSearchService related;
     private final NotificationService notifications;
+    private final com.learningmaterial.system.service.ContentReviewService reviews;
 
     public TaskConfirmationServiceImpl(
             AiTaskMapper tasks,
@@ -57,7 +58,9 @@ public class TaskConfirmationServiceImpl implements TaskConfirmationService {
             Clock clock,
             PlatformTransactionManager transactionManager,
             PersonalMaterialSearchService related,
-            NotificationService notifications) {
+            NotificationService notifications,
+            com.learningmaterial.system.service.ContentReviewService reviews) {
+        this.reviews = reviews;
         this.notifications = notifications;
         this.related = related;
         this.tasks = tasks;
@@ -216,6 +219,7 @@ public class TaskConfirmationServiceImpl implements TaskConfirmationService {
         if (results.confirm(task.getId(), write(receipt), now) != 1
                 || tasks.confirm(task.getId(), now) != 1)
             throw conflict("TASK_NOT_CONFIRMABLE", "任务状态已变化");
+        reviews.supersedeByMaterial(userId, material.getId(), now);
         return new Outcome(receipt, null);
     }
 

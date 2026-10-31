@@ -1,6 +1,6 @@
 const { ApiError, getToken, request } = require('../../utils/api')
 
-const typeLabels = { RESULT_READY: '结果待确认', TASK_FAILED: '任务失败', REVIEW_DECIDED: '审核结果' }
+const typeLabels = { RESULT_READY: '结果待确认', TASK_FAILED: '任务失败', REVIEW_DECIDED: '审核结果', REVIEW_SUPERSEDED: '需重新送审' }
 function targetPath(target) {
   if (!target) return ''
   const validId = id => typeof id === 'string' && /^[1-9]\d{0,18}$/.test(id) && (id.length < 19 || id <= '9223372036854775807')

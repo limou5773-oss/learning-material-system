@@ -38,15 +38,30 @@ async function submit() {
   <div class="materials-layout narrow">
     <router-link class="back-link" to="/materials">← 返回资料</router-link>
     <div class="section-heading"><div><span class="intro-eyebrow">QUICK CAPTURE</span><h1>新建文字笔记</h1><p>写下课堂要点，稍后在两端继续查看。</p></div></div>
-    <section class="materials-panel editor-panel">
-      <p v-if="error" class="inline-error" role="alert">{{ error }}</p>
-      <form @submit.prevent="submit">
-        <label for="note-title">标题</label><input id="note-title" v-model="form.title" maxlength="255" placeholder="例如：线性代数第三章要点" />
-        <label for="note-subject">学科</label><input id="note-subject" v-model="form.subject" maxlength="64" placeholder="可选，例如：数学" />
-        <label for="note-tags">标签</label><input id="note-tags" v-model="form.tags" placeholder="可选，多个标签用逗号隔开" />
-        <label for="note-body">笔记正文</label><textarea id="note-body" v-model="form.noteText" maxlength="20000" rows="13" placeholder="写下你的学习内容…"></textarea>
-        <div class="editor-actions"><span>{{ form.noteText.length }} / 20000 字</span><button type="submit" :disabled="loading">{{ loading ? '正在保存…' : '保存笔记' }}</button></div>
-      </form>
+    <section class="materials-panel form-panel">
+      <el-alert v-if="error" class="form-alert" :title="error" type="error" show-icon :closable="false" role="alert" />
+      <el-form label-position="top" @submit.prevent="submit">
+        <el-form-item label="标题" required>
+          <el-input v-model="form.title" maxlength="255" placeholder="例如：线性代数第三章要点" />
+        </el-form-item>
+        <div class="form-row-2">
+          <el-form-item label="学科">
+            <el-input v-model="form.subject" maxlength="64" placeholder="可选，例如：数学" />
+          </el-form-item>
+          <el-form-item label="标签">
+            <el-input v-model="form.tags" placeholder="可选，多个标签用逗号隔开" />
+          </el-form-item>
+        </div>
+        <el-form-item label="笔记正文" required>
+          <el-input v-model="form.noteText" type="textarea" :rows="13" maxlength="20000" placeholder="写下你的学习内容…" />
+        </el-form-item>
+        <div class="editor-actions"><span>{{ form.noteText.length }} / 20000 字</span><el-button type="primary" native-type="submit" :loading="loading">保存笔记</el-button></div>
+      </el-form>
     </section>
   </div>
 </template>
+
+<style scoped>
+.form-alert { margin-bottom: 18px; }
+.editor-actions { justify-content: space-between; }
+</style>

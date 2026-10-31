@@ -1,9 +1,10 @@
-.relation-item { display: block; width: 100%; margin: 24rpx 0 0; padding: 28rpx; border: 2rpx solid #d9e4d9; border-radius: 17rpx; background: #fff; color: #192c25; text-align: left; font-size: 28rpx; line-height: 1.6; white-space: normal; word-break: break-all; }
-.relation-item.selected { border-color: #276c47; background: #f4faf4; }
-.relation-type { color: #295d3e; font-weight: 700; }
+.relation-item { display: block; width: 100%; margin: 20rpx 0 0; padding: 28rpx; border: 1rpx solid var(--line); border-radius: var(--r-lg); background: var(--surface); box-shadow: var(--shadow-sm); color: var(--ink); text-align: left; font-size: 28rpx; line-height: 1.6; white-space: normal; word-break: break-all; }
+.relation-item.selected { border-color: var(--brand); background: var(--brand-soft); }
+.relation-type { color: var(--brand-ink); font-weight: 700; }
 .relation-evidence { margin: 14rpx 0; white-space: pre-wrap; }
-.relation-detail { margin-top: 34rpx; }
-.endpoint, .source { margin-top: 28rpx; padding-top: 24rpx; border-top: 1rpx solid #e2e9df; }
+.relation-detail { margin-top: 28rpx; }
+.endpoint, .source { margin-top: 28rpx; padding-top: 24rpx; border-top: 1rpx solid var(--line); }
 .source-copy { display: block; margin: 20rpx 0; font-size: 28rpx; line-height: 1.8; white-space: pre-wrap; word-break: break-all; }
-.pagination { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-top: 30rpx; font-size: 24rpx; }
-.pagination button { margin: 0; font-size: 25rpx; }
+.pagination { display: flex; align-items: center; justify-content: space-between; gap: 16rpx; margin-top: 28rpx; color: var(--ink-3); font-size: 24rpx; }
+.pagination button { margin: 0; padding: 0 24rpx; height: 64rpx; line-height: 64rpx; border-radius: var(--r-pill); background: var(--surface); box-shadow: var(--shadow-sm); color: var(--brand-ink); font-size: 24rpx; }
+.pagination button[disabled] { opacity: .4; }

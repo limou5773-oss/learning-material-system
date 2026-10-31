@@ -15,7 +15,7 @@ global.wx = {
   setStorageSync: (key, value) => storage.set(key, value),
   removeStorageSync: key => storage.delete(key),
   chooseMedia: options => chooseHandler(options),
-  uploadFile: options => uploadHandler(options),
+  uploadFile: options => { uploadHandler(options); return { onProgressUpdate() {} } },
   downloadFile: options => downloadHandler(options),
   request: options => requestHandler(options),
   redirectTo: options => { navigation = options.url },

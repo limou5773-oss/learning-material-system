@@ -1,22 +1,68 @@
-<view class="page">
-  <view class="toolbar"><view class="toolbar-title">我的资料</view><view class="toolbar-actions"><view class="small-action" bindtap="newNote">＋ 写笔记</view><view class="small-action secondary-action" bindtap="newImage">上传图片</view></view></view>
-  <view class="filter-card">
-    <input class="field-input" value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索标题或正文" maxlength="100" />
-    <input class="field-input subject-input" value="{{subject}}" bindinput="onSubjectInput" placeholder="筛选学科" maxlength="64" />
-    <view class="filter-actions"><picker range="{{tagNames}}" value="{{tagIndex}}" bindchange="onTagChange"><view class="tag-picker">{{tagNames[tagIndex]}} ▾</view></picker><picker range="{{statusNames}}" value="{{statusIndex}}" bindchange="onStatusChange"><view class="tag-picker">{{statusNames[statusIndex]}} ▾</view></picker><button class="filter-button" bindtap="search">搜索</button></view>
-    <view class="favorite-filter"><text>只看收藏</text><switch checked="{{favoritesOnly}}" bindchange="onFavoriteChange" color="#276c47" /></view>
+<wxs module="m">
+module.exports.typeLabel = function (t) {
+  return t === 'IMAGE' ? '图片' : t === 'PDF' ? 'PDF' : '笔记'
+}
+module.exports.typeClass = function (t) {
+  return t === 'IMAGE' ? 'b-image' : t === 'PDF' ? 'b-pdf' : 'b-note'
+}
+module.exports.excerpt = function (item) {
+  return item.type === 'IMAGE' ? '打开查看原图' : item.type === 'PDF' ? '打开预览 PDF' : item.excerpt
+}
+</wxs>
+<view class="page materials-page">
+  <view class="toolbar">
+    <view class="toolbar-title">我的资料</view>
   </view>
+
+  <view class="search-bar">
+    <view class="search-ico"></view>
+    <input class="search-input" value="{{keyword}}" bindinput="onKeywordInput" placeholder="搜索标题或正文" placeholder-style="color:#a0aab8" maxlength="100" confirm-type="search" bindconfirm="search" />
+    <view class="search-btn" bindtap="search">搜索</view>
+  </view>
+
+  <view class="filter-row">
+    <input class="filter-input" value="{{subject}}" bindinput="onSubjectInput" placeholder="学科" placeholder-style="color:#a0aab8" maxlength="64" />
+    <picker range="{{tagNames}}" value="{{tagIndex}}" bindchange="onTagChange"><view class="filter-pick">{{tagNames[tagIndex]}} ▾</view></picker>
+    <picker range="{{statusNames}}" value="{{statusIndex}}" bindchange="onStatusChange"><view class="filter-pick">{{statusNames[statusIndex]}} ▾</view></picker>
+    <view class="fav-toggle {{favoritesOnly ? 'on' : ''}}" bindtap="toggleFavFilter">★ 收藏</view>
+  </view>
+
   <view wx:if="{{error}}" class="error">{{error}}<view class="retry" bindtap="load">点击重试</view></view>
-  <view wx:if="{{loading}}" class="state">正在加载资料…</view>
-  <view wx:elif="{{!items.length}}" class="state">这里还没有符合条件的资料。</view>
-  <view wx:else class="note-list">
-    <view wx:for="{{items}}" wx:key="id" class="note-item" data-id="{{item.id}}" bindtap="openDetail">
-      <view class="note-item-top"><text class="note-type">{{item.type === 'IMAGE' ? '图片资料' : item.type === 'PDF' ? 'PDF 资料' : '文字笔记'}}{{item.status === 'ARCHIVED' ? ' · 已归档' : ''}}</text><text class="note-date">{{item.shortDate}}</text></view>
-      <view class="note-title">{{item.title}}</view>
-      <view class="note-excerpt">{{item.type === 'IMAGE' ? '打开查看原图' : item.type === 'PDF' ? '打开预览 PDF' : item.excerpt}}</view>
-      <view class="note-meta"><text>{{item.subject || '未分类'}}</text><text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="id" class="tag-pill">#{{tag.name}}</text></view>
-      <button class="favorite-button" data-id="{{item.id}}" disabled="{{favoriteBusyId === item.id}}" catchtap="toggleFavorite">{{item.favorite ? '★ 已收藏' : '☆ 收藏'}}</button>
+
+  <view wx:if="{{loading}}" class="note-list">
+    <view wx:for="{{[1,2,3]}}" wx:key="*this" class="skeleton-item">
+      <view class="sk sk-line w40"></view>
+      <view class="sk sk-line w80"></view>
+      <view class="sk sk-line w60"></view>
     </view>
   </view>
-  <view wx:if="{{total > pageSize}}" class="pagination"><button bindtap="previous" disabled="{{page === 1 || loading}}">上一页</button><text>第 {{page}} 页 / 共 {{total}} 条</text><button bindtap="next" disabled="{{page * pageSize >= total || loading}}">下一页</button></view>
+  <view wx:elif="{{!items.length}}" class="empty">
+    <view class="empty-ico"></view>
+    <view class="empty-text">这里还没有符合条件的资料</view>
+    <view class="empty-sub">换个筛选条件，或点底部“＋”添加资料</view>
+  </view>
+  <view wx:else class="note-list">
+    <view wx:for="{{items}}" wx:key="id" class="note-item" data-id="{{item.id}}" bindtap="openDetail">
+      <view class="note-item-top">
+        <view class="type-badge {{m.typeClass(item.type)}}">{{m.typeLabel(item.type)}}</view>
+        <text wx:if="{{item.status === 'ARCHIVED'}}" class="arch-tag">已归档</text>
+        <text class="note-date">{{item.shortDate}}</text>
+      </view>
+      <view class="note-title">{{item.title}}</view>
+      <view class="note-excerpt">{{m.excerpt(item)}}</view>
+      <view class="note-foot">
+        <view class="note-meta">
+          <text class="subject-tag">{{item.subject || '未分类'}}</text>
+          <text wx:for="{{item.tags}}" wx:for-item="tag" wx:key="id" class="tag-pill">#{{tag.name}}</text>
+        </view>
+        <view class="fav-btn {{item.favorite ? 'on' : ''}}" data-id="{{item.id}}" catchtap="toggleFavorite">{{item.favorite ? '★' : '☆'}}</view>
+      </view>
+    </view>
+  </view>
+
+  <view wx:if="{{total > pageSize}}" class="pagination">
+    <button bindtap="previous" disabled="{{page === 1 || loading}}">上一页</button>
+    <text>第 {{page}} 页 / 共 {{total}} 条</text>
+    <button bindtap="next" disabled="{{page * pageSize >= total || loading}}">下一页</button>
+  </view>
 </view>

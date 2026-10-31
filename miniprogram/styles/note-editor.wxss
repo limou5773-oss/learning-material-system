@@ -1,0 +1,37 @@
+@import "./form.wxss";
+.note-editor-page { display: flex; flex-direction: column; gap: 18rpx; box-sizing: border-box; height: 100vh; min-height: 0; padding: 22rpx 28rpx calc(16rpx + env(safe-area-inset-bottom)); }
+.note-editor-page .form-header { align-items: center; flex-shrink: 0; gap: 16rpx; padding: 0 4rpx; }
+.note-editor-page .form-header-mark { width: 66rpx; height: 66rpx; border-radius: 23rpx; }
+.note-editor-page .form-header-icon { width: 36rpx; height: 36rpx; }
+.note-editor-page .form-title { font-size: 35rpx; line-height: 1.3; }
+.note-editor-page .form-description { margin-top: 7rpx; font-size: 22rpx; line-height: 1.45; }
+.note-editor-page .note-form { display: flex; flex: 1; flex-direction: column; min-height: 0; margin: 0; padding: 26rpx; border-radius: 32rpx; box-shadow: 0 6rpx 24rpx #27467406; }
+.note-editor-page .form-field { flex-shrink: 0; margin-top: 20rpx; }
+.note-editor-page .first-field { margin-top: 0; }
+.note-editor-page .form-label { margin-bottom: 12rpx; font-size: 25rpx; line-height: 1.35; }
+.note-editor-page .form-optional { font-size: 21rpx; }
+.note-editor-page .form-input { height: 78rpx; padding: 0 22rpx; font-size: 26rpx; }
+.note-editor-page .form-placeholder { font-size: 24rpx; }
+.note-meta { display: grid; flex-shrink: 0; grid-template-columns: minmax(0, 1fr) minmax(0, 1.2fr); gap: 18rpx; }
+.note-meta .form-field { min-width: 0; }
+.note-editor-page .note-body { display: flex; flex: 1; flex-direction: column; min-height: 240rpx; }
+.note-body .form-label { flex-shrink: 0; }
+.note-editor-page .note-textarea { flex: 1; height: 0; min-height: 180rpx; padding: 20rpx 22rpx; font-size: 27rpx; line-height: 1.8; }
+.note-editor-page .form-action-bar { position: static; flex-shrink: 0; padding: 0; border: 0; background: transparent; box-shadow: none; }
+.note-editor-page button.form-primary { height: 84rpx; }
+.note-editor-page .form-action-note { margin-top: 10rpx; font-size: 21rpx; line-height: 1.4; }
+.note-editor-page .error, .note-editor-page .notice { flex-shrink: 0; margin: 0; padding: 14rpx 22rpx; border-radius: 20rpx; font-size: 23rpx; }
+.note-editor-page.is-conflict { height: auto; min-height: 100vh; }
+.is-conflict .note-form { flex: none; }
+.is-conflict .note-textarea { flex: none; height: 320rpx; }
+.note-server-copy { padding: 24rpx; border: 1rpx solid #efe1c7; border-radius: 26rpx; background: #fffdf7; color: #89733f; font-size: 25rpx; line-height: 1.7; }
+.note-server-copy .server-content { display: block; max-height: 240rpx; margin: 16rpx 0; padding: 18rpx; overflow: auto; border-radius: 20rpx; background: #fff; color: #67758a; white-space: pre-wrap; }
+.note-server-copy button.form-secondary { margin-top: 18rpx; height: auto; min-height: 76rpx; padding: 16rpx; font-size: 24rpx; }
+@media (max-height: 540px) {
+  .note-editor-page { gap: 12rpx; padding-top: 12rpx; }
+  .note-editor-page .note-form { padding: 20rpx 24rpx; }
+  .note-editor-page .form-field { margin-top: 14rpx; }
+  .note-editor-page .first-field { margin-top: 0; }
+  .note-editor-page .form-input { height: 70rpx; }
+}
+.note-icon { background-image: url("data:image/svg+xml;base64,PHN2ZyB4bWxucz0iaHR0cDovL3d3dy53My5vcmcvMjAwMC9zdmciIHZpZXdCb3g9IjAgMCAyNCAyNCIgZmlsbD0ibm9uZSIgc3Ryb2tlPSIjNTM4ZGUyIiBzdHJva2Utd2lkdGg9IjEuNyIgc3Ryb2tlLWxpbmVjYXA9InJvdW5kIiBzdHJva2UtbGluZWpvaW49InJvdW5kIj48cGF0aCBkPSJNMTQgM0g0djE4aDE2VjExTTEzIDdsNS01IDQgNC01IDUtNSAxWiIvPjxwYXRoIGQ9Ik04IDE2aDciLz48L3N2Zz4="); }

@@ -10,6 +10,8 @@
 | --- | --- |
 | MySQL地址、库名 | spring.datasource.url |
 | MySQL账号、密码 | spring.datasource.username / password |
+| JWT签名密钥 | lms.jwt.secret，至少32个随机字节的Base64编码 |
+| JWT签发方、有效期 | lms.jwt.issuer / ttl，默认learning-material-system / 7d |
 | DeepSeek密钥 | lms.model.api-key |
 | 模型名 | lms.model.name，默认deepseek-flash |
 | 腾讯云密钥 | lms.ocr.secret-id / secret-key |
@@ -22,6 +24,8 @@
 密码和密钥填写在引号内。DeepSeek 的 `lms.model.provider` 设为 `deepseek`，腾讯 OCR 的 `lms.ocr.provider` 设为 `tencent`；智能体整理选择 `lms.task.processor.mode: agent`。先填写数据库密码测试登录/资料功能；真实AI另填密钥并开启worker，OCR按需开启。仅修改配置并不代表真实厂商联调已通过。
 
 ## 启动
+
+JWT配置仍在原 `application.yml` 的 `lms.jwt` 节点。本机已生成随机签名密钥；修改密钥会使所有旧JWT失效。不要把真实签名密钥上传GitHub，也不要将自动测试使用的公开测试密钥用于日常运行。JWT切换无需改表；重启后端后，Web和小程序都需重新登录。详细机制见[JWT登录说明](JWT登录说明.md)。
 
 首次可直接导入整合好的[单文件SQL](../backend/src/main/resources/db/migration/learning_material_system.sql)，包含建库、全部表和迁移记录。操作见[数据库初始化说明](../database/README.md)，导入后正常启动后端即可。
 

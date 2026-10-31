@@ -228,22 +228,22 @@ async function deleteRelation() {
 .relation-panel { margin-bottom: 24px; }
 .relation-panel h2 { margin-top: 0; font-size: 20px; }
 .relation-panel h3 { font-size: 16px; }
-.relation-panel button { padding: 10px 14px; border: 1px solid #dce5f2; border-radius: 8px; background: white; color: #315bc2; font: inherit; font-size: 13px; cursor: pointer; }
+.relation-panel button { padding: 10px 14px; border: 1px solid #dce5f2; border-radius: 12px; background: white; color: var(--brand-hover); font: inherit; font-size: 13px; cursor: pointer; }
 .relation-panel button:disabled, .relation-panel :is(input, textarea, select):disabled { opacity: .55; cursor: default; }
-.relation-success { padding: 12px; border-radius: 8px; background: #edf7f0; color: #2e6549; }
+.relation-success { padding: 12px; border-radius: 12px; background: #edf7f0; color: #2e6549; }
 .relation-list { display: grid; gap: 8px; padding-left: 20px; }
 .relation-list button { text-align: left; overflow-wrap: anywhere; }
-.relation-list button[aria-pressed="true"] { border-color: #315bc2; background: #eef3ff; }
+.relation-list button[aria-pressed="true"] { border-color: var(--brand-hover); background: #eef3ff; }
 .relation-inspector { margin-top: 24px; padding-top: 24px; border-top: 1px solid #e3e9f1; overflow-wrap: anywhere; }
 .relation-details { display: grid; grid-template-columns: repeat(2, minmax(0, 1fr)); gap: 16px; margin: 16px 0; }
 .relation-form-row { display: flex; align-items: end; gap: 16px; margin-top: 20px; }
 .relation-form-row label { flex: 1; min-width: 0; }
 .relation-field { display: block; margin: 16px 0 8px; }
 .relation-panel label { font-size: 13px; color: #43516a; }
-.relation-panel label :is(input, textarea, select) { display: block; width: 100%; margin-top: 8px; padding: 10px 12px; border: 1px solid #dfe6f0; border-radius: 8px; color: #34435a; background: white; font: inherit; }
-.endpoint-snapshot { padding: 16px; border: 1px solid #e3e9f1; border-radius: 8px; overflow-wrap: anywhere; }
-.relation-panel .save-relation { background: #315bc2; color: white; }
+.relation-panel label :is(input, textarea, select) { display: block; width: 100%; margin-top: 8px; padding: 10px 12px; border: 1px solid #dfe6f0; border-radius: 12px; color: #34435a; background: white; font: inherit; }
+.endpoint-snapshot { padding: 16px; border: 1px solid #e3e9f1; border-radius: 12px; overflow-wrap: anywhere; }
+.relation-panel .save-relation { background: var(--brand-hover); color: white; }
 .relation-panel .danger-button { margin-top: 16px; color: #a13d32; }
-.relation-panel :is(button, input, select, textarea):focus-visible { outline: 2px solid #315bc2; outline-offset: 2px; }
+.relation-panel :is(button, input, select, textarea):focus-visible { outline: 2px solid var(--brand-hover); outline-offset: 2px; }
 @media (max-width: 700px) { .relation-panel { padding: 20px; } .relation-details { grid-template-columns: 1fr; } .relation-form-row { flex-direction: column; align-items: stretch; } }
 </style>

@@ -18,17 +18,17 @@ import org.springframework.transaction.support.TransactionTemplate;
 import com.learningmaterial.system.mapper.SessionMapper;
 import com.learningmaterial.system.mapper.UserMapper;
 import com.learningmaterial.system.security.AuthPrincipal;
+import com.learningmaterial.system.security.JwtTokenProvider;
+import io.jsonwebtoken.JwtException;
 import com.learningmaterial.system.service.AuthService;
 import java.nio.charset.StandardCharsets;
 import java.security.MessageDigest;
 import java.security.NoSuchAlgorithmException;
 import java.security.SecureRandom;
 import java.time.Clock;
-import java.time.Duration;
 import java.time.Instant;
 import java.time.LocalDateTime;
 import java.time.ZoneOffset;
-import java.util.Base64;
 import java.util.HexFormat;
 import java.util.Locale;
 import org.springframework.dao.DataIntegrityViolationException;
@@ -39,7 +39,6 @@ import org.springframework.transaction.annotation.Transactional;
 
 @Service
 public class AuthServiceImpl implements AuthService {
-    private static final Duration SESSION_LIFETIME = Duration.ofDays(7);
     private final UserMapper users;
     private final SessionMapper sessions;
     private final PasswordEncoder passwords;
@@ -47,11 +46,13 @@ public class AuthServiceImpl implements AuthService {
     private final WechatBindingMapper bindings;
     private final WechatLoginClient wechat;
     private final TransactionTemplate transactions;
+    private final JwtTokenProvider jwt;
     private final SecureRandom random = new SecureRandom();
     private final String dummyHash;
 
     public AuthServiceImpl(UserMapper users, SessionMapper sessions, PasswordEncoder passwords, Clock clock,
-                           WechatBindingMapper bindings, WechatLoginClient wechat, PlatformTransactionManager manager) {
+                           WechatBindingMapper bindings, WechatLoginClient wechat, PlatformTransactionManager manager,
+                           JwtTokenProvider jwt) {
         this.users = users;
         this.sessions = sessions;
         this.passwords = passwords;
@@ -59,6 +60,7 @@ public class AuthServiceImpl implements AuthService {
         this.bindings = bindings;
         this.wechat = wechat;
         this.transactions = new TransactionTemplate(manager);
+        this.jwt = jwt;
         this.dummyHash = passwords.encode("unknown-user-" + random.nextLong());
     }
 
@@ -101,10 +103,9 @@ public class AuthServiceImpl implements AuthService {
     }
 
     private SessionToken createSession(UserRow user, com.learningmaterial.system.dto.AuthDtos.ClientType clientType) {
-        byte[] tokenBytes = new byte[32];
-        random.nextBytes(tokenBytes);
-        String token = Base64.getUrlEncoder().withoutPadding().encodeToString(tokenBytes);
-        Instant expiry = clock.instant().plus(SESSION_LIFETIME);
+        var issued = jwt.issue(user.getId());
+        String token = issued.token();
+        Instant expiry = issued.expiresAt();
         LocalDateTime now = utcNow();
         SessionRow session = new SessionRow();
         session.setUserId(user.getId());
@@ -120,9 +121,11 @@ public class AuthServiceImpl implements AuthService {
     @Override
     @Transactional(readOnly = true)
     public AuthPrincipal authenticate(String token) {
-        if (token == null || !token.matches("[A-Za-z0-9_-]{43}")) return null;
+        long userId;
+        try { userId = jwt.verify(token); }
+        catch (JwtException | IllegalArgumentException invalidToken) { return null; }
         SessionRow session = sessions.findActive(tokenHash(token), utcNow());
-        if (session == null) return null;
+        if (session == null || session.getUserId() != userId) return null;
         UserRow user = users.findById(session.getUserId());
         if (user == null || !"ENABLED".equals(user.getStatus())) return null;
         return new AuthPrincipal(user.getId(), session.getId(), user.getRole());

@@ -57,6 +57,8 @@ class TaskWorkerSchedulingIntegrationTest {
                 Long.class, Long.parseLong(taskId))).isZero();
         } finally {
             jdbc.update("DELETE FROM ai_tool_call WHERE task_id IN (SELECT id FROM ai_task WHERE user_id = ?)", userId);
+            jdbc.update("DELETE FROM ocr_attempt WHERE task_id IN (SELECT id FROM ai_task WHERE user_id = ?)", userId);
+            jdbc.update("DELETE FROM model_attempt WHERE task_id IN (SELECT id FROM ai_task WHERE user_id = ?)", userId);
             jdbc.update("DELETE FROM ai_task WHERE user_id = ?", userId);
             jdbc.update("DELETE FROM favorite WHERE user_id = ?", userId);
             jdbc.update("DELETE mt FROM material_tag mt JOIN material m ON mt.material_id = m.id WHERE m.user_id = ?", userId);

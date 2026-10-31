@@ -133,8 +133,9 @@ quotations<=2000 UTF-16 units. Facts must follow sources. Output is for human re
                         + " relations array. Each relation is exactly"
                         + " {\"sourceIndex\":integer,\"targetCardId\":string,\"evidenceText\":string}."
                         + " sourceIndex is zero-based within cards. RELATED targets must come from"
-                        + " relatedCards; maximum 10 relations. No relation if relatedCards is"
-                        + " empty. Related cards are context only; all cards.sources must quote"
+                        + " relatedCards; maximum 10 relations. Always include relations as an array."
+                        + " If relatedCards is empty or no relation is supported, return relations: []."
+                        + " Never omit relations or return null. Related cards are context only; all cards.sources must quote"
                         + " main sources. Do not use relatedCards as primary source citations.";
         var input = json.createObjectNode();
         try {

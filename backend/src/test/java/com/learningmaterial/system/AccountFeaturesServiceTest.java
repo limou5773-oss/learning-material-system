@@ -1,6 +1,9 @@
 package com.learningmaterial.system;
 
 import com.learningmaterial.system.common.ApiException;
+import com.learningmaterial.system.config.JwtProperties;
+import com.learningmaterial.system.dto.AuthDtos.ClientType;
+import com.learningmaterial.system.dto.AuthDtos.LoginInput;
 import com.learningmaterial.system.dto.UserPatch;
 import com.learningmaterial.system.dto.WechatIdentity;
 import com.learningmaterial.system.entity.SessionRow;
@@ -11,6 +14,7 @@ import com.learningmaterial.system.mapper.SessionMapper;
 import com.learningmaterial.system.mapper.UserMapper;
 import com.learningmaterial.system.mapper.WechatBindingMapper;
 import com.learningmaterial.system.security.AuthPrincipal;
+import com.learningmaterial.system.security.JwtTokenProvider;
 import com.learningmaterial.system.service.impl.AuthServiceImpl;
 import java.time.*;
 import org.junit.jupiter.api.BeforeEach;
@@ -40,8 +44,10 @@ class AccountFeaturesServiceTest {
 
     @BeforeEach
     void setup() {
-        auth = new AuthServiceImpl(users, sessions, encoder, Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC),
-                bindings, wechat, manager);
+        Clock clock = Clock.fixed(now.toInstant(ZoneOffset.UTC), ZoneOffset.UTC);
+        var jwt = new JwtTokenProvider(new JwtProperties("AAECAwQFBgcICQoLDA0ODxAREhMUFRYXGBkaGxwdHh8=",
+            "learning-material-test", Duration.ofDays(7)), clock);
+        auth = new AuthServiceImpl(users, sessions, encoder, clock, bindings, wechat, manager, jwt);
         user = new UserRow();
         user.setId(7L); user.setUsername("account_test"); user.setDisplayName("原昵称");
         user.setRole("USER"); user.setStatus("ENABLED"); user.setCreatedAt(now);
@@ -49,6 +55,28 @@ class AccountFeaturesServiceTest {
         when(users.findByIdForUpdate(7)).thenReturn(user);
         when(sessions.findActiveById(9, 7, now)).thenReturn(new SessionRow());
         when(manager.getTransaction(any())).thenReturn(new SimpleTransactionStatus());
+    }
+
+    @Test
+    void loginReturnsJwtWithRevocableSession() {
+        when(users.findByUsernameForUpdate("account_test")).thenReturn(user);
+        doAnswer(call -> { ((SessionRow) call.getArgument(0)).setId(9L); return 1; }).when(sessions).insert(any());
+        var issued = auth.login(new LoginInput("account_test", "OldPassword1", ClientType.WEB));
+        assertThat(issued.accessToken()).matches("[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+\\.[A-Za-z0-9_-]+");
+        assertThat(issued.tokenType()).isEqualTo("Bearer");
+        ArgumentCaptor<SessionRow> saved = ArgumentCaptor.forClass(SessionRow.class);
+        verify(sessions).insert(saved.capture());
+        assertThat(saved.getValue().getTokenHash()).hasSize(64).isNotEqualTo(issued.accessToken());
+        when(sessions.findActive(saved.getValue().getTokenHash(), now)).thenReturn(saved.getValue());
+        when(users.findById(7)).thenReturn(user);
+        assertThat(auth.authenticate(issued.accessToken())).isEqualTo(principal);
+        saved.getValue().setUserId(8L);
+        assertThat(auth.authenticate(issued.accessToken())).isNull();
+        saved.getValue().setUserId(7L);
+        auth.logout(principal);
+        verify(sessions).revoke(9, now);
+        when(sessions.findActive(saved.getValue().getTokenHash(), now)).thenReturn(null);
+        assertThat(auth.authenticate(issued.accessToken())).isNull();
     }
 
     @Test

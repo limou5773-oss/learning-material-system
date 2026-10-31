@@ -53,6 +53,22 @@ public class ContentReviewServiceImpl implements ContentReviewService {
         this.tasks=tasks;this.calls=calls;this.ocr=ocr;this.models=models;
     }
     @Override
+    @Transactional(propagation=org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void supersedeByMaterial(long owner,long materialId,LocalDateTime now) {
+        if(reviews.supersedeByMaterial(materialId,now)==0)return;
+        reviews.setAccess(materialId,"RESTRICTED",now);
+        tasks.cancelForRestrictedMaterial(owner,materialId,now);
+        calls.markRestrictedSourceUnknown(owner,materialId,now);
+        ocr.markRestrictedSourceUnknown(owner,materialId,now);
+        models.markRestrictedSourceUnknown(owner,materialId,now);
+        notifications.insertSupersededEvent(materialId,now);
+    }
+    @Override
+    @Transactional(propagation=org.springframework.transaction.annotation.Propagation.MANDATORY)
+    public void supersedePendingByMaterial(long materialId,LocalDateTime now) {
+        reviews.supersedePendingByMaterial(materialId,now);
+    }
+    @Override
     @Transactional
     public StoredFile file(AuthPrincipal actor,long id) {
         Locked locked=lock(actor,id);
@@ -146,7 +162,7 @@ public class ContentReviewServiceImpl implements ContentReviewService {
     public PageView<ReviewView> list(String status,int page,int size) {
         checkPage(page,size);
         status=status==null||status.isBlank()?null:status.trim();
-        if(status!=null&&!List.of("PENDING","APPROVED","REJECTED").contains(status))throw invalid();
+        if(status!=null&&!List.of("PENDING","APPROVED","REJECTED","SUPERSEDED").contains(status))throw invalid();
         return page(null,status,page,size);
     }
     private PageView<ReviewView> page(Long id,String status,int page,int size) {

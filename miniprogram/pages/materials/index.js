@@ -11,6 +11,7 @@ Page({
 
   onShow() {
     if (!getToken()) { wx.reLaunch({ url: '/pages/login/index?reason=expired' }); return }
+    if (typeof this.getTabBar === 'function' && this.getTabBar()) this.getTabBar().setData({ selected: 0 })
     this.loadTags()
     this.load()
   },
@@ -59,6 +60,8 @@ Page({
   onKeywordInput(event) { this.setData({ keyword: event.detail.value }) },
   onSubjectInput(event) { this.setData({ subject: event.detail.value }) },
   onFavoriteChange(event) { this.setData({ favoritesOnly: event.detail.value, page: 1 }); this.load() },
+  toggleFavFilter() { this.setData({ favoritesOnly: !this.data.favoritesOnly, page: 1 }); this.load() },
+  onPullDownRefresh() { Promise.resolve(this.load()).finally(() => wx.stopPullDownRefresh()) },
   onTagChange(event) { this.setData({ tagIndex: Number(event.detail.value), page: 1 }); this.load() },
   onStatusChange(event) { this.setData({ statusIndex: Number(event.detail.value), page: 1 }); this.load() },
   search() { this.setData({ page: 1 }); this.load() },
@@ -81,6 +84,4 @@ Page({
     } catch (error) { this.handleError(error) }
     finally { this.setData({ favoriteBusyId: '' }) }
   },
-  newNote() { wx.navigateTo({ url: '/pages/note/new' }) },
-  newImage() { wx.navigateTo({ url: '/pages/image/new' }) },
 })
